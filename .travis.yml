@@ -1,0 +1,24 @@
+language: java
+sudo: false
+dist: trusty
+notifications:
+  slack: "blazebit:$SLACK_API_TOKEN"
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+install:
+# Skip the first maven execution for downloading dependencies by using this command
+  - /bin/true
+after_failure:
+  - sh travis/print_surefire_reports.sh
+script:
+  - ./build.sh
+after_success:
+  - "bash ./.travis-deploy.sh"
+env:
+  global:
+    - MAVEN_SKIP_RC=true
+matrix:
+  fast_finish: true
+  include:
+    - jdk: oraclejdk8
