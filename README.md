@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Blazebit/blaze-expression.svg?branch=master)](https://travis-ci.org/Blazebit/blaze-expression)
+[![Build Status](https://travis-ci.com/Blazebit/blaze-expression.svg?branch=master)](https://travis-ci.org/Blazebit/blaze-expression)
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-expression-core-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-expression-core-api)
 [![Slack Status](https://blazebit.herokuapp.com/badge.svg)](https://blazebit.herokuapp.com)
