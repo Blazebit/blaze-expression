@@ -36,6 +36,6 @@ public class FunctionRendererDeclarativeFunctionMetadataProcessor implements Dec
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, FunctionExpression annotation) {
-        return new ExpressionFunctionRenderer(annotation.value());
+        return new ExpressionFunctionRenderer(annotation.value(), annotation.predicate());
     }
 }

@@ -30,6 +30,7 @@ import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsNullPredicate;
@@ -114,6 +115,20 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             return arithmetic(e.getType(), e.getType(), null, result, null, DomainOperator.UNARY_MINUS);
         }
         return result;
+    }
+
+    @Override
+    public Object visit(ExpressionPredicate e) {
+        Object left = e.getExpression().accept(this);
+        if (left == null) {
+            return null;
+        }
+        Boolean testValue = e.isNegated() ? Boolean.TRUE : Boolean.FALSE;
+        Boolean b = compare(e.getExpression().getType(), e.getExpression().getType(), left, left, ComparisonOperator.EQUAL);
+        if (!testValue.equals(b)) {
+            return b;
+        }
+        return testValue;
     }
 
     @Override

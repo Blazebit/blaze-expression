@@ -27,6 +27,7 @@ import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.Expression;
+import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
@@ -159,6 +160,18 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             sb.append('-');
         }
         e.getExpression().accept(this);
+    }
+
+    @Override
+    public void visit(ExpressionPredicate e) {
+        boolean negated = e.isNegated();
+        if (negated) {
+            sb.append("NOT(");
+        }
+        e.getExpression().accept(this);
+        if (negated) {
+            sb.append(')');
+        }
     }
 
     @Override

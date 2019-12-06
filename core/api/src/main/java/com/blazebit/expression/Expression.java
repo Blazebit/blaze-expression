@@ -45,6 +45,13 @@ public interface Expression {
          *
          * @param e The expression to visit
          */
+        void visit(ExpressionPredicate e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
         void visit(BetweenPredicate e);
 
         /**
@@ -119,6 +126,14 @@ public interface Expression {
          * @return the result
          */
         T visit(ArithmeticFactor e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(ExpressionPredicate e);
 
         /**
          * Visits the given expression and returns a result.

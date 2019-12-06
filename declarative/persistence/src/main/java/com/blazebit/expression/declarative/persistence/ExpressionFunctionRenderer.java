@@ -37,14 +37,17 @@ import java.util.function.Consumer;
 public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRenderer>, FunctionRenderer {
 
     private final String[] chunks;
-    private final Integer[] parameterIndices;
+    private final int[] parameterIndices;
+    private final boolean rendersPredicate;
 
     /**
      * Creates a function renderer that renders function arguments into 1-based parameter placeholders.
      *
      * @param template The rendering template
+     * @param rendersPredicate Whether a predicate is rendered
      */
-    public ExpressionFunctionRenderer(String template) {
+    public ExpressionFunctionRenderer(String template, boolean rendersPredicate) {
+        this.rendersPredicate = rendersPredicate;
         List<String> chunkList = new ArrayList<String>();
         List<Integer> parameterIndexList = new ArrayList<Integer>();
         StringBuilder sb = new StringBuilder();
@@ -61,7 +64,7 @@ public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRe
                     if (Character.isDigit(c)) {
                         sb.append(c);
                     } else {
-                        parameterIndexList.add(Integer.valueOf(sb.toString()) - 1);
+                        parameterIndexList.add(Integer.parseInt(sb.toString()) - 1);
                         sb.setLength(0);
                         sb.append(c);
                         break;
@@ -69,7 +72,7 @@ public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRe
                 }
 
                 if (i == template.length()) {
-                    parameterIndexList.add(Integer.valueOf(sb.toString()) - 1);
+                    parameterIndexList.add(Integer.parseInt(sb.toString()) - 1);
                     sb.setLength(0);
                 }
             } else {
@@ -81,8 +84,18 @@ public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRe
             chunkList.add(sb.toString());
         }
 
+        int[] parameterIndices = new int[parameterIndexList.size()];
+        for (int i = 0; i < parameterIndexList.size(); i++) {
+            parameterIndices[i] = parameterIndexList.get(i);
+        }
+
         this.chunks = chunkList.toArray(new String[chunkList.size()]);
-        this.parameterIndices = parameterIndexList.toArray(new Integer[parameterIndexList.size()]);
+        this.parameterIndices = parameterIndices;
+    }
+
+    @Override
+    public boolean rendersPredicate() {
+        return rendersPredicate;
     }
 
     @Override

@@ -51,4 +51,11 @@ public @interface FunctionExpression {
      * @return the function expression template
      */
     String value();
+
+    /**
+     * Whether a predicate is rendered by the function expression.
+     *
+     * @return whether a predicate is rendered by the function expression
+     */
+    boolean predicate() default false;
 }

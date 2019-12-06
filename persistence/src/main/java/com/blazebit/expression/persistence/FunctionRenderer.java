@@ -30,6 +30,15 @@ import java.util.function.Consumer;
 public interface FunctionRenderer {
 
     /**
+     * Returns whether the renderer renders a predicate or an expression.
+     *
+     * @return whether a predicate or expresion is rendered
+     */
+    default boolean rendersPredicate() {
+        return false;
+    }
+
+    /**
      * Renders the given domain function with the given return type and arguments to the given StringBuilder.
      *
      * @param function The domain function

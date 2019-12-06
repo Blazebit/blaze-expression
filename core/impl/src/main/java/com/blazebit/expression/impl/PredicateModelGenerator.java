@@ -40,6 +40,7 @@ import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsNullPredicate;
@@ -276,7 +277,11 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     public Expression visitBooleanFunction(PredicateParser.BooleanFunctionContext ctx) {
         Expression expression = super.visitBooleanFunction(ctx);
         if (expression.getType() == getBooleanDomainType()) {
-            return expression;
+            if (expression instanceof Predicate) {
+                return expression;
+            }
+
+            return new ExpressionPredicate(getBooleanDomainType(), expression, false);
         }
 
         throw new TypeErrorException("Invalid use of non-boolean returning function: " + ctx.getText());
