@@ -36,6 +36,7 @@ public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker
     private final int parameterCount;
 
     public MethodFunctionInvoker(Method function, int parameterCount) {
+        function.setAccessible(true);
         this.function = function;
         this.parameterCount = parameterCount;
     }

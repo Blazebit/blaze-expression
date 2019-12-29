@@ -30,6 +30,8 @@ import java.util.ServiceLoader;
  */
 public final class Expressions {
 
+    private static volatile ExpressionServiceFactoryProvider defaultProvider;
+
     private Expressions() {
     }
 
@@ -49,11 +51,15 @@ public final class Expressions {
      * @return The first {@linkplain ExpressionServiceFactoryProvider} that is found
      */
     public static ExpressionServiceFactoryProvider getDefaultProvider() {
-        Iterator<ExpressionServiceFactoryProvider> iterator = ServiceLoader.load(ExpressionServiceFactoryProvider.class).iterator();
-        if (iterator.hasNext()) {
-            return iterator.next();
-        }
+        ExpressionServiceFactoryProvider provider = defaultProvider;
+        if (provider == null) {
+            Iterator<ExpressionServiceFactoryProvider> iterator = ServiceLoader.load(ExpressionServiceFactoryProvider.class).iterator();
+            if (iterator.hasNext()) {
+                return defaultProvider = iterator.next();
+            }
 
-        throw new IllegalStateException("No expression service factory provider available. Did you forget to add the expression-impl dependency?");
+            throw new IllegalStateException("No expression service factory provider available. Did you forget to add the expression-impl dependency?");
+        }
+        return provider;
     }
 }

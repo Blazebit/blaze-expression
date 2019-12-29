@@ -18,6 +18,9 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * The base interface for an expression.
  *
@@ -230,4 +233,15 @@ public interface Expression {
      * @return the value as returned by the result visitor
      */
     <T> T accept(ResultVisitor<T> visitor);
+
+    /**
+     * Returns the paths that are used in this expression.
+     *
+     * @return the paths that are used
+     */
+    default Set<Path> getUsedPaths() {
+        Set<Path> paths = new HashSet<>();
+        accept(new PathCollectingVisitor(paths));
+        return paths;
+    }
 }

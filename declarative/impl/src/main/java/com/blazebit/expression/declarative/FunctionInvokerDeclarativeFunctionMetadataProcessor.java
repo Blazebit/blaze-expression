@@ -22,6 +22,7 @@ import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * @author Christian Beikov
@@ -36,7 +37,10 @@ public class FunctionInvokerDeclarativeFunctionMetadataProcessor implements Decl
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation) {
-        return new MethodFunctionInvoker(method, method.getParameterCount());
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+        if (Modifier.isStatic(method.getModifiers()) && !Modifier.isPrivate(method.getModifiers())) {
+            return new MethodFunctionInvoker(method, method.getParameterCount());
+        }
+        return null;
     }
 }

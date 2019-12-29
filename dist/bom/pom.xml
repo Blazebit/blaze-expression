@@ -67,11 +67,6 @@
                 <version>${version.blazedomain}</version>
                 <scope>runtime</scope>
             </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>blaze-domain-persistence</artifactId>
-                <version>${version.blazedomain}</version>
-            </dependency>
 
             <!-- Module dependencies -->
 

@@ -17,7 +17,6 @@
 package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
-import com.blazebit.domain.persistence.StaticDomainFunctionTypeResolvers;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;

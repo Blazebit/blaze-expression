@@ -35,7 +35,7 @@ public class FunctionRendererDeclarativeFunctionMetadataProcessor implements Dec
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, FunctionExpression annotation) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, FunctionExpression annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
         return new ExpressionFunctionRenderer(annotation.value(), annotation.predicate());
     }
 }

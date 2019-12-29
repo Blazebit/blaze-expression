@@ -54,7 +54,7 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
                 .withResultType(STRING)
                 .withArgument("string", STRING)
                 .withArgument("start", INTEGER)
-                .withArgument("end", INTEGER)
+                .withArgument("count", INTEGER)
                 .build();
     }
 
@@ -68,12 +68,24 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
         if (start == null) {
             return null;
         }
-        Object end = arguments.get(function.getArgument(2));
-        if (end == null) {
-            return string.toString().substring((int) start);
-        } else {
-            return string.toString().substring((int) start, (int) end);
+        int startIndex = ((int) start) - 1;
+        int endIndexOffset = 0;
+        if (startIndex < 0) {
+            endIndexOffset = -startIndex;
+            startIndex = 0;
         }
+        String s = string.toString();
+        int endIndex;
+        Object count = arguments.get(function.getArgument(2));
+        if (count == null) {
+            endIndex = s.length() - endIndexOffset;
+        } else {
+            endIndex = startIndex + ((int) count) - endIndexOffset;
+        }
+        if (endIndex > s.length()) {
+            endIndex = s.length();
+        }
+        return s.substring(startIndex, endIndex);
     }
 
     @Override

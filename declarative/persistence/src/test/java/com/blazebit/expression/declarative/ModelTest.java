@@ -30,6 +30,7 @@ import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionServiceFactory;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.declarative.persistence.FunctionExpression;
+import com.blazebit.persistence.BaseWhereBuilder;
 import com.blazebit.persistence.BetweenBuilder;
 import com.blazebit.persistence.CaseWhenStarterBuilder;
 import com.blazebit.persistence.CommonQueryBuilder;
@@ -94,7 +95,7 @@ public class ModelTest {
         ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "u"));
         WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
         serializer.serializeTo(serializerContext, expression, whereBuilderMock);
-        Assert.assertEquals("CASE WHEN u.age > 18 THEN 1 ELSE 0 END", whereBuilderMock.lhs);
+        Assert.assertEquals("u.age > 18", whereBuilderMock.predicate);
     }
 
     @DomainFunctions
@@ -135,8 +136,7 @@ public class ModelTest {
 
     static class WhereBuilderMock implements WhereBuilder, MultipleSubqueryInitiator<RestrictionBuilder>, RestrictionBuilder {
 
-        private String lhs;
-        private String rhs;
+        private String predicate;
 
         @Override
         public WhereOrBuilder whereOr() {
@@ -146,6 +146,17 @@ public class ModelTest {
         @Override
         public WhereBuilder setWhereExpression(String expression) {
             return null;
+        }
+
+        @Override
+        public BaseWhereBuilder whereExpression(String expression) {
+            return null;
+        }
+
+        @Override
+        public MultipleSubqueryInitiator whereExpressionSubqueries(String expression) {
+            predicate = expression;
+            return this;
         }
 
         @Override
@@ -165,8 +176,7 @@ public class ModelTest {
 
         @Override
         public MultipleSubqueryInitiator<RestrictionBuilder> whereSubqueries(String expression) {
-            lhs = expression;
-            return this;
+            return null;
         }
 
         @Override
@@ -336,7 +346,6 @@ public class ModelTest {
 
         @Override
         public Object eqExpression(String expression) {
-            rhs = expression;
             return null;
         }
 
@@ -572,6 +581,66 @@ public class ModelTest {
 
         @Override
         public Object notIn(Object... values) {
+            return null;
+        }
+
+        @Override
+        public BetweenBuilder betweenLiteral(Object start) {
+            return null;
+        }
+
+        @Override
+        public BetweenBuilder notBetweenLiteral(Object start) {
+            return null;
+        }
+
+        @Override
+        public Object eqLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object notEqLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object gtLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object geLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object ltLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object leLiteral(Object value) {
+            return null;
+        }
+
+        @Override
+        public Object inLiterals(Collection values) {
+            return null;
+        }
+
+        @Override
+        public Object inLiterals(Object... values) {
+            return null;
+        }
+
+        @Override
+        public Object notInLiterals(Collection values) {
+            return null;
+        }
+
+        @Override
+        public Object notInLiterals(Object... values) {
             return null;
         }
 

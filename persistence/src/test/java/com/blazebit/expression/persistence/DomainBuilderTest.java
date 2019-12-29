@@ -76,7 +76,7 @@ public class DomainBuilderTest {
         Assert.assertEquals(stringType, substring.getArguments().get(0).getType());
         Assert.assertEquals("start", substring.getArguments().get(1).getName());
         Assert.assertEquals(integerType, substring.getArguments().get(1).getType());
-        Assert.assertEquals("end", substring.getArguments().get(2).getName());
+        Assert.assertEquals("count", substring.getArguments().get(2).getName());
         Assert.assertEquals(integerType, substring.getArguments().get(2).getType());
         Assert.assertEquals(stringType, resolveFunctionType("substring", stringType, integerType, integerType));
     }

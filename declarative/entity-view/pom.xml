@@ -1,45 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>blaze-expression-parent</artifactId>
+        <artifactId>blaze-expression-declarative</artifactId>
         <groupId>com.blazebit</groupId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../parent/pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>blaze-expression-persistence</artifactId>
+    <artifactId>blaze-expression-declarative-entity-view</artifactId>
+
+    <properties>
+        <version.hibernate>5.4.6.Final</version.hibernate>
+    </properties>
 
     <dependencies>
+        <!-- Actually we only need JPA but since there is no official artifact we rather use this than provider specific apis -->
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>7.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-expression-core-api</artifactId>
+            <artifactId>blaze-expression-declarative-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-persistence-core-api</artifactId>
+            <artifactId>blaze-persistence-entity-view-api</artifactId>
             <version>${version.blaze-persistence}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-expression-core-impl</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
+            <artifactId>blaze-persistence-core-parser</artifactId>
+            <version>${version.blaze-persistence}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-domain-core-impl</artifactId>
-            <version>${version.blaze-domain}</version>
+            <artifactId>blaze-persistence-entity-view-impl</artifactId>
+            <version>${version.blaze-persistence}</version>
             <scope>runtime</scope>
         </dependency>
 
         <!-- Test dependencies -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <scope>test</scope>
-		</dependency>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-core-testsuite</artifactId>
+            <version>${version.blaze-persistence}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.200</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>${version.hibernate}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-envers</artifactId>
+            <version>${version.hibernate}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-testing</artifactId>
+            <version>${version.hibernate}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-integration-hibernate-5.4</artifactId>
+            <version>${version.blaze-persistence}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-testsuite-base-hibernate</artifactId>
+            <version>${version.blaze-persistence}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- IntelliJ apparently needs the annotation processor here -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-apt-utils</artifactId>
