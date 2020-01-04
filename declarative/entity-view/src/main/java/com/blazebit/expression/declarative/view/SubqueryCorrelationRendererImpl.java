@@ -23,7 +23,7 @@ import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.persistence.SubqueryProvider;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.SubqueryInitiator;
-import com.blazebit.persistence.view.SubqueryProviderFactory;
+import com.blazebit.persistence.spi.ServiceProvider;
 import com.blazebit.persistence.view.metamodel.SubqueryAttribute;
 
 import java.util.Collections;
@@ -33,11 +33,11 @@ import java.util.regex.Pattern;
  * @author Christian Beikov
  * @since 1.0.0
  */
-class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
+public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
 
     private static final String[] EMPTY = new String[0];
 
-    private final SubqueryProviderFactory subqueryProviderFactory;
+    private final SubqueryAttribute<?, ?> subqueryAttribute;
     private final String[] subqueryExpressionChunks;
     private final boolean preChunks;
     private final boolean postChunks;
@@ -48,7 +48,7 @@ class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDe
      * @param subqueryAttribute The subquery attribute
      */
     public SubqueryCorrelationRendererImpl(SubqueryAttribute<?, ?> subqueryAttribute) {
-        this.subqueryProviderFactory = subqueryAttribute.getSubqueryProviderFactory();
+        this.subqueryAttribute = subqueryAttribute;
         String subqueryExpression = subqueryAttribute.getSubqueryExpression().trim();
         String subqueryAlias = subqueryAttribute.getSubqueryAlias();
         if (subqueryExpression.isEmpty() || subqueryExpression.equals(subqueryAlias)) {
@@ -73,7 +73,7 @@ class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDe
     public String correlate(CriteriaBuilder<?> cb, String parentAlias, PersistenceExpressionSerializer serializer) {
         DefaultViewRootJpqlMacro.registerIfAbsent(serializer, parentAlias);
         MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, parentAlias);
-        String alias = serializer.registerSubqueryProvider(new SubqueryProviderWrapper(subqueryProviderFactory.create(null, Collections.emptyMap())));
+        String alias = serializer.registerSubqueryProvider(new SubqueryProviderWrapper(subqueryAttribute.getSubqueryProviderFactory().create(null, Collections.emptyMap())));
         StringBuilder sb = new StringBuilder();
 
         if (preChunks) {
@@ -91,6 +91,9 @@ class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDe
             sb.append(alias);
         }
 
+        String expression = sb.toString();
+        sb.setLength(0);
+        subqueryAttribute.renderSubqueryExpression(parentAlias, expression, alias, (ServiceProvider) serializer.getWhereBuilder(), sb);
         return sb.toString();
     }
 

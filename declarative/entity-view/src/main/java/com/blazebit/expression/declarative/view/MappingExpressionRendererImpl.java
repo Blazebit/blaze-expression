@@ -20,22 +20,24 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.persistence.ExpressionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.persistence.spi.ServiceProvider;
+import com.blazebit.persistence.view.metamodel.MappingAttribute;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-class ExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer> {
+public class MappingExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer> {
 
-    private final String expression;
+    private final MappingAttribute<?, ?> mappingAttribute;
 
     /**
-     * Creates a new expression renderer
+     * Creates a new mapping attribute based expression renderer.
      *
-     * @param expression The expression
+     * @param mappingAttribute The mapping attribute
      */
-    public ExpressionRendererImpl(String expression) {
-        this.expression = expression;
+    public MappingExpressionRendererImpl(MappingAttribute<?, ?> mappingAttribute) {
+        this.mappingAttribute = mappingAttribute;
     }
 
     @Override
@@ -45,7 +47,8 @@ class ExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<E
         // NOTE: We don't support the embedding view macro on plain expressions as that would require us to parse expressions
         // So we set null in order to cause an exception if it is used
         MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, null);
-        sb.append('.').append(expression);
+        sb.setLength(0);
+        mappingAttribute.renderMapping(parentAlias, (ServiceProvider) serializer.getWhereBuilder(), sb);
     }
 
     /**

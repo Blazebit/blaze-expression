@@ -24,9 +24,9 @@ import com.blazebit.persistence.CorrelationQueryBuilder;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.FromProvider;
 import com.blazebit.persistence.JoinOnBuilder;
+import com.blazebit.persistence.spi.ServiceProvider;
 import com.blazebit.persistence.view.CorrelationBuilder;
 import com.blazebit.persistence.view.CorrelationProvider;
-import com.blazebit.persistence.view.CorrelationProviderFactory;
 import com.blazebit.persistence.view.metamodel.CorrelatedAttribute;
 
 import javax.persistence.metamodel.EntityType;
@@ -36,11 +36,9 @@ import java.util.Collections;
  * @author Christian Beikov
  * @since 1.0.0
  */
-class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
+public class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
 
-    private final CorrelationProviderFactory correlationProviderFactory;
-    private final String correlationBasis;
-    private final String correlationResult;
+    private final CorrelatedAttribute<?, ?> correlatedAttribute;
 
     /**
      * Creates a new correlation renderer for a correlatedAttribute attribute.
@@ -48,29 +46,21 @@ class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer,
      * @param correlatedAttribute The correlated attribute
      */
     public CorrelationProviderCorrelationRendererImpl(CorrelatedAttribute<?, ?> correlatedAttribute) {
-        this.correlationProviderFactory = correlatedAttribute.getCorrelationProviderFactory();
-        this.correlationBasis = correlatedAttribute.getCorrelationBasis();
-        this.correlationResult = correlatedAttribute.getCorrelationResult();
+        this.correlatedAttribute = correlatedAttribute;
     }
 
     @Override
     public String correlate(CriteriaBuilder<?> cb, String parentAlias, PersistenceExpressionSerializer serializer) {
         DefaultViewRootJpqlMacro.registerIfAbsent(serializer, parentAlias);
         MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, parentAlias);
-        CorrelationProvider correlationProvider = correlationProviderFactory.create(null, Collections.emptyMap());
+        CorrelationProvider correlationProvider = correlatedAttribute.getCorrelationProviderFactory().create(null, Collections.emptyMap());
         CorrelationBuilderImpl correlationBuilder = new CorrelationBuilderImpl(cb, serializer.nextCorrelationAlias());
-        String correlationExpression;
-        if (parentAlias == null) {
-            correlationExpression = correlationBasis;
-        } else {
-            correlationExpression = parentAlias + "." + correlationBasis;
-        }
-        correlationProvider.applyCorrelation(correlationBuilder, correlationExpression);
-        if (correlationResult == null) {
-            return correlationBuilder.getCorrelationAlias();
-        } else {
-            return correlationBuilder.getCorrelationAlias() + "." + correlationResult;
-        }
+        StringBuilder sb = new StringBuilder();
+        correlatedAttribute.renderCorrelationBasis(parentAlias, (ServiceProvider) serializer.getWhereBuilder(), sb);
+        correlationProvider.applyCorrelation(correlationBuilder, sb.toString());
+        sb.setLength(0);
+        correlatedAttribute.renderCorrelationResult(correlationBuilder.getCorrelationAlias(), (ServiceProvider) serializer.getWhereBuilder(), sb);
+        return sb.toString();
     }
 
     /**
