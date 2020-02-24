@@ -24,61 +24,63 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class ReplaceFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final ReplaceFunction INSTANCE = new ReplaceFunction();
 
-    private CurrentTimestampFunction() {
+    private ReplaceFunction() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the REPLACE function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("REPLACE")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withResultType(STRING)
+                .withArgument("string", STRING)
+                .withArgument("target", STRING)
+                .withArgument("replacement", STRING)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        String string = (String) arguments.get(function.getArgument(0));
+        if (string == null) {
+            return null;
+        }
+        String target = (String) arguments.get(function.getArgument(1));
+        if (target == null) {
+            return null;
+        }
+        String replacement = (String) arguments.get(function.getArgument(2));
+        if (replacement == null) {
+            return null;
+        }
+        return string.replace(target, replacement);
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("REPLACE(");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        sb.append(", ");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(", ");
+        argumentRenderers.get(function.getArgument(2)).accept(sb);
+        sb.append(')');
     }
 }

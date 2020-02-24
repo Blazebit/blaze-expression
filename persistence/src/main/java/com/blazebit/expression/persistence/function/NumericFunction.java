@@ -63,6 +63,24 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
                     return new BigDecimal(Math.tan(value));
                 }
             },
+            new NumericFunction("ASIN") {
+                @Override
+                protected Object invoke(double value) {
+                    return new BigDecimal(Math.asin(value));
+                }
+            },
+            new NumericFunction("ACOS") {
+                @Override
+                protected Object invoke(double value) {
+                    return new BigDecimal(Math.acos(value));
+                }
+            },
+            new NumericFunction("ATAN") {
+                @Override
+                protected Object invoke(double value) {
+                    return new BigDecimal(Math.atan(value));
+                }
+            },
             new NumericFunction("LOG") {
                 @Override
                 protected Object invoke(double value) {
@@ -73,6 +91,18 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
                 @Override
                 protected Object invoke(double value) {
                     return new BigDecimal(Math.exp(value));
+                }
+            },
+            new NumericFunction("RADIANS") {
+                @Override
+                protected Object invoke(double value) {
+                    return new BigDecimal(Math.toRadians(value));
+                }
+            },
+            new NumericFunction("DEGREES") {
+                @Override
+                protected Object invoke(double value) {
+                    return new BigDecimal(Math.toDegrees(value));
                 }
             }
     );

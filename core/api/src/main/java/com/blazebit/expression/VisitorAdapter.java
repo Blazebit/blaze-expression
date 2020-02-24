@@ -78,6 +78,11 @@ public abstract class VisitorAdapter implements Expression.Visitor {
     }
 
     @Override
+    public void visit(IsEmptyPredicate e) {
+        e.getLeft().accept(this);
+    }
+
+    @Override
     public void visit(FunctionInvocation e) {
         for (Expression value : e.getArguments().values()) {
             value.accept(this);

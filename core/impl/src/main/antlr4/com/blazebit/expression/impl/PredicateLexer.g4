@@ -44,6 +44,7 @@ LEADING_ZERO_NUMERIC_LITERAL
 AND             : [aA] [nN] [dD];
 BETWEEN         : [bB] [eE] [tT] [wW] [eE] [eE] [nN];
 DAYS            : [dD] [aA] [yY] [sS];
+EMPTY           : [eE] [mM] [pP] [tT] [yY];
 FALSE           : [fF] [aA] [lL] [sS] [eE];
 HOURS           : [hH] [oO] [uU] [rR] [sS];
 IN              : [iI] [nN];

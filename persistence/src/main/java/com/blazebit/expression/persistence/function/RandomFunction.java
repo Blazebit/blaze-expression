@@ -22,63 +22,45 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
+import com.blazebit.expression.persistence.PersistenceDomainContributor;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
-
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class RandomFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final RandomFunction INSTANCE = new RandomFunction();
 
-    private CurrentTimestampFunction() {
+    private RandomFunction() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the RANDOM function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("RANDOM")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
+        domainBuilder.withFunctionTypeResolver("RANDOM", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.NUMERIC));
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        return new BigDecimal(ThreadLocalRandom.current().nextDouble());
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("RANDOM()");
     }
 }

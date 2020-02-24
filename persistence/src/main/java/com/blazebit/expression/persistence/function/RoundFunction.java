@@ -24,61 +24,68 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class RoundFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final RoundFunction INSTANCE = new RoundFunction();
 
-    private CurrentTimestampFunction() {
+    private RoundFunction() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the ROUND function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("ROUND")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withArgument("value", NUMERIC)
+                .withArgument("precision", INTEGER)
+                .withMinArgumentCount(1)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
+        domainBuilder.withFunctionTypeResolver("ROUND", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        Object value = arguments.get(function.getArgument(0));
+        if (value == null) {
+            return null;
+        }
+        int prec = 0;
+        if (arguments.size() > 1) {
+            Object precision = arguments.get(function.getArgument(1));
+            if (precision == null) {
+                return null;
+            }
+            prec = ((Number) precision).intValue();
+        }
+
+        return new BigDecimal(((Number) value).doubleValue()).round(new MathContext(prec, RoundingMode.HALF_UP));
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("ROUND(");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        if (function.getArgumentCount() > 1) {
+            sb.append(", ");
+            argumentRenderers.get(function.getArgument(1)).accept(sb);
+        }
+        sb.append(')');
     }
 }

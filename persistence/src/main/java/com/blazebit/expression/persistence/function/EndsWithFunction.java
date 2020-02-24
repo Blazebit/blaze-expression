@@ -24,56 +24,67 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.BOOLEAN;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class AbsFunction implements FunctionRenderer, FunctionInvoker {
+public class EndsWithFunction implements FunctionRenderer, FunctionInvoker {
 
-    private static final AbsFunction INSTANCE = new AbsFunction();
+    private static final EndsWithFunction INSTANCE = new EndsWithFunction();
 
-    private AbsFunction() {
+    private EndsWithFunction() {
     }
 
     /**
-     * Adds the ABS function to the domain builder.
+     * Adds the ENDS_WITH function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("ABS")
+        domainBuilder.createFunction("ENDS_WITH")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(1)
+                .withMinArgumentCount(2)
+                .withResultType(BOOLEAN)
+                .withArgument("string", STRING)
+                .withArgument("substring", STRING)
                 .build();
-        domainBuilder.withFunctionTypeResolver("ABS", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object argument = arguments.get(function.getArgument(0));
-        if (argument == null) {
+        String string = (String) arguments.get(function.getArgument(1));
+        if (string == null) {
             return null;
         }
-
-        if (argument instanceof BigDecimal) {
-            return ((BigDecimal) argument).abs();
-        } else if (argument instanceof BigInteger) {
-            return ((BigInteger) argument).abs();
-        } else {
-            throw new IllegalArgumentException("Illegal argument for ABS function: " + argument);
+        String substring = (String) arguments.get(function.getArgument(0));
+        if (substring == null) {
+            return null;
         }
+        return string.endsWith(substring);
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("ABS(");
-        argumentRenderers.values().iterator().next().accept(sb);
+        sb.append("LOCATE(");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(", ");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        sb.append(") = LENGTH(");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(") - LENGTH(");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
         sb.append(')');
+    }
+
+    @Override
+    public boolean rendersPredicate() {
+        return true;
     }
 }

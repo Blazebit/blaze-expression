@@ -33,17 +33,28 @@ import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.expression.persistence.function.AbsFunction;
+import com.blazebit.expression.persistence.function.Atan2Function;
+import com.blazebit.expression.persistence.function.CeilFunction;
+import com.blazebit.expression.persistence.function.CurrentDateFunction;
+import com.blazebit.expression.persistence.function.CurrentTimeFunction;
 import com.blazebit.expression.persistence.function.CurrentTimestampFunction;
+import com.blazebit.expression.persistence.function.EndsWithFunction;
+import com.blazebit.expression.persistence.function.FloorFunction;
 import com.blazebit.expression.persistence.function.GreatestFunction;
 import com.blazebit.expression.persistence.function.LTrimFunction;
 import com.blazebit.expression.persistence.function.LeastFunction;
 import com.blazebit.expression.persistence.function.LengthFunction;
 import com.blazebit.expression.persistence.function.LocateFunction;
+import com.blazebit.expression.persistence.function.LocateLastFunction;
 import com.blazebit.expression.persistence.function.LowerFunction;
 import com.blazebit.expression.persistence.function.NumericFunction;
 import com.blazebit.expression.persistence.function.PowFunction;
 import com.blazebit.expression.persistence.function.RTrimFunction;
+import com.blazebit.expression.persistence.function.RandomFunction;
+import com.blazebit.expression.persistence.function.ReplaceFunction;
+import com.blazebit.expression.persistence.function.RoundFunction;
 import com.blazebit.expression.persistence.function.SizeFunction;
+import com.blazebit.expression.persistence.function.StartsWithFunction;
 import com.blazebit.expression.persistence.function.SubstringFunction;
 import com.blazebit.expression.persistence.function.TrimFunction;
 import com.blazebit.expression.persistence.function.UpperFunction;
@@ -51,9 +62,10 @@ import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Objects;
 
 /**
@@ -63,11 +75,12 @@ import java.util.Objects;
 @ServiceProvider(DomainContributor.class)
 public class PersistenceDomainContributor implements DomainContributor {
 
+    // NOTE: Copied to TypeAdapterRegistry. Keep in sync
     public static final Class<?> BOOLEAN = Boolean.class;
-    // TODO: think about using BigInteger instead of Integer
-    public static final Class<?> INTEGER = Integer.class;
+    public static final Class<?> INTEGER = BigInteger.class;
     public static final Class<?> NUMERIC = BigDecimal.class;
-    public static final Class<?> TIMESTAMP = Calendar.class;
+    public static final Class<?> TIMESTAMP = Instant.class;
+    public static final Class<?> TIME = LocalTime.class;
     public static final Class<?> INTERVAL = TemporalInterval.class;
     public static final Class<?> STRING = String.class;
 
@@ -82,8 +95,10 @@ public class PersistenceDomainContributor implements DomainContributor {
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
             if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
                 return new DefaultResolvedLiteral(domainModel.getType(NUMERIC), value);
+            } else if (value instanceof BigInteger) {
+                return new DefaultResolvedLiteral(domainModel.getType(INTEGER), value);
             }
-            return new DefaultResolvedLiteral(domainModel.getType(INTEGER), value.intValue());
+            return new DefaultResolvedLiteral(domainModel.getType(INTEGER), BigInteger.valueOf(value.longValue()));
         }
     };
     public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolver() {
@@ -110,6 +125,7 @@ public class PersistenceDomainContributor implements DomainContributor {
         createBasicType(domainBuilder, NUMERIC, DomainOperator.arithmetic(), DomainPredicateType.comparable(), handlersFor(NumericOperatorHandler.INSTANCE));
         createBasicType(domainBuilder, STRING, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicateType.comparable(), handlersFor(StringOperatorHandler.INSTANCE));
         createBasicType(domainBuilder, TIMESTAMP, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicateType.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE));
+        createBasicType(domainBuilder, TIME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicateType.comparable(), handlersFor(TimeOperatorHandler.INSTANCE));
         createBasicType(domainBuilder, BOOLEAN, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicateType.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE));
         domainBuilder.withNumericLiteralResolver(NUMERIC_LITERAL_TYPE_RESOLVER);
         domainBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
@@ -132,8 +148,14 @@ public class PersistenceDomainContributor implements DomainContributor {
         domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP));
         domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP));
 
+        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME));
+        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME));
+
         CurrentTimestampFunction.addFunction(domainBuilder);
+        CurrentDateFunction.addFunction(domainBuilder);
+        CurrentTimeFunction.addFunction(domainBuilder);
         SubstringFunction.addFunction(domainBuilder);
+        ReplaceFunction.addFunction(domainBuilder);
         TrimFunction.addFunction(domainBuilder);
         LTrimFunction.addFunction(domainBuilder);
         RTrimFunction.addFunction(domainBuilder);
@@ -141,8 +163,16 @@ public class PersistenceDomainContributor implements DomainContributor {
         LowerFunction.addFunction(domainBuilder);
         LengthFunction.addFunction(domainBuilder);
         LocateFunction.addFunction(domainBuilder);
+        LocateLastFunction.addFunction(domainBuilder);
+        StartsWithFunction.addFunction(domainBuilder);
+        EndsWithFunction.addFunction(domainBuilder);
         AbsFunction.addFunction(domainBuilder);
+        CeilFunction.addFunction(domainBuilder);
+        FloorFunction.addFunction(domainBuilder);
         NumericFunction.addFunction(domainBuilder);
+        Atan2Function.addFunction(domainBuilder);
+        RoundFunction.addFunction(domainBuilder);
+        RandomFunction.addFunction(domainBuilder);
         PowFunction.addFunction(domainBuilder);
         GreatestFunction.addFunction(domainBuilder);
         LeastFunction.addFunction(domainBuilder);
@@ -152,7 +182,16 @@ public class PersistenceDomainContributor implements DomainContributor {
     private <T extends ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance) {
         return new MetadataDefinition[] {
             new ComparisonOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorInterpreterMetadataDefinition(instance)
+            new DomainOperatorInterpreterMetadataDefinition(instance),
+            new DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer.SIMPLE)
+        };
+    }
+
+    private <T extends DomainOperatorRenderer & ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance) {
+        return new MetadataDefinition[] {
+            new ComparisonOperatorInterpreterMetadataDefinition(instance),
+            new DomainOperatorInterpreterMetadataDefinition(instance),
+            new DomainOperatorRendererMetadataDefinition(instance)
         };
     }
 
@@ -206,6 +245,29 @@ public class PersistenceDomainContributor implements DomainContributor {
         @Override
         public DomainOperatorInterpreter build(MetadataDefinitionHolder<?> definitionHolder) {
             return domainOperatorInterpreter;
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class DomainOperatorRendererMetadataDefinition implements MetadataDefinition<DomainOperatorRenderer> {
+
+        private final DomainOperatorRenderer domainOperatorRenderer;
+
+        public DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer domainOperatorRenderer) {
+            this.domainOperatorRenderer = domainOperatorRenderer;
+        }
+
+        @Override
+        public Class<DomainOperatorRenderer> getJavaType() {
+            return DomainOperatorRenderer.class;
+        }
+
+        @Override
+        public DomainOperatorRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+            return domainOperatorRenderer;
         }
     }
 

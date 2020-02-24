@@ -97,6 +97,13 @@ public interface Expression {
          *
          * @param e The expression to visit
          */
+        void visit(IsEmptyPredicate e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
         void visit(Path e);
 
         /**
@@ -185,6 +192,14 @@ public interface Expression {
          * @return the result
          */
         T visit(IsNullPredicate e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(IsEmptyPredicate e);
 
         /**
          * Visits the given expression and returns a result.

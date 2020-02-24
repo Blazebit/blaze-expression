@@ -28,6 +28,7 @@ import com.blazebit.persistence.view.metamodel.SubqueryAttribute;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * @author Christian Beikov
@@ -47,19 +48,21 @@ public class EntityViewAttributeDeclarativeMetadataProcessor implements Declarat
         if (entityViewManager == null) {
             throw new IllegalStateException("Missing EntityViewManager! Please provide the EntityViewManager as service via DeclarativeDomainConfiguration.withService(EntityViewManager.class, evm)");
         }
-        ManagedViewType<?> managedViewType = entityViewManager.getMetamodel().managedView(annotatedClass);
-        if (managedViewType != null) {
-            MethodAttribute<?, ?> attribute = managedViewType.getAttribute(getAttributeName(method));
-            if (attribute instanceof MappingAttribute<?, ?>) {
-                return new MappingExpressionRendererImpl((MappingAttribute<?, ?>) attribute);
-            } else if (attribute instanceof SubqueryAttribute<?, ?>) {
-                SubqueryAttribute<?, ?> subqueryAttribute = (SubqueryAttribute<?, ?>) attribute;
-                return new SubqueryCorrelationRendererImpl(subqueryAttribute);
-            } else if (attribute instanceof CorrelatedAttribute<?, ?>) {
-                CorrelatedAttribute<?, ?> correlatedAttribute = (CorrelatedAttribute<?, ?>) attribute;
-                return new CorrelationProviderCorrelationRendererImpl(correlatedAttribute);
-            } else {
-                throw new IllegalStateException("Unknown attribute type: " + attribute);
+        if (Modifier.isAbstract(method.getModifiers())) {
+            ManagedViewType<?> managedViewType = entityViewManager.getMetamodel().managedView(annotatedClass);
+            if (managedViewType != null) {
+                MethodAttribute<?, ?> attribute = managedViewType.getAttribute(getAttributeName(method));
+                if (attribute instanceof MappingAttribute<?, ?>) {
+                    return new MappingExpressionRendererImpl((MappingAttribute<?, ?>) attribute);
+                } else if (attribute instanceof SubqueryAttribute<?, ?>) {
+                    SubqueryAttribute<?, ?> subqueryAttribute = (SubqueryAttribute<?, ?>) attribute;
+                    return new SubqueryCorrelationRendererImpl(subqueryAttribute);
+                } else if (attribute instanceof CorrelatedAttribute<?, ?>) {
+                    CorrelatedAttribute<?, ?> correlatedAttribute = (CorrelatedAttribute<?, ?>) attribute;
+                    return new CorrelationProviderCorrelationRendererImpl(correlatedAttribute);
+                } else {
+                    throw new IllegalStateException("Unknown attribute type: " + attribute);
+                }
             }
         }
         return null;

@@ -22,63 +22,56 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
+import com.blazebit.expression.persistence.PersistenceDomainContributor;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class FloorFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final FloorFunction INSTANCE = new FloorFunction();
 
-    private CurrentTimestampFunction() {
+    private FloorFunction() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the FLOOR function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("FLOOR")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withExactArgumentCount(1)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
+        domainBuilder.withFunctionTypeResolver("FLOOR", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.INTEGER));
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        Object argument = arguments.get(function.getArgument(0));
+        if (argument == null) {
+            return null;
+        }
+
+        if (argument instanceof Number) {
+            return BigInteger.valueOf((long) Math.floor(((Number) argument).doubleValue()));
+        } else {
+            throw new IllegalArgumentException("Illegal argument for CEIL function: " + argument);
+        }
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("FLOOR(");
+        argumentRenderers.values().iterator().next().accept(sb);
+        sb.append(')');
     }
 }

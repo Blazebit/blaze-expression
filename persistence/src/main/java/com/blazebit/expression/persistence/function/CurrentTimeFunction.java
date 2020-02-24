@@ -25,21 +25,22 @@ import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIME;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class CurrentTimeFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final CurrentTimeFunction INSTANCE = new CurrentTimeFunction();
+    private static final int SECONDS_PER_DAY = 86400;
 
-    private CurrentTimestampFunction() {
+    private CurrentTimeFunction() {
     }
 
     /**
@@ -48,37 +49,22 @@ public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvok
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("CURRENT_TIME")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withResultType(TIME)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        Instant instant = CurrentTimestampFunction.get(context);
+        return LocalTime.ofSecondOfDay(Math.floorMod(instant.getEpochSecond(), SECONDS_PER_DAY));
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("CURRENT_TIME");
     }
 }

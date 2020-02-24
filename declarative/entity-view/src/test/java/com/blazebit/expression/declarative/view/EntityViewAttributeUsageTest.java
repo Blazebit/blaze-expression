@@ -17,7 +17,6 @@
 package com.blazebit.expression.declarative.view;
 
 import com.blazebit.domain.declarative.DeclarativeDomain;
-import com.blazebit.domain.declarative.DomainAttribute;
 import com.blazebit.domain.declarative.DomainFunctions;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
@@ -34,6 +33,7 @@ import com.blazebit.persistence.testsuite.AbstractCoreTest;
 import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViews;
+import com.blazebit.persistence.view.IdMapping;
 import com.blazebit.persistence.view.MappingCorrelatedSimple;
 import com.blazebit.persistence.view.MappingSubquery;
 import com.blazebit.persistence.view.SubqueryProvider;
@@ -85,12 +85,13 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
         Assert.assertEquals("SELECT userEntity FROM UserEntity userEntity " +
                                 "JOIN UserEntity _expr_correlation_0 ON (_expr_correlation_0.age = userEntity.age) " +
                                 "WHERE _expr_correlation_0.id = 1 " +
-                                "AND limit((" +
+                                "AND (" +
                                 "SELECT subSameNamed.age " +
                                 "FROM UserEntity subSameNamed " +
                                 "WHERE subSameNamed.name = userEntity.name " +
-                                "ORDER BY subSameNamed.age DESC" +
-                                "),1) > 10", cb.getQueryString());
+                                "ORDER BY subSameNamed.age DESC " +
+                                "LIMIT 1" +
+                                ") > 10", cb.getQueryString());
     }
 
     @DomainFunctions
@@ -102,11 +103,11 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
     @EntityView(UserEntity.class)
     @com.blazebit.domain.declarative.DomainType
     public static interface UserView {
+        @IdMapping
+        Integer getId();
         String getName();
-        @DomainAttribute(Integer.class)
         long getAge();
         @MappingSubquery(OldestSameNamedAgeSubqueryProvider.class)
-        @DomainAttribute(Integer.class)
         Long getOldestNamedAge();
         @MappingCorrelatedSimple(
             correlated = UserEntity.class,

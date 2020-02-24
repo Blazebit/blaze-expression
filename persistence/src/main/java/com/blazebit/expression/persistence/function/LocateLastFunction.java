@@ -24,61 +24,76 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class LocateLastFunction implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final LocateLastFunction INSTANCE = new LocateLastFunction();
 
-    private CurrentTimestampFunction() {
+    private LocateLastFunction() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the LOCATE_LAST function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("LOCATE_LAST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withMinArgumentCount(2)
+                .withResultType(INTEGER)
+                .withArgument("substring", STRING)
+                .withArgument("string", STRING)
+                .withArgument("start", INTEGER)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        Object substring = arguments.get(function.getArgument(0));
+        if (substring == null) {
+            return null;
+        }
+        Object string = arguments.get(function.getArgument(1));
+        if (string == null) {
+            return null;
+        }
+        Object start = arguments.getOrDefault(function.getArgument(2), 0);
+        if (start == null) {
+            return null;
+        }
+
+        String needle = substring.toString();
+        String s = string.toString();
+        int startIndex = (int) start;
+        return s.lastIndexOf(needle, startIndex);
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+
+        sb.append("LENGTH(");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(") - LOCATE(REVERSE(");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        sb.append("), REVERSE(");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(')');
+        Consumer<StringBuilder> thirdArg = argumentRenderers.get(function.getArgument(2));
+        if (thirdArg != null) {
+            sb.append(", ");
+            thirdArg.accept(sb);
+        }
+        sb.append(')');
     }
 }

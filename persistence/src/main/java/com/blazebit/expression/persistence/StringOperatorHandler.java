@@ -18,6 +18,7 @@ package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
@@ -26,7 +27,7 @@ import com.blazebit.expression.spi.DomainOperatorInterpreter;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class StringOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter {
+public class StringOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer {
 
     public static final StringOperatorHandler INSTANCE = new StringOperatorHandler();
 
@@ -38,8 +39,8 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
         String l;
         String r;
         if (leftValue instanceof String && rightValue instanceof String) {
-            l = leftValue.toString();
-            r = rightValue.toString();
+            l = (String) leftValue;
+            r = (String) rightValue;
         } else {
             throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
         }
@@ -71,5 +72,19 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
         }
 
         throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+    }
+
+    @Override
+    public void render(ChainingArithmeticExpression e, PersistenceExpressionSerializer serializer) {
+        if (e.getOperator().getDomainOperator() == DomainOperator.PLUS) {
+            StringBuilder sb = serializer.getStringBuilder();
+            sb.append("CONCAT(");
+            e.getLeft().accept(serializer);
+            sb.append(", ");
+            e.getRight().accept(serializer);
+            sb.append(')');
+        } else {
+            throw new IllegalArgumentException("Can't handle the operator " + e.getOperator().getDomainOperator() + " for the arguments [" + e.getLeft() + ", " + e.getRight() + "]!");
+        }
     }
 }

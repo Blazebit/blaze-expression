@@ -31,6 +31,7 @@ import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
+import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
@@ -114,6 +115,15 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
      */
     public Map<Object, Object> getProperties() {
         return properties;
+    }
+
+    /**
+     * Returns the current string builder to which the serialization is done.
+     *
+     * @return the current string builder
+     */
+    public StringBuilder getStringBuilder() {
+        return sb;
     }
 
     /**
@@ -284,11 +294,8 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
 
     @Override
     public void visit(ChainingArithmeticExpression e) {
-        e.getLeft().accept(this);
-        sb.append(' ');
-        sb.append(e.getOperator().getOperator());
-        sb.append(' ');
-        e.getRight().accept(this);
+        DomainOperatorRenderer operatorRenderer = e.getType().getMetadata(DomainOperatorRenderer.class);
+        operatorRenderer.render(e, this);
     }
 
     @Override
@@ -384,5 +391,15 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
             sb.append("NOT ");
         }
         sb.append("NULL");
+    }
+
+    @Override
+    public void visit(IsEmptyPredicate e) {
+        e.getLeft().accept(this);
+        sb.append(" IS ");
+        if (e.isNegated()) {
+            sb.append("NOT ");
+        }
+        sb.append("EMPTY");
     }
 }

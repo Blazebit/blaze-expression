@@ -23,27 +23,27 @@ import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.Literal;
-import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
-import java.time.Instant;
+import java.time.LocalTime;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer {
+public class TimeOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer {
 
-    public static final TimestampOperatorHandler INSTANCE = new TimestampOperatorHandler();
+    public static final TimeOperatorHandler INSTANCE = new TimeOperatorHandler();
 
-    private TimestampOperatorHandler() {
+    private TimeOperatorHandler() {
     }
 
     @Override
     public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
-        if (leftValue instanceof Instant && rightValue instanceof Instant) {
-            Instant l = (Instant) leftValue;
-            Instant r = (Instant) rightValue;
+        if (leftValue instanceof LocalTime && rightValue instanceof LocalTime) {
+            LocalTime l = (LocalTime) leftValue;
+            LocalTime r = (LocalTime) rightValue;
             switch (operator) {
                 case EQUAL:
                     return l.compareTo(r) == 0;
@@ -81,23 +81,23 @@ public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, 
                 default:
                     break;
             }
-        } else if (leftValue instanceof Instant && rightValue instanceof TemporalInterval) {
-            Instant instant = (Instant) leftValue;
+        } else if (leftValue instanceof LocalTime && rightValue instanceof TemporalInterval) {
+            LocalTime localTime = (LocalTime) leftValue;
             TemporalInterval interval = (TemporalInterval) rightValue;
             switch (operator) {
                 case PLUS:
-                    return interval.add(instant);
+                    return interval.add(localTime);
                 case MINUS:
-                    return interval.subtract(instant);
+                    return interval.subtract(localTime);
                 default:
                     break;
             }
-        } else if (leftValue instanceof TemporalInterval && rightValue instanceof Instant) {
+        } else if (leftValue instanceof TemporalInterval && rightValue instanceof LocalTime) {
             TemporalInterval interval = (TemporalInterval) leftValue;
-            Instant instant = (Instant) rightValue;
+            LocalTime localTime = (LocalTime) rightValue;
 
             if (operator == DomainOperator.PLUS) {
-                return interval.add(instant);
+                return interval.add(localTime);
             }
         } else {
             throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
@@ -125,15 +125,6 @@ public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, 
             }
 
             if (interval != null) {
-                if (interval.getYears() != 0) {
-                    sb.append("ADD_YEAR(");
-                }
-                if (interval.getMonths() != 0) {
-                    sb.append("ADD_MONTH(");
-                }
-                if (interval.getDays() != 0) {
-                    sb.append("ADD_DAY(");
-                }
                 int seconds = 0;
                 if (interval.getHours() != 0) {
                     seconds = interval.getHours() * 60 * 60;
@@ -151,18 +142,6 @@ public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, 
                 if (seconds != 0) {
                     sb.append(", ");
                     sb.append(seconds * factor).append(')');
-                }
-                if (interval.getDays() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getDays() * factor).append(')');
-                }
-                if (interval.getMonths() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getMonths() * factor).append(')');
-                }
-                if (interval.getYears() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getYears() * factor).append(')');
                 }
             }
         }

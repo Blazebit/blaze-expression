@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Collections;
 
@@ -43,7 +44,7 @@ public class ExpressionInterpreterTest {
 
     @Test
     public void testBasic() {
-        Assert.assertEquals(3, testExpression("1 + 2"));
+        Assert.assertEquals(BigInteger.valueOf(3), testExpression("1 + 2"));
     }
 
     @Test

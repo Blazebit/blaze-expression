@@ -110,7 +110,6 @@ public class ModelTest {
     @com.blazebit.domain.declarative.DomainType
     static interface User {
         String getName();
-        @DomainAttribute(Integer.class)
         long getAge();
     }
 

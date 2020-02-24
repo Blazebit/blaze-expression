@@ -43,6 +43,7 @@ import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
+import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
@@ -153,6 +154,25 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 throw cannotResolvePredicateType(DomainPredicateType.NULLNESS, operandTypes);
             } else {
                 return new IsNullPredicate(domainType, left, ctx.NOT() != null);
+            }
+        }
+    }
+
+    @Override
+    public Predicate visitIsEmptyPredicate(PredicateParser.IsEmptyPredicateContext ctx) {
+        Expression left = ctx.expression().accept(this);
+
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.COLLECTION);
+
+        if (predicateTypeResolver == null) {
+            throw missingPredicateTypeResolver(left.getType(), DomainPredicateType.COLLECTION);
+        } else {
+            List<DomainType> operandTypes = Collections.singletonList(left.getType());
+            DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
+            if (domainType == null) {
+                throw cannotResolvePredicateType(DomainPredicateType.COLLECTION, operandTypes);
+            } else {
+                return new IsEmptyPredicate(domainType, left, ctx.NOT() != null);
             }
         }
     }

@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class DomainBuilderTest {
             DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
             domainModel = domainBuilder.build();
             stringType = domainModel.getType(String.class);
-            integerType = domainModel.getType(Integer.class);
+            integerType = domainModel.getType(BigInteger.class);
             decimalType = domainModel.getType(BigDecimal.class);
         }
     }

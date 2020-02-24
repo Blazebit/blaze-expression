@@ -43,6 +43,7 @@ predicate
     | predicate AND predicate                                                                   # AndPredicate
     | predicate OR predicate                                                                    # OrPredicate
     | expression IS NOT? NULL                                                                   # IsNullPredicate
+    | expression IS NOT? EMPTY                                                                  # IsEmptyPredicate
     | lhs=expression EQUAL rhs=expression                                                       # EqualityPredicate
     | lhs=expression NOT_EQUAL rhs=expression                                                   # InequalityPredicate
     | lhs=expression GREATER rhs=expression                                                     # GreaterThanPredicate

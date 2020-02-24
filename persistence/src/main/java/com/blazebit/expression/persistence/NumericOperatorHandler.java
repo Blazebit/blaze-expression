@@ -20,8 +20,8 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.persistence.util.ConversionUtils;
-import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -39,31 +39,20 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
 
     @Override
     public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
+        if (leftValue == null || rightValue == null) {
+            return null;
+        }
         Comparable l;
         Comparable r;
-        if (leftValue instanceof BigDecimal || rightValue instanceof BigDecimal || leftValue instanceof Double || rightValue instanceof Double || leftValue instanceof Float || rightValue instanceof Float) {
-            l = ConversionUtils.getBigDecimal(leftValue);
-            r = ConversionUtils.getBigDecimal(rightValue);
-        } else if (leftValue instanceof BigInteger || rightValue instanceof BigInteger) {
-            l = ConversionUtils.getBigInteger(leftValue);
-            r = ConversionUtils.getBigInteger(rightValue);
-        } else if (leftValue instanceof Long || rightValue instanceof Long) {
-            l = leftValue instanceof Long ? (Long) leftValue : ((Number) leftValue).longValue();
-            r = rightValue instanceof Long ? (Long) rightValue : ((Number) rightValue).longValue();
-        } else if (leftValue instanceof Integer || rightValue instanceof Integer) {
-            l = leftValue instanceof Integer ? (Integer) leftValue : ((Number) leftValue).intValue();
-            r = rightValue instanceof Integer ? (Integer) rightValue : ((Number) rightValue).intValue();
-        } else if (leftValue instanceof Short || rightValue instanceof Short) {
-            l = leftValue instanceof Short ? (Short) leftValue : ((Number) leftValue).shortValue();
-            r = rightValue instanceof Short ? (Short) rightValue : ((Number) rightValue).shortValue();
-        } else if (leftValue instanceof Byte || rightValue instanceof Byte) {
-            l = leftValue instanceof Byte ? (Byte) leftValue : ((Number) leftValue).byteValue();
-            r = rightValue instanceof Byte ? (Byte) rightValue : ((Number) rightValue).byteValue();
-        } else if (leftValue instanceof Number && rightValue instanceof Number) {
-            l = ((Number) leftValue).doubleValue();
-            r = ((Number) rightValue).doubleValue();
+        if (leftValue instanceof BigDecimal && rightValue instanceof BigInteger) {
+            l = (Comparable) leftValue;
+            r = new BigDecimal((BigInteger) rightValue);
+        } else if (leftValue instanceof BigInteger && rightValue instanceof BigDecimal) {
+            l = new BigDecimal((BigInteger) leftValue);
+            r = (Comparable) rightValue;
         } else {
-            throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            l = (Comparable) leftValue;
+            r = (Comparable) rightValue;
         }
 
         switch (operator) {
@@ -89,6 +78,9 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
     @Override
     public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (rightValue == null) {
+            if (leftValue == null) {
+                return null;
+            }
             if (operator == DomainOperator.UNARY_MINUS) {
                 if (leftValue instanceof BigDecimal) {
                     return ((BigDecimal) leftValue).negate();
@@ -97,25 +89,11 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
                 }
             }
         } else {
-            if (leftValue instanceof BigDecimal || rightValue instanceof BigDecimal || leftValue instanceof Double || rightValue instanceof Double || leftValue instanceof Float || rightValue instanceof Float) {
-                BigDecimal l = ConversionUtils.getBigDecimal(leftValue);
-                BigDecimal r = ConversionUtils.getBigDecimal(rightValue);
+            if (leftValue == null) {
+                return null;
+            }
 
-                switch (operator) {
-                    case PLUS:
-                        return l.add(r);
-                    case MINUS:
-                        return l.subtract(r);
-                    case MULTIPLICATION:
-                        return l.multiply(r);
-                    case DIVISION:
-                        return l.divide(r);
-                    case MODULO:
-                        return l.remainder(r);
-                    default:
-                        break;
-                }
-            } else if (leftValue instanceof BigInteger || rightValue instanceof BigInteger) {
+            if (leftValue instanceof BigInteger && rightValue instanceof BigInteger) {
                 BigInteger l = ConversionUtils.getBigInteger(leftValue);
                 BigInteger r = ConversionUtils.getBigInteger(rightValue);
 
@@ -133,88 +111,33 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
                     default:
                         break;
                 }
-            } else if (leftValue instanceof Long || rightValue instanceof Long) {
-                long l = leftValue instanceof Long ? (Long) leftValue : ((Number) leftValue).longValue();
-                long r = rightValue instanceof Long ? (Long) rightValue : ((Number) rightValue).longValue();
-                switch (operator) {
-                    case PLUS:
-                        return l + r;
-                    case MINUS:
-                        return l - r;
-                    case MULTIPLICATION:
-                        return l * r;
-                    case DIVISION:
-                        return l / r;
-                    case MODULO:
-                        return l % r;
-                    default:
-                        break;
+            } else {
+                BigDecimal l;
+                BigDecimal r;
+                if (leftValue instanceof BigDecimal && rightValue instanceof BigInteger) {
+                    l = (BigDecimal) leftValue;
+                    r = new BigDecimal((BigInteger) rightValue);
+                } else if (leftValue instanceof BigInteger && rightValue instanceof BigDecimal) {
+                    l = new BigDecimal((BigInteger) leftValue);
+                    r = (BigDecimal) rightValue;
+                } else if (leftValue instanceof BigDecimal && rightValue instanceof BigDecimal) {
+                    l = (BigDecimal) leftValue;
+                    r = (BigDecimal) rightValue;
+                } else {
+                    throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
                 }
-            } else if (leftValue instanceof Integer || rightValue instanceof Integer) {
-                int l = leftValue instanceof Integer ? (Integer) leftValue : ((Number) leftValue).intValue();
-                int r = rightValue instanceof Integer ? (Integer) rightValue : ((Number) rightValue).intValue();
+
                 switch (operator) {
                     case PLUS:
-                        return l + r;
+                        return l.add(r);
                     case MINUS:
-                        return l - r;
+                        return l.subtract(r);
                     case MULTIPLICATION:
-                        return l * r;
+                        return l.multiply(r);
                     case DIVISION:
-                        return l / r;
+                        return l.divide(r);
                     case MODULO:
-                        return l % r;
-                    default:
-                        break;
-                }
-            } else if (leftValue instanceof Short || rightValue instanceof Short) {
-                short l = leftValue instanceof Short ? (Short) leftValue : ((Number) leftValue).shortValue();
-                short r = rightValue instanceof Short ? (Short) rightValue : ((Number) rightValue).shortValue();
-                switch (operator) {
-                    case PLUS:
-                        return l + r;
-                    case MINUS:
-                        return l - r;
-                    case MULTIPLICATION:
-                        return l * r;
-                    case DIVISION:
-                        return l / r;
-                    case MODULO:
-                        return l % r;
-                    default:
-                        break;
-                }
-            } else if (leftValue instanceof Byte || rightValue instanceof Byte) {
-                byte l = leftValue instanceof Byte ? (Byte) leftValue : ((Number) leftValue).byteValue();
-                byte r = rightValue instanceof Byte ? (Byte) rightValue : ((Number) rightValue).byteValue();
-                switch (operator) {
-                    case PLUS:
-                        return l + r;
-                    case MINUS:
-                        return l - r;
-                    case MULTIPLICATION:
-                        return l * r;
-                    case DIVISION:
-                        return l / r;
-                    case MODULO:
-                        return l % r;
-                    default:
-                        break;
-                }
-            } else if (leftValue instanceof Number && rightValue instanceof Number) {
-                double l = ((Number) leftValue).doubleValue();
-                double r = ((Number) rightValue).doubleValue();
-                switch (operator) {
-                    case PLUS:
-                        return l + r;
-                    case MINUS:
-                        return l - r;
-                    case MULTIPLICATION:
-                        return l * r;
-                    case DIVISION:
-                        return l / r;
-                    case MODULO:
-                        return l % r;
+                        return l.remainder(r);
                     default:
                         break;
                 }

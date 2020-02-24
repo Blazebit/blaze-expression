@@ -31,6 +31,7 @@ import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
+import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
@@ -276,5 +277,15 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             sb.append("NOT ");
         }
         sb.append("NULL");
+    }
+
+    @Override
+    public void visit(IsEmptyPredicate e) {
+        e.getLeft().accept(this);
+        sb.append(" IS ");
+        if (e.isNegated()) {
+            sb.append("NOT ");
+        }
+        sb.append("EMPTY");
     }
 }

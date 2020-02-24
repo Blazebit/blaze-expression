@@ -24,61 +24,58 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.TIMESTAMP;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class Atan2Function implements FunctionRenderer, FunctionInvoker {
 
-    public static final String INSTANT_PROPERTY = "instant";
-    private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
+    private static final Atan2Function INSTANCE = new Atan2Function();
 
-    private CurrentTimestampFunction() {
+    private Atan2Function() {
     }
 
     /**
-     * Adds the CURRENT_TIMESTAMP function to the domain builder.
+     * Adds the ATAN2 function to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
     public static void addFunction(DomainBuilder domainBuilder) {
-        domainBuilder.createFunction("CURRENT_TIMESTAMP")
+        domainBuilder.createFunction("ATAN2")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withExactArgumentCount(0)
-                .withResultType(TIMESTAMP)
+                .withArgument("y", NUMERIC)
+                .withArgument("x", NUMERIC)
                 .build();
-    }
-
-    /**
-     * Returns the current instant for the interpreter context something like the <i>transaction time</i>.
-     *
-     * @param context The interpreter context
-     * @return The current instant
-     */
-    public static Instant get(ExpressionInterpreter.Context context) {
-        Object o = context.getProperty(INSTANT_PROPERTY);
-        if (o instanceof Instant) {
-            return (Instant) o;
-        }
-        o = Instant.now();
-        context.setProperty(INSTANT_PROPERTY, o);
-        return (Instant) o;
+        domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        return get(context);
+        Object y = arguments.get(function.getArgument(0));
+        if (y == null) {
+            return null;
+        }
+        Object x = arguments.get(function.getArgument(1));
+        if (x == null) {
+            return null;
+        }
+
+        return new BigDecimal(Math.atan2(((Number) y).doubleValue(), ((Number) x).doubleValue()));
     }
 
     @Override
     public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
-        sb.append("CURRENT_TIMESTAMP");
+        sb.append("ATAN2(");
+        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        sb.append(", ");
+        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        sb.append(')');
     }
 }
