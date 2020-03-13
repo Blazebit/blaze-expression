@@ -16,28 +16,35 @@
 
 package com.blazebit.expression.declarative;
 
-import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.spi.TypeAdapter;
+import com.blazebit.domain.boot.model.MetadataDefinition;
+import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.declarative.Transient;
+
+import java.lang.annotation.Annotation;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CharacterTypeAdapter implements TypeAdapter<Character, String> {
+public final class TransientMetadataDefinition implements MetadataDefinition<Transient>, Transient {
 
-    public static final CharacterTypeAdapter INSTANCE = new CharacterTypeAdapter();
+    public static final TransientMetadataDefinition INSTANCE = new TransientMetadataDefinition();
 
-    private CharacterTypeAdapter() {
+    private TransientMetadataDefinition() {
     }
 
     @Override
-    public String toInternalType(ExpressionInterpreter.Context context, Character value, DomainType domainType) {
-        return value.toString();
+    public Class<Transient> getJavaType() {
+        return Transient.class;
     }
 
     @Override
-    public Character toModelType(ExpressionInterpreter.Context context, String value, DomainType domainType) {
-        return value.charAt(0);
+    public Transient build(MetadataDefinitionHolder<?> definitionHolder) {
+        return this;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return Transient.class;
     }
 }

@@ -61,6 +61,7 @@ import com.blazebit.expression.persistence.function.UpperFunction;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -84,13 +85,13 @@ public class PersistenceDomainContributor implements DomainContributor {
     public static final Class<?> INTERVAL = TemporalInterval.class;
     public static final Class<?> STRING = String.class;
 
-    public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolver() {
+    public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new SerializableBooleanLiteralResolver() {
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
             return new DefaultResolvedLiteral(domainModel.getType(BOOLEAN), value);
         }
     };
-    public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolver() {
+    public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new SerializableNumericLiteralResolver() {
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
             if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
@@ -101,7 +102,7 @@ public class PersistenceDomainContributor implements DomainContributor {
             return new DefaultResolvedLiteral(domainModel.getType(INTEGER), BigInteger.valueOf(value.longValue()));
         }
     };
-    public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolver() {
+    public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new SerializableTemporalLiteralResolver() {
         @Override
         public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
             return new DefaultResolvedLiteral(domainModel.getType(TIMESTAMP), value);
@@ -112,12 +113,21 @@ public class PersistenceDomainContributor implements DomainContributor {
             return new DefaultResolvedLiteral(domainModel.getType(INTERVAL), value);
         }
     };
-    public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new StringLiteralResolver() {
+    public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new SerializableStringLiteralResolver() {
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, String value) {
             return new DefaultResolvedLiteral(domainModel.getType(STRING), value);
         }
     };
+
+    private static interface SerializableBooleanLiteralResolver extends BooleanLiteralResolver, Serializable {
+    }
+    private static interface SerializableNumericLiteralResolver extends NumericLiteralResolver, Serializable {
+    }
+    private static interface SerializableTemporalLiteralResolver extends TemporalLiteralResolver, Serializable {
+    }
+    private static interface SerializableStringLiteralResolver extends StringLiteralResolver, Serializable {
+    }
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {

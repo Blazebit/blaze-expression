@@ -44,6 +44,7 @@ import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -100,7 +101,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         try {
             Object value = expression.accept(this);
             if (typeAdapter != null) {
-                value = typeAdapter.toModelType(value, expression.getType());
+                value = typeAdapter.toModelType(context, value, expression.getType());
             }
             return (T) value;
         } finally {
@@ -316,9 +317,9 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                 return null;
             }
             if (e.isNegated()) {
-                return !((Collection<?>) left).isEmpty();
+                return ((Iterable<?>) left).iterator().hasNext();
             } else {
-                return ((Collection<?>) left).isEmpty();
+                return !((Iterable<?>) left).iterator().hasNext();
             }
         } finally {
             typeAdapter = null;
@@ -342,6 +343,10 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                     throw new IllegalArgumentException("No attribute accessor available for attribute: " + attribute);
                 }
                 value = attributeAccessor.getAttribute(value, attribute);
+                TypeAdapter<Object, Object> adapter = attribute.getMetadata(TypeAdapter.class);
+                if (adapter != null) {
+                    value = adapter.toInternalType(context, value, attribute.getType());
+                }
             }
             typeAdapter = attributes.get(attributes.size() - 1).getMetadata(TypeAdapter.class);
         }
@@ -365,11 +370,11 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
                 Object argumentValue = entry.getValue().accept(this);
                 if (typeAdapter != null) {
-                    argumentValue = typeAdapter.toInternalType(argumentValue, entry.getKey().getType());
+                    argumentValue = typeAdapter.toInternalType(context, argumentValue, entry.getKey().getType());
                 }
                 TypeAdapter argumentAdapter = entry.getKey().getMetadata(TypeAdapter.class);
                 if (argumentAdapter != null) {
-                    argumentValue = argumentAdapter.toModelType(argumentValue, entry.getKey().getType());
+                    argumentValue = argumentAdapter.toModelType(context, argumentValue, entry.getKey().getType());
                 }
                 argumentValues.put(entry.getKey(), argumentValue);
             }
@@ -382,7 +387,19 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     @Override
     public Object visit(Literal e) {
         typeAdapter = null;
-        return e.getValue();
+        if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+            Collection<Expression> collection = (Collection<Expression>) e.getValue();
+            if (collection.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<Object> resolved = new ArrayList<>(collection.size());
+            for (Expression expression : collection) {
+                resolved.add(expression.accept(this));
+            }
+            return resolved;
+        } else {
+            return e.getValue();
+        }
     }
 
     private Boolean compare(DomainType leftType, DomainType rightType, Object left, Object right, ComparisonOperator operator) {

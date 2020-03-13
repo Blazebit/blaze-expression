@@ -90,9 +90,10 @@ public interface ExpressionInterpreter {
          * Returns the property value for the given key or <code>null</code>.
          *
          * @param key The property key
+         * @param <X> The return type
          * @return the property value or <code>null</code>
          */
-        public Object getProperty(String key);
+        public <X> X getProperty(String key);
 
         /**
          * Sets the given property value for the given key.
@@ -106,9 +107,10 @@ public interface ExpressionInterpreter {
          * Returns the object assignment of the root variable with the given name or <code>null</code>.
          *
          * @param alias The root variable name
+         * @param <X> The return type
          * @return the object assignment or <code>null</code>
          */
-        public Object getRoot(String alias);
+        public <X> X getRoot(String alias);
 
         /**
          * Returns the domain type of the root variable with the given name or <code>null</code>.

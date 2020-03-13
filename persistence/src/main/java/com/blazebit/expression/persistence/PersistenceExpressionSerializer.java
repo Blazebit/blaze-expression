@@ -186,7 +186,7 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
             }
         }
 
-        renderer.render(e.getFunction(), e.getType(), argumentRenderers, sb);
+        renderer.render(e.getFunction(), e.getType(), argumentRenderers, sb, this);
     }
 
     @Override

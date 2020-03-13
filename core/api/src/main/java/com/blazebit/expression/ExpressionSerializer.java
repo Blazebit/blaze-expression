@@ -63,9 +63,10 @@ public interface ExpressionSerializer<T> {
          * Returns the context parameter value for the given context parameter name or <code>null</code>.
          *
          * @param contextParameterName The context parameter name
+         * @param <X> The return type
          * @return the context parameter value for the given context parameter name or <code>null</code>
          */
-        public Object getContextParameter(String contextParameterName);
+        public <X> X getContextParameter(String contextParameterName);
     }
 
 }

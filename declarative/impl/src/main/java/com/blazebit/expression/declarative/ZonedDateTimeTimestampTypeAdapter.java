@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.time.Instant;
@@ -35,7 +36,7 @@ public class ZonedDateTimeTimestampTypeAdapter implements TypeAdapter<ZonedDateT
     }
 
     @Override
-    public Instant toInternalType(ZonedDateTime value, DomainType domainType) {
+    public Instant toInternalType(ExpressionInterpreter.Context context, ZonedDateTime value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -43,7 +44,7 @@ public class ZonedDateTimeTimestampTypeAdapter implements TypeAdapter<ZonedDateT
     }
 
     @Override
-    public ZonedDateTime toModelType(Instant value, DomainType domainType) {
+    public ZonedDateTime toModelType(ExpressionInterpreter.Context context, Instant value, DomainType domainType) {
         if (value == null) {
             return null;
         }

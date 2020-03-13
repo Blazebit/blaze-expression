@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.sql.Timestamp;
@@ -34,7 +35,7 @@ public class JavaSqlTimestampTimestampTypeAdapter implements TypeAdapter<Timesta
     }
 
     @Override
-    public Instant toInternalType(Timestamp value, DomainType domainType) {
+    public Instant toInternalType(ExpressionInterpreter.Context context, Timestamp value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -42,7 +43,7 @@ public class JavaSqlTimestampTimestampTypeAdapter implements TypeAdapter<Timesta
     }
 
     @Override
-    public Timestamp toModelType(Instant value, DomainType domainType) {
+    public Timestamp toModelType(ExpressionInterpreter.Context context, Instant value, DomainType domainType) {
         if (value == null) {
             return null;
         }

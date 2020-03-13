@@ -40,13 +40,13 @@ public interface FunctionRenderer {
 
     /**
      * Renders the given domain function with the given return type and arguments to the given StringBuilder.
-     *
      * @param function The domain function
      * @param returnType The function return type
      * @param argumentRenderers The argument renderers for the arguments
      * @param sb The StringBuilder to render to
+     * @param serializer The serializer
      */
-    void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb);
+    void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer);
 
     /**
      * Returns a function renderer that renders a function as builtin function.
@@ -55,7 +55,7 @@ public interface FunctionRenderer {
      * @return the function renderer
      */
     static FunctionRenderer builtin(String persistenceFunctionName) {
-        return (function, returnType, argumentRenderers, sb) -> {
+        return (function, returnType, argumentRenderers, sb, serializer) -> {
             sb.append(persistenceFunctionName).append(", ");
             if (!argumentRenderers.isEmpty()) {
                 for (Consumer<StringBuilder> value : argumentRenderers.values()) {
@@ -75,7 +75,7 @@ public interface FunctionRenderer {
      * @return the function renderer
      */
     static FunctionRenderer function(String persistenceFunctionName) {
-        return (function, returnType, argumentRenderers, sb) -> {
+        return (function, returnType, argumentRenderers, sb, serializer) -> {
             sb.append("FUNCTION('").append(persistenceFunctionName).append("', ");
             if (!argumentRenderers.isEmpty()) {
                 for (Consumer<StringBuilder> value : argumentRenderers.values()) {

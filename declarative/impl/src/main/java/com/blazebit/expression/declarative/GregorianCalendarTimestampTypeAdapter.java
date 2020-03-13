@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.time.Instant;
@@ -34,7 +35,7 @@ public class GregorianCalendarTimestampTypeAdapter implements TypeAdapter<Gregor
     }
 
     @Override
-    public Instant toInternalType(GregorianCalendar value, DomainType domainType) {
+    public Instant toInternalType(ExpressionInterpreter.Context context, GregorianCalendar value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -42,7 +43,7 @@ public class GregorianCalendarTimestampTypeAdapter implements TypeAdapter<Gregor
     }
 
     @Override
-    public GregorianCalendar toModelType(Instant value, DomainType domainType) {
+    public GregorianCalendar toModelType(ExpressionInterpreter.Context context, Instant value, DomainType domainType) {
         if (value == null) {
             return null;
         }

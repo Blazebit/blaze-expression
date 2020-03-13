@@ -48,6 +48,7 @@ import com.blazebit.persistence.internal.RestrictionBuilderExperimental;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -77,13 +78,15 @@ public class ModelTest {
 
     @Test
     public void test1() {
-        Assert.assertEquals(4, testExpression("length(user.name)", new UserImpl("Hugo", 20)));
+        Assert.assertEquals(BigInteger.valueOf(4), testExpression("length(user.name)", new UserImpl("Hugo", 20)));
     }
 
     @Test
     public void test2() {
         Assert.assertEquals(true, testExpression("IS_OLD(user)", new UserImpl("Hugo", 20)));
         Assert.assertEquals(false, testExpression("IS_OLD(user)", new UserImpl("Hugo", 18)));
+        Assert.assertEquals(false, testExpression("IS_OLD(user, 'abc')", new UserImpl("Hugo", 18)));
+        Assert.assertEquals(false, testExpression("IS_OLD(user, 'abc', 'asd')", new UserImpl("Hugo", 18)));
     }
 
     @Test
@@ -102,7 +105,7 @@ public class ModelTest {
     static class Functions {
         @DomainFunction("IS_OLD")
         @FunctionExpression("?1.age > 18")
-        static Boolean isOld(@DomainFunctionParam("person") User user) {
+        static Boolean isOld(ExpressionInterpreter.Context context, @DomainFunctionParam("person") User user, String... args) {
             return user.getAge() > 18;
         }
     }

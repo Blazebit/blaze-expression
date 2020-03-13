@@ -24,9 +24,11 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -77,14 +79,14 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker {
         }
 
         if (argument instanceof Collection<?>) {
-            return ((Collection) argument).size();
+            return BigInteger.valueOf(((Collection) argument).size());
         } else {
             throw new IllegalArgumentException("Illegal argument for SIZE function: " + argument);
         }
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
+    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("SIZE(");
         argumentRenderers.values().iterator().next().accept(sb);
         sb.append(')');

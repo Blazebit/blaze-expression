@@ -22,6 +22,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.math.BigDecimal;
@@ -71,7 +72,7 @@ public class AbsFunction implements FunctionRenderer, FunctionInvoker {
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
+    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("ABS(");
         argumentRenderers.values().iterator().next().accept(sb);
         sb.append(')');

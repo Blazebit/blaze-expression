@@ -17,6 +17,7 @@
 package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 
 /**
  * An adapter for converting between a model and the internal expression type.
@@ -31,18 +32,21 @@ public interface TypeAdapter<X, Y> {
     /**
      * Converts the given value in model representation of the given domain type to the internal representation.
      *
+     *
+     * @param context The interpreter context
      * @param value The value to convert
      * @param domainType The domain type of the value
      * @return the internal representation
      */
-    public Y toInternalType(X value, DomainType domainType);
+    public Y toInternalType(ExpressionInterpreter.Context context, X value, DomainType domainType);
 
     /**
      * Converts the given value in internal representation of the given domain type to the model representation.
      *
+     * @param context The interpreter context
      * @param value The value to convert
      * @param domainType The domain type of the value
      * @return the model representation
      */
-    public X toModelType(Y value, DomainType domainType);
+    public X toModelType(ExpressionInterpreter.Context context, Y value, DomainType domainType);
 }

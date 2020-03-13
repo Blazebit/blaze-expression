@@ -19,9 +19,11 @@
 
         <version.blaze-utils>0.1.21</version.blaze-utils>
         <version.blaze-persistence>1.4.1</version.blaze-persistence>
-        <version.blaze-domain>1.0.0-Alpha4</version.blaze-domain>
+        <version.blaze-domain>1.0.0-Alpha5</version.blaze-domain>
         <version.weld>2.4.5.Final</version.weld>
         <version.junit>4.12</version.junit>
+
+        <version.processor.plugin>3.3.2</version.processor.plugin>
     </properties>
 
     <dependencyManagement>
@@ -69,6 +71,15 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.bsc.maven</groupId>
+                    <artifactId>maven-processor-plugin</artifactId>
+                    <version>${version.processor.plugin}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

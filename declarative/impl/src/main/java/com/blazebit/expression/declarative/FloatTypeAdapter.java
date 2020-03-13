@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.math.BigDecimal;
@@ -33,7 +34,7 @@ public class FloatTypeAdapter implements TypeAdapter<Float, BigDecimal> {
     }
 
     @Override
-    public BigDecimal toInternalType(Float value, DomainType domainType) {
+    public BigDecimal toInternalType(ExpressionInterpreter.Context context, Float value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -41,7 +42,7 @@ public class FloatTypeAdapter implements TypeAdapter<Float, BigDecimal> {
     }
 
     @Override
-    public Float toModelType(BigDecimal value, DomainType domainType) {
+    public Float toModelType(ExpressionInterpreter.Context context, BigDecimal value, DomainType domainType) {
         if (value == null) {
             return null;
         }

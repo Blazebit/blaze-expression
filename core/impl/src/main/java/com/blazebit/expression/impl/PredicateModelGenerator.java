@@ -29,6 +29,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
+import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.ArithmeticOperatorType;
@@ -61,6 +62,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Christian Beikov
@@ -250,7 +252,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     @Override
     public Expression visitInPredicate(PredicateParser.InPredicateContext ctx) {
         ArithmeticExpression left = (ArithmeticExpression) ctx.expression().accept(this);
-        List<ArithmeticExpression> inItems = getLiteralList(ctx.inList().expression());
+        List<ArithmeticExpression> inItems = getExpressionList(ctx.inList().expression());
 
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.EQUALITY);
 
@@ -467,7 +469,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitCollectionLiteral(PredicateParser.CollectionLiteralContext ctx) {
-        List<Expression> literalList = getLiteralList(ctx.literal());
+        List<Expression> literalList = getExpressionList(ctx.literal());
         CollectionDomainType collectionDomainType;
         if (literalList.isEmpty()) {
             collectionDomainType = domainModel.getCollectionType(null);
@@ -524,20 +526,44 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         if (function == null) {
             throw unknownFunction(functionName);
         } else {
-            List<Expression> literalList = getLiteralList(ctx.expression());
-            if (literalList.size() > function.getArgumentCount()) {
+            List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
+            if (function.getArgumentCount() != -1 && literalList.size() > function.getArgumentCount()) {
                 throw new DomainModelException(String.format("Function '%s' expects at most %d arguments but found %d",
                         function.getName(),
                         function.getArgumentCount(),
                         literalList.size()
                 ));
             }
+            if (literalList.size() < function.getMinArgumentCount()) {
+                throw new DomainModelException(String.format("Function '%s' expects at least %d arguments but found %d",
+                                                             function.getName(),
+                                                             function.getMinArgumentCount(),
+                                                             literalList.size()
+                ));
+            }
             Map<DomainFunctionArgument, Expression> arguments = new LinkedHashMap<>(literalList.size());
             Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(literalList.size());
-            for (int i = 0; i < literalList.size(); i++) {
+            int i = 0;
+            int lastIdx = function.getArguments().size() - 1;
+            for (; i < lastIdx; i++) {
                 DomainFunctionArgument domainFunctionArgument = function.getArguments().get(i);
                 argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
                 arguments.put(domainFunctionArgument, literalList.get(i));
+            }
+            if (lastIdx != -1) {
+                DomainFunctionArgument domainFunctionArgument = function.getArguments().get(lastIdx);
+                if (function.getArgumentCount() == -1) {
+                    // Varargs
+                    List<Expression> varArgs = new ArrayList<>(literalList.size() - i);
+                    argumentTypes.put(domainFunctionArgument, domainFunctionArgument.getType());
+                    for (; i < literalList.size(); i++) {
+                        varArgs.add(literalList.get(i));
+                    }
+                    arguments.put(domainFunctionArgument, new Literal(new DefaultResolvedLiteral(domainFunctionArgument.getType(), varArgs)));
+                } else {
+                    argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
+                    arguments.put(domainFunctionArgument, literalList.get(i));
+                }
             }
             DomainFunctionTypeResolver functionTypeResolver = domainModel.getFunctionTypeResolver(functionName);
             DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
@@ -554,7 +580,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             if (type instanceof EntityDomainType) {
                 EntityDomainType entityDomainType = (EntityDomainType) type;
                 List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
-                List<Expression> literalList = getLiteralList(ctx.expression());
+                List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
                 Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
                 for (int i = 0; i < literalList.size(); i++) {
                     EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(argNames.get(i).getText());
@@ -566,13 +592,20 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             }
         } else {
             List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
-            List<Expression> literalList = getLiteralList(ctx.expression());
+            List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
             Map<DomainFunctionArgument, Expression> arguments = new LinkedHashMap<>(literalList.size());
-            if (arguments.size() > function.getArgumentCount()) {
+            if (function.getArgumentCount() != -1 && arguments.size() > function.getArgumentCount()) {
                 throw new DomainModelException(String.format("Function '%s' expects at most %d arguments but found %d",
                         function.getName(),
                         function.getArgumentCount(),
                         arguments.size()
+                ));
+            }
+            if (arguments.size() < function.getMinArgumentCount()) {
+                throw new DomainModelException(String.format("Function '%s' expects at least %d arguments but found %d",
+                                                             function.getName(),
+                                                             function.getMinArgumentCount(),
+                                                             arguments.size()
                 ));
             }
             Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(arguments.size());
@@ -607,12 +640,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @SuppressWarnings("unchecked")
-    private <T> List<T> getLiteralList(List<? extends ParserRuleContext> items) {
-        List<T> literals = new ArrayList<>(items.size());
+    private <T> List<T> getExpressionList(List<? extends ParserRuleContext> items) {
+        List<T> expressions = new ArrayList<>(items.size());
         for (int i = 0; i < items.size(); i++) {
-            literals.add((T) items.get(i).accept(this));
+            expressions.add((T) items.get(i).accept(this));
         }
-        return literals;
+        return expressions;
     }
 
     private DomainType getBooleanDomainType() {
@@ -681,5 +714,48 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     private TypeErrorException cannotResolveOperationType(DomainOperator operator, List<DomainType> operandTypes) {
         return new TypeErrorException(String.format("Cannot resolve operation type for operator %s and operand types %s", operator, operandTypes));
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class DefaultResolvedLiteral implements ResolvedLiteral {
+
+        private final DomainType type;
+        private final Object value;
+
+        public DefaultResolvedLiteral(DomainType type, Object value) {
+            this.type = type;
+            this.value = value;
+        }
+
+        @Override
+        public DomainType getType() {
+            return type;
+        }
+
+        @Override
+        public Object getValue() {
+            return value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            DefaultResolvedLiteral that = (DefaultResolvedLiteral) o;
+            return Objects.equals(type, that.type) &&
+                Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, value);
+        }
     }
 }

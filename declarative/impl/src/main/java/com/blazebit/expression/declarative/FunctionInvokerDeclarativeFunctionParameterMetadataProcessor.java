@@ -18,18 +18,20 @@ package com.blazebit.expression.declarative;
 
 import com.blazebit.apt.service.ServiceProvider;
 import com.blazebit.domain.boot.model.MetadataDefinition;
-import com.blazebit.domain.declarative.spi.DeclarativeFunctionMetadataProcessor;
+import com.blazebit.domain.declarative.spi.DeclarativeFunctionParameterMetadataProcessor;
+import com.blazebit.expression.ExpressionInterpreter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-@ServiceProvider(DeclarativeFunctionMetadataProcessor.class)
-public class FunctionInvokerDeclarativeFunctionMetadataProcessor implements DeclarativeFunctionMetadataProcessor<Annotation> {
+@ServiceProvider(DeclarativeFunctionParameterMetadataProcessor.class)
+public class FunctionInvokerDeclarativeFunctionParameterMetadataProcessor implements DeclarativeFunctionParameterMetadataProcessor<Annotation> {
 
     @Override
     public Class<Annotation> getProcessingAnnotation() {
@@ -37,14 +39,11 @@ public class FunctionInvokerDeclarativeFunctionMetadataProcessor implements Decl
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
-        if (isFunctionInvokerMethod(method)) {
-            return new MethodFunctionInvoker(method, method.getParameterCount());
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+        if (FunctionInvokerDeclarativeFunctionMetadataProcessor.isFunctionInvokerMethod(method) && parameter.getType() == ExpressionInterpreter.Context.class && Arrays.asList(method.getParameters()).indexOf(parameter) == 0) {
+            return TransientMetadataDefinition.INSTANCE;
         }
         return null;
     }
 
-    static boolean isFunctionInvokerMethod(Method method) {
-        return Modifier.isStatic(method.getModifiers()) && !Modifier.isPrivate(method.getModifiers());
-    }
 }

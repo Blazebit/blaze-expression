@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 /**
@@ -31,12 +32,12 @@ public class BooleanTypeAdapter implements TypeAdapter<Boolean, Boolean> {
     }
 
     @Override
-    public Boolean toInternalType(Boolean value, DomainType domainType) {
+    public Boolean toInternalType(ExpressionInterpreter.Context context, Boolean value, DomainType domainType) {
         return value;
     }
 
     @Override
-    public Boolean toModelType(Boolean value, DomainType domainType) {
+    public Boolean toModelType(ExpressionInterpreter.Context context, Boolean value, DomainType domainType) {
         return value;
     }
 }

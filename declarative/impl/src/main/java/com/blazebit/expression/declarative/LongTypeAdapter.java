@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.math.BigInteger;
@@ -33,7 +34,7 @@ public class LongTypeAdapter implements TypeAdapter<Long, BigInteger> {
     }
 
     @Override
-    public BigInteger toInternalType(Long value, DomainType domainType) {
+    public BigInteger toInternalType(ExpressionInterpreter.Context context, Long value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -41,7 +42,7 @@ public class LongTypeAdapter implements TypeAdapter<Long, BigInteger> {
     }
 
     @Override
-    public Long toModelType(BigInteger value, DomainType domainType) {
+    public Long toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
         if (value == null) {
             return null;
         }

@@ -21,6 +21,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
@@ -75,12 +76,12 @@ public class LocateFunction implements FunctionRenderer, FunctionInvoker {
 
         String needle = substring.toString();
         String s = string.toString();
-        int startIndex = (int) start;
+        int startIndex = ((Number) start).intValue();
         return s.indexOf(needle, startIndex);
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
+    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("LOCATE(");
         argumentRenderers.get(function.getArgument(0)).accept(sb);
         sb.append(", ");

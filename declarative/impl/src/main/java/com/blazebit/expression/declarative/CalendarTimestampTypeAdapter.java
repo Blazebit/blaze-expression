@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.time.Instant;
@@ -34,7 +35,7 @@ public class CalendarTimestampTypeAdapter implements TypeAdapter<Calendar, Insta
     }
 
     @Override
-    public Instant toInternalType(Calendar value, DomainType domainType) {
+    public Instant toInternalType(ExpressionInterpreter.Context context, Calendar value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -42,7 +43,7 @@ public class CalendarTimestampTypeAdapter implements TypeAdapter<Calendar, Insta
     }
 
     @Override
-    public Calendar toModelType(Instant value, DomainType domainType) {
+    public Calendar toModelType(ExpressionInterpreter.Context context, Instant value, DomainType domainType) {
         if (value == null) {
             return null;
         }

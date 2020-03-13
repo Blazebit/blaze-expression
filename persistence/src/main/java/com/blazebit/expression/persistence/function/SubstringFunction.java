@@ -22,6 +22,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.util.Map;
@@ -68,7 +69,7 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
         if (start == null) {
             return null;
         }
-        int startIndex = ((int) start) - 1;
+        int startIndex = ((Number) start).intValue() - 1;
         int endIndexOffset = 0;
         if (startIndex < 0) {
             endIndexOffset = -startIndex;
@@ -80,7 +81,7 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
         if (count == null) {
             endIndex = s.length() - endIndexOffset;
         } else {
-            endIndex = startIndex + ((int) count) - endIndexOffset;
+            endIndex = startIndex + ((Number) count).intValue() - endIndexOffset;
         }
         if (endIndex > s.length()) {
             endIndex = s.length();
@@ -89,7 +90,7 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
+    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("SUBSTRING(");
         argumentRenderers.get(function.getArgument(0)).accept(sb);
         sb.append(", ");

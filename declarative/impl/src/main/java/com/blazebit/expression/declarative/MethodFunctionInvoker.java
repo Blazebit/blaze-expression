@@ -23,7 +23,9 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -33,11 +35,15 @@ import java.util.Map;
 public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker>, FunctionInvoker {
 
     private final Method function;
+    private final boolean usesInterpreterContext;
+    private final Class<?> varArgComponentType;
     private final int parameterCount;
 
     public MethodFunctionInvoker(Method function, int parameterCount) {
         function.setAccessible(true);
         this.function = function;
+        this.usesInterpreterContext = function.getParameterCount() > 0 && function.getParameterTypes()[0] == ExpressionInterpreter.Context.class;
+        this.varArgComponentType = function.isVarArgs() ? function.getParameterTypes()[function.getParameterCount() - 1].getComponentType() : null;
         this.parameterCount = parameterCount;
     }
 
@@ -45,8 +51,22 @@ public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
         try {
             Object[] args = new Object[parameterCount];
-            for (int i = 0; i < parameterCount; i++) {
-                args[i] = arguments.get(function.getArgument(i));
+            int i = 0;
+            int offset = 0;
+            if (usesInterpreterContext) {
+                args[i] = context;
+                offset = 1;
+            }
+            int argumentCount = function.getArguments().size();
+            int end = Math.min(parameterCount - offset, argumentCount) - 1;
+            for (; i < end; i++) {
+                args[i + offset] = arguments.get(function.getArgument(i));
+            }
+            if (varArgComponentType == null) {
+                args[i + offset] = arguments.get(function.getArgument(i));
+            } else {
+                Collection<Object> varArgs = (Collection<Object>) arguments.get(function.getArgument(i));
+                args[i + offset] = varArgs.toArray((Object[]) Array.newInstance(varArgComponentType, varArgs.size()));
             }
             return this.function.invoke(null, args);
         } catch (Exception e) {

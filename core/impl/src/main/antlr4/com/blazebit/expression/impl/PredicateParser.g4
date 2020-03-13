@@ -55,6 +55,11 @@ predicate
     | function                                                                                  # BooleanFunction
     ;
 
+predicateOrExpression
+    : expression
+    | predicate
+    ;
+
 inList
     : LP expression (COMMA expression)* RP
     | expression
@@ -79,8 +84,8 @@ collectionLiteral
     ;
 
 function
-    : name=identifier LP ((expression COMMA)* expression)? RP                                      #IndexedFunctionInvocation
-    | name=identifier LP ((identifier EQUAL expression COMMA)* identifier EQUAL expression)? RP    #NamedInvocation
+    : name=identifier LP ((predicateOrExpression COMMA)* predicateOrExpression)? RP                                      #IndexedFunctionInvocation
+    | name=identifier LP ((identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression)? RP    #NamedInvocation
     ;
 
 timestampLiteral

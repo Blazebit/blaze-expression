@@ -17,6 +17,7 @@
 package com.blazebit.expression.declarative;
 
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.sql.Time;
@@ -34,7 +35,7 @@ public class JavaSqlTimeTimeTypeAdapter implements TypeAdapter<Time, LocalTime> 
     }
 
     @Override
-    public LocalTime toInternalType(Time value, DomainType domainType) {
+    public LocalTime toInternalType(ExpressionInterpreter.Context context, Time value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -42,7 +43,7 @@ public class JavaSqlTimeTimeTypeAdapter implements TypeAdapter<Time, LocalTime> 
     }
 
     @Override
-    public Time toModelType(LocalTime value, DomainType domainType) {
+    public Time toModelType(ExpressionInterpreter.Context context, LocalTime value, DomainType domainType) {
         if (value == null) {
             return null;
         }

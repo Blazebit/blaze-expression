@@ -21,6 +21,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
@@ -62,13 +63,13 @@ public class RTrimFunction implements FunctionRenderer, FunctionInvoker {
         if (string == null) {
             return null;
         }
-        Object character = arguments.getOrDefault(function.getArgument(1), ' ');
+        String character = (String) arguments.getOrDefault(function.getArgument(1), " ");
         if (character == null) {
             return null;
         }
 
         String s = string.toString();
-        char c = (char) character;
+        char c = character.charAt(0);
         int end = s.length() - 1;
         for (; end > 0; end--) {
             if (c != s.charAt(end)) {
@@ -80,7 +81,7 @@ public class RTrimFunction implements FunctionRenderer, FunctionInvoker {
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb) {
+    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("RTRIM(");
         argumentRenderers.get(function.getArgument(0)).accept(sb);
         Consumer<StringBuilder> secondArg = argumentRenderers.get(function.getArgument(1));
