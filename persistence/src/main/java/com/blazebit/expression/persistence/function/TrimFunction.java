@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -34,7 +36,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.S
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TrimFunction implements FunctionRenderer, FunctionInvoker {
+public class TrimFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final TrimFunction INSTANCE = new TrimFunction();
 
@@ -50,10 +52,11 @@ public class TrimFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("TRIM")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("TRIM"))
                 .withMinArgumentCount(1)
                 .withResultType(STRING)
-                .withArgument("string", STRING)
-                .withArgument("character", STRING)
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("TRIM_STRING"))
+                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("TRIM_CHARACTER"))
                 .build();
     }
 

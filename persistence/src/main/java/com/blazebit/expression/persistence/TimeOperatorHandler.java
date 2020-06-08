@@ -26,13 +26,14 @@ import com.blazebit.expression.Literal;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
+import java.io.Serializable;
 import java.time.LocalTime;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TimeOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer {
+public class TimeOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer, Serializable {
 
     public static final TimeOperatorHandler INSTANCE = new TimeOperatorHandler();
 

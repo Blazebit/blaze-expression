@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Map;
@@ -36,7 +38,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.T
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimeFunction implements FunctionRenderer, FunctionInvoker {
+public class CurrentTimeFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final CurrentTimeFunction INSTANCE = new CurrentTimeFunction();
     private static final int SECONDS_PER_DAY = 86400;
@@ -53,6 +55,7 @@ public class CurrentTimeFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("CURRENT_TIME")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("CURRENT_TIME"))
                 .withExactArgumentCount(0)
                 .withResultType(TIME)
                 .build();

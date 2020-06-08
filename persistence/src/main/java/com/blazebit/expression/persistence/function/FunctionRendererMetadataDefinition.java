@@ -20,11 +20,13 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-class FunctionRendererMetadataDefinition implements MetadataDefinition<FunctionRenderer> {
+class FunctionRendererMetadataDefinition implements MetadataDefinition<FunctionRenderer>, Serializable {
 
     private final FunctionRenderer functionRenderer;
 

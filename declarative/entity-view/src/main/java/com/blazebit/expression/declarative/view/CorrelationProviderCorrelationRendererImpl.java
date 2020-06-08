@@ -30,13 +30,14 @@ import com.blazebit.persistence.view.CorrelationProvider;
 import com.blazebit.persistence.view.metamodel.CorrelatedAttribute;
 
 import javax.persistence.metamodel.EntityType;
+import java.io.Serializable;
 import java.util.Collections;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
+public class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer>, Serializable {
 
     private final CorrelatedAttribute<?, ?> correlatedAttribute;
 

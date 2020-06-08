@@ -23,6 +23,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -32,7 +33,7 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker>, FunctionInvoker {
+public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker>, FunctionInvoker, Serializable {
 
     private final Method function;
     private final boolean usesInterpreterContext;

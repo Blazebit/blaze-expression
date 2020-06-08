@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -55,7 +56,7 @@ public interface FunctionRenderer {
      * @return the function renderer
      */
     static FunctionRenderer builtin(String persistenceFunctionName) {
-        return (function, returnType, argumentRenderers, sb, serializer) -> {
+        return (FunctionRenderer & Serializable) (function, returnType, argumentRenderers, sb, serializer) -> {
             sb.append(persistenceFunctionName).append(", ");
             if (!argumentRenderers.isEmpty()) {
                 for (Consumer<StringBuilder> value : argumentRenderers.values()) {
@@ -75,7 +76,7 @@ public interface FunctionRenderer {
      * @return the function renderer
      */
     static FunctionRenderer function(String persistenceFunctionName) {
-        return (function, returnType, argumentRenderers, sb, serializer) -> {
+        return (FunctionRenderer & Serializable) (function, returnType, argumentRenderers, sb, serializer) -> {
             sb.append("FUNCTION('").append(persistenceFunctionName).append("', ");
             if (!argumentRenderers.isEmpty()) {
                 for (Consumer<StringBuilder> value : argumentRenderers.values()) {

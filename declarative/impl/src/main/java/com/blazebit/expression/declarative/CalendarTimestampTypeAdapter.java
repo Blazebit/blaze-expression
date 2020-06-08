@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Calendar;
 
@@ -27,7 +28,7 @@ import java.util.Calendar;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CalendarTimestampTypeAdapter implements TypeAdapter<Calendar, Instant> {
+public class CalendarTimestampTypeAdapter implements TypeAdapter<Calendar, Instant>, Serializable {
 
     public static final CalendarTimestampTypeAdapter INSTANCE = new CalendarTimestampTypeAdapter();
 

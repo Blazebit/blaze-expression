@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -34,7 +37,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.N
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class GreatestFunction implements FunctionRenderer, FunctionInvoker {
+public class GreatestFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final GreatestFunction INSTANCE = new GreatestFunction();
 
@@ -50,7 +53,11 @@ public class GreatestFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("GREATEST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("GREATEST"))
                 .withMinArgumentCount(2)
+                .withArgument("first", DocumentationMetadataDefinition.localized("GREATEST_FIRST"))
+                .withArgument("second", DocumentationMetadataDefinition.localized("GREATEST_SECOND"))
+                .withArgument("other", DocumentationMetadataDefinition.localized("GREATEST_OTHER"))
                 .build();
         domainBuilder.withFunctionTypeResolver("GREATEST", StaticDomainFunctionTypeResolvers.widest(NUMERIC));
     }

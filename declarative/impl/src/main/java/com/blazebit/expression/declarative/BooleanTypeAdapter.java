@@ -20,11 +20,13 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class BooleanTypeAdapter implements TypeAdapter<Boolean, Boolean> {
+public class BooleanTypeAdapter implements TypeAdapter<Boolean, Boolean>, Serializable {
 
     public static final BooleanTypeAdapter INSTANCE = new BooleanTypeAdapter();
 

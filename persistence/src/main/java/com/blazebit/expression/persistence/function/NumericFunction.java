@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +40,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.N
  * @author Christian Beikov
  * @since 1.0.0
  */
-public abstract class NumericFunction implements FunctionRenderer, FunctionInvoker {
+public abstract class NumericFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final List<NumericFunction> FUNCTIONS = Arrays.asList(
             new NumericFunction("SQRT") {
@@ -115,7 +118,7 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
     }
 
     /**
-     * Adds the numeric functions SQRT, SIN, COS, TAN, LOG, EXP to the domain builder.
+     * Adds the numeric functions SQRT, SIN, COS, TAN, LOG, EXP, RADIANS and DEGREES to the domain builder.
      *
      * @param domainBuilder The domain builder
      */
@@ -124,7 +127,9 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
             domainBuilder.createFunction(f.name)
                     .withMetadata(new FunctionRendererMetadataDefinition(f))
                     .withMetadata(new FunctionInvokerMetadataDefinition(f))
+                    .withMetadata(DocumentationMetadataDefinition.localized(f.name))
                     .withExactArgumentCount(1)
+                    .withArgument("number", DocumentationMetadataDefinition.localized(f.name + "_ARG"))
                     .build();
             domainBuilder.withFunctionTypeResolver(f.name, StaticDomainFunctionTypeResolvers.returning(NUMERIC));
         }

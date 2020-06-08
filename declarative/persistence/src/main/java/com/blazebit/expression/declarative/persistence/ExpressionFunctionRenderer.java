@@ -24,6 +24,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.function.Consumer;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRenderer>, FunctionRenderer {
+public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRenderer>, FunctionRenderer, Serializable {
 
     private final String[] chunks;
     private final int[] parameterIndices;

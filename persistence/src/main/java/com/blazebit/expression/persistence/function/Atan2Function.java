@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -35,7 +38,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.N
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class Atan2Function implements FunctionRenderer, FunctionInvoker {
+public class Atan2Function implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final Atan2Function INSTANCE = new Atan2Function();
 
@@ -51,8 +54,9 @@ public class Atan2Function implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("ATAN2")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withArgument("y", NUMERIC)
-                .withArgument("x", NUMERIC)
+                .withMetadata(DocumentationMetadataDefinition.localized("ATAN2"))
+                .withArgument("y", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_Y"))
+                .withArgument("x", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_X"))
                 .build();
         domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }

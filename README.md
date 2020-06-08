@@ -3,7 +3,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-expression-core-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.blazebit/blaze-expression-core-api)
 [![Slack Status](https://blazebit.herokuapp.com/badge.svg)](https://blazebit.herokuapp.com)
 
-[![Javadoc - Expression](https://www.javadoc.io/badge/com.blazebit/blaze-expression-core-api.svg?label=javadoc%20-%20expression-api)](http://www.javadoc.io/doc/com.blazebit/blaze-expression-core-api)
+[![Javadoc - Expression](https://www.javadoc.io/badge/com.blazebit/blaze-expression-core-api.svg?label=javadoc%20-%20expression-core-api)](http://www.javadoc.io/doc/com.blazebit/blaze-expression-core-api)
 
 Blaze-Expression
 ==========

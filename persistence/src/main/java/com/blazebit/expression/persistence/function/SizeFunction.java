@@ -24,10 +24,12 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
@@ -39,7 +41,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.I
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class SizeFunction implements FunctionRenderer, FunctionInvoker {
+public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFunctionTypeResolver, Serializable {
 
     private static final SizeFunction INSTANCE = new SizeFunction();
 
@@ -55,20 +57,21 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("SIZE")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("SIZE"))
                 .withExactArgumentCount(1)
-                .withCollectionArgument("collection")
+                .withCollectionArgument("collection", DocumentationMetadataDefinition.localized("SIZE_ARG"))
                 .withResultType(INTEGER)
                 .build();
-        domainBuilder.withFunctionTypeResolver("SIZE", new DomainFunctionTypeResolver() {
-            @Override
-            public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
-                DomainType argumentType = argumentTypes.values().iterator().next();
-                if (!(argumentType instanceof CollectionDomainType)) {
-                    throw new IllegalArgumentException("SIZE only accepts a collection argument! Invalid type given: " + argumentType);
-                }
-                return domainModel.getType(INTEGER);
-            }
-        });
+        domainBuilder.withFunctionTypeResolver("SIZE", INSTANCE);
+    }
+
+    @Override
+    public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
+        DomainType argumentType = argumentTypes.values().iterator().next();
+        if (!(argumentType instanceof CollectionDomainType)) {
+            throw new IllegalArgumentException("SIZE only accepts a collection argument! Invalid type given: " + argumentType);
+        }
+        return domainModel.getType(INTEGER);
     }
 
     @Override

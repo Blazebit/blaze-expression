@@ -20,13 +20,14 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class FloatTypeAdapter implements TypeAdapter<Float, BigDecimal> {
+public class FloatTypeAdapter implements TypeAdapter<Float, BigDecimal>, Serializable {
 
     public static final FloatTypeAdapter INSTANCE = new FloatTypeAdapter();
 

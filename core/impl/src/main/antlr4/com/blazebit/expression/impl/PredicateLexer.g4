@@ -29,8 +29,8 @@ fragment HEX_DIGIT          : ('0'..'9'|'a'..'f'|'A'..'F') ;
 fragment UNICODE_ESCAPE     : '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
 
 STRING_LITERAL
-    : '"' ( ESCAPE_SEQUENCE | ~('\\'|'"') )* '"' {setText(getText().substring(1, getText().length() - 1));}
-    | ('\'' ( ESCAPE_SEQUENCE | ~('\\'|'\'') )* '\'')+ {setText(getText().substring(1, getText().length() - 1).replace("''", "'"));}
+    : '"' ( ESCAPE_SEQUENCE | ~('\\'|'"') )* '"' {this.setText(this.getText().substring(1, this.getText().length() - 1));}
+    | ('\'' ( ESCAPE_SEQUENCE | ~('\\'|'\'') )* '\'')+ {this.setText(this.getText().substring(1, this.getText().length() - 1).replace("''", "'"));}
     ;
 
 NUMERIC_LITERAL

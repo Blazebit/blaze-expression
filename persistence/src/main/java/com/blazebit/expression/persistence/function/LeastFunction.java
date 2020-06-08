@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -34,7 +37,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.N
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class LeastFunction implements FunctionRenderer, FunctionInvoker {
+public class LeastFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final LeastFunction INSTANCE = new LeastFunction();
 
@@ -50,7 +53,11 @@ public class LeastFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("LEAST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("LEAST"))
                 .withMinArgumentCount(2)
+                .withArgument("first", DocumentationMetadataDefinition.localized("LEAST_FIRST"))
+                .withArgument("second", DocumentationMetadataDefinition.localized("LEAST_SECOND"))
+                .withArgument("other", DocumentationMetadataDefinition.localized("LEAST_OTHER"))
                 .build();
         domainBuilder.withFunctionTypeResolver("LEAST", StaticDomainFunctionTypeResolvers.widest(NUMERIC));
     }

@@ -15,7 +15,9 @@
         <module>core</module>
         <module>declarative</module>
         <module>persistence</module>
+        <module>editor</module>
         <module>documentation</module>
+        <module>examples</module>
     </modules>
 
     <artifactId>blaze-expression</artifactId>
@@ -31,6 +33,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <version.checkstyle>8.7</version.checkstyle>
+        <version.jar.plugin>2.6</version.jar.plugin>
         <maven.min.version>3.3.1</maven.min.version>
         <maven.build.timestamp.format>yyyy</maven.build.timestamp.format>
         <currentYearDynamic>${maven.build.timestamp}</currentYearDynamic>
@@ -135,6 +138,7 @@
                         <include>**/src/main/**/*.xml</include>
                     </includes>
                     <excludes>
+                        <exclude>**/node_modules/**</exclude>
                     </excludes>
                     <properties>
                         <inceptionYear>${project.inceptionYear}</inceptionYear>

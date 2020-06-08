@@ -20,13 +20,14 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ByteTypeAdapter implements TypeAdapter<Byte, BigInteger> {
+public class ByteTypeAdapter implements TypeAdapter<Byte, BigInteger>, Serializable {
 
     public static final ByteTypeAdapter INSTANCE = new ByteTypeAdapter();
 

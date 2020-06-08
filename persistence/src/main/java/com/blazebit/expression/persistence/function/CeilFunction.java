@@ -20,12 +20,15 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceDomainContributor;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -34,7 +37,7 @@ import java.util.function.Consumer;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CeilFunction implements FunctionRenderer, FunctionInvoker {
+public class CeilFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final CeilFunction INSTANCE = new CeilFunction();
 
@@ -50,7 +53,9 @@ public class CeilFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("CEIL")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("CEIL"))
                 .withExactArgumentCount(1)
+                .withArgument("number", DocumentationMetadataDefinition.localized("CEIL_ARG"))
                 .build();
         domainBuilder.withFunctionTypeResolver("CEIL", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.INTEGER));
     }

@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.sql.Time;
 import java.time.LocalTime;
 
@@ -27,7 +28,7 @@ import java.time.LocalTime;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class JavaSqlTimeTimeTypeAdapter implements TypeAdapter<Time, LocalTime> {
+public class JavaSqlTimeTimeTypeAdapter implements TypeAdapter<Time, LocalTime>, Serializable {
 
     public static final JavaSqlTimeTimeTypeAdapter INSTANCE = new JavaSqlTimeTimeTypeAdapter();
 

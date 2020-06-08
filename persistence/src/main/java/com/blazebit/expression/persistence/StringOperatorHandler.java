@@ -23,11 +23,13 @@ import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class StringOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer {
+public class StringOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, DomainOperatorRenderer, Serializable {
 
     public static final StringOperatorHandler INSTANCE = new StringOperatorHandler();
 

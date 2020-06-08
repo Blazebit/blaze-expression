@@ -26,6 +26,7 @@ import com.blazebit.persistence.SubqueryInitiator;
 import com.blazebit.persistence.spi.ServiceProvider;
 import com.blazebit.persistence.view.metamodel.SubqueryAttribute;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer> {
+public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer>, Serializable {
 
     private static final String[] EMPTY = new String[0];
 

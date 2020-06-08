@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -36,7 +38,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.S
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class LocateLastFunction implements FunctionRenderer, FunctionInvoker {
+public class LocateLastFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final LocateLastFunction INSTANCE = new LocateLastFunction();
 
@@ -52,11 +54,12 @@ public class LocateLastFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("LOCATE_LAST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("LOCATE_LAST"))
                 .withMinArgumentCount(2)
                 .withResultType(INTEGER)
-                .withArgument("substring", STRING)
-                .withArgument("string", STRING)
-                .withArgument("start", INTEGER)
+                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_SUBSTRING"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_STRING"))
+                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_LAST_START"))
                 .build();
     }
 

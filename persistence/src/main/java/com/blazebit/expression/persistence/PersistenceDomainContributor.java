@@ -23,7 +23,7 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
@@ -32,6 +32,7 @@ import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainContributor;
+import com.blazebit.domain.spi.DomainSerializer;
 import com.blazebit.expression.persistence.function.AbsFunction;
 import com.blazebit.expression.persistence.function.Atan2Function;
 import com.blazebit.expression.persistence.function.CeilFunction;
@@ -67,6 +68,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -85,58 +87,19 @@ public class PersistenceDomainContributor implements DomainContributor {
     public static final Class<?> INTERVAL = TemporalInterval.class;
     public static final Class<?> STRING = String.class;
 
-    public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new SerializableBooleanLiteralResolver() {
-        @Override
-        public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
-            return new DefaultResolvedLiteral(domainModel.getType(BOOLEAN), value);
-        }
-    };
-    public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new SerializableNumericLiteralResolver() {
-        @Override
-        public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
-            if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
-                return new DefaultResolvedLiteral(domainModel.getType(NUMERIC), value);
-            } else if (value instanceof BigInteger) {
-                return new DefaultResolvedLiteral(domainModel.getType(INTEGER), value);
-            }
-            return new DefaultResolvedLiteral(domainModel.getType(INTEGER), BigInteger.valueOf(value.longValue()));
-        }
-    };
-    public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new SerializableTemporalLiteralResolver() {
-        @Override
-        public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
-            return new DefaultResolvedLiteral(domainModel.getType(TIMESTAMP), value);
-        }
-
-        @Override
-        public ResolvedLiteral resolveIntervalLiteral(DomainModel domainModel, TemporalInterval value) {
-            return new DefaultResolvedLiteral(domainModel.getType(INTERVAL), value);
-        }
-    };
-    public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new SerializableStringLiteralResolver() {
-        @Override
-        public ResolvedLiteral resolveLiteral(DomainModel domainModel, String value) {
-            return new DefaultResolvedLiteral(domainModel.getType(STRING), value);
-        }
-    };
-
-    private static interface SerializableBooleanLiteralResolver extends BooleanLiteralResolver, Serializable {
-    }
-    private static interface SerializableNumericLiteralResolver extends NumericLiteralResolver, Serializable {
-    }
-    private static interface SerializableTemporalLiteralResolver extends TemporalLiteralResolver, Serializable {
-    }
-    private static interface SerializableStringLiteralResolver extends StringLiteralResolver, Serializable {
-    }
+    public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
+    public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
+    public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolverImpl();
+    public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new StringLiteralResolverImpl();
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        createBasicType(domainBuilder, INTEGER, DomainOperator.arithmetic(), DomainPredicateType.comparable(), handlersFor(NumericOperatorHandler.INSTANCE));
-        createBasicType(domainBuilder, NUMERIC, DomainOperator.arithmetic(), DomainPredicateType.comparable(), handlersFor(NumericOperatorHandler.INSTANCE));
-        createBasicType(domainBuilder, STRING, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicateType.comparable(), handlersFor(StringOperatorHandler.INSTANCE));
-        createBasicType(domainBuilder, TIMESTAMP, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicateType.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE));
-        createBasicType(domainBuilder, TIME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicateType.comparable(), handlersFor(TimeOperatorHandler.INSTANCE));
-        createBasicType(domainBuilder, BOOLEAN, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicateType.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE));
+        createBasicType(domainBuilder, INTEGER, "Integer", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
+        createBasicType(domainBuilder, NUMERIC, "Numeric", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
+        createBasicType(domainBuilder, STRING, "String", new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
+        createBasicType(domainBuilder, TIMESTAMP, "Timestamp", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
+        createBasicType(domainBuilder, TIME, "Time", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
+        createBasicType(domainBuilder, BOOLEAN, "Boolean", new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
         domainBuilder.withNumericLiteralResolver(NUMERIC_LITERAL_TYPE_RESOLVER);
         domainBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
         domainBuilder.withTemporalLiteralResolver(TEMPORAL_LITERAL_TYPE_RESOLVER);
@@ -189,34 +152,119 @@ public class PersistenceDomainContributor implements DomainContributor {
         SizeFunction.addFunction(domainBuilder);
     }
 
-    private <T extends ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance) {
+    private <T extends ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance, String documentationKey) {
         return new MetadataDefinition[] {
             new ComparisonOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer.SIMPLE)
+            new DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer.SIMPLE),
+            DocumentationMetadataDefinition.localized(documentationKey)
         };
     }
 
-    private <T extends DomainOperatorRenderer & ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance) {
+    private <T extends DomainOperatorRenderer & ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance, String documentationKey) {
         return new MetadataDefinition[] {
             new ComparisonOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorRendererMetadataDefinition(instance)
+            new DomainOperatorRendererMetadataDefinition(instance),
+            DocumentationMetadataDefinition.localized(documentationKey)
         };
     }
 
-    private static void createBasicType(DomainBuilder domainBuilder, Class<?> type, DomainOperator[] operators, DomainPredicateType[] predicates, MetadataDefinition<?>... metadataDefinitions) {
-        String typeName = type.getSimpleName();
-        domainBuilder.createBasicType(typeName, type, metadataDefinitions);
-        domainBuilder.withOperator(typeName, operators);
-        domainBuilder.withPredicate(typeName, predicates);
+    private static void createBasicType(DomainBuilder domainBuilder, Class<?> type, String name, DomainOperator[] operators, DomainPredicate[] predicates, MetadataDefinition<?>... metadataDefinitions) {
+        domainBuilder.createBasicType(name, type, metadataDefinitions);
+        domainBuilder.withOperator(name, operators);
+        domainBuilder.withPredicate(name, predicates);
     }
 
     /**
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class ComparisonOperatorInterpreterMetadataDefinition implements MetadataDefinition<ComparisonOperatorInterpreter> {
+    private static class BooleanLiteralResolverImpl implements DomainSerializer<BooleanLiteralResolver>, BooleanLiteralResolver, Serializable {
+        @Override
+        public <T> T serialize(DomainModel domainModel, BooleanLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) "\"BooleanLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
+            return new DefaultResolvedLiteral(domainModel.getType(BOOLEAN), value);
+        }
+    }
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class NumericLiteralResolverImpl implements DomainSerializer<NumericLiteralResolver>, NumericLiteralResolver, Serializable {
+        @Override
+        public <T> T serialize(DomainModel domainModel, NumericLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) "\"NumericLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
+            if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
+                return new DefaultResolvedLiteral(domainModel.getType(NUMERIC), value);
+            } else if (value instanceof BigInteger) {
+                return new DefaultResolvedLiteral(domainModel.getType(INTEGER), value);
+            }
+            return new DefaultResolvedLiteral(domainModel.getType(INTEGER), BigInteger.valueOf(value.longValue()));
+        }
+    }
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class TemporalLiteralResolverImpl implements DomainSerializer<TemporalLiteralResolver>, TemporalLiteralResolver, Serializable {
+        @Override
+        public <T> T serialize(DomainModel domainModel, TemporalLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) "\"TemporalLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
+            return new DefaultResolvedLiteral(domainModel.getType(TIMESTAMP), value);
+        }
+
+        @Override
+        public ResolvedLiteral resolveIntervalLiteral(DomainModel domainModel, TemporalInterval value) {
+            return new DefaultResolvedLiteral(domainModel.getType(INTERVAL), value);
+        }
+    }
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class StringLiteralResolverImpl implements DomainSerializer<StringLiteralResolver>, StringLiteralResolver, Serializable {
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, StringLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) "\"StringLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveLiteral(DomainModel domainModel, String value) {
+            return new DefaultResolvedLiteral(domainModel.getType(STRING), value);
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class ComparisonOperatorInterpreterMetadataDefinition implements MetadataDefinition<ComparisonOperatorInterpreter>, Serializable {
 
         private final ComparisonOperatorInterpreter comparisonOperatorInterpreter;
 

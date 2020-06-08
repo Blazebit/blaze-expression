@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,14 +85,16 @@ public class DomainBuilderTest {
 
     @Test
     public void testAbs() {
-        DomainFunction substring = domainModel.getFunction("abs");
-        Assert.assertEquals("ABS", substring.getName());
-        Assert.assertEquals(1, substring.getMinArgumentCount());
-        Assert.assertEquals(1, substring.getArgumentCount());
-        Assert.assertNull(substring.getResultType());
+        DomainFunction abs = domainModel.getFunction("abs");
+        Assert.assertEquals("ABS", abs.getName());
+        Assert.assertNotNull(abs.getMetadata(DocumentationMetadataDefinition.class).serialize(domainModel, null, String.class, "json", Collections.emptyMap()));
+        Assert.assertEquals(1, abs.getMinArgumentCount());
+        Assert.assertEquals(1, abs.getArgumentCount());
+        Assert.assertNull(abs.getResultType());
 
-        Assert.assertEquals(1, substring.getArguments().size());
-        Assert.assertNull(substring.getArguments().get(0).getName());
+        Assert.assertEquals(1, abs.getArguments().size());
+        Assert.assertEquals("number", abs.getArguments().get(0).getName());
+        Assert.assertNotNull(abs.getArguments().get(0).getMetadata(DocumentationMetadataDefinition.class).serialize(domainModel, null, String.class, "json", Collections.emptyMap()));
         Assert.assertEquals(integerType, resolveFunctionType("abs", integerType));
         Assert.assertEquals(decimalType, resolveFunctionType("abs", decimalType));
     }

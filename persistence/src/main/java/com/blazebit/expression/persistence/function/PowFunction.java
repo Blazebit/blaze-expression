@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -35,7 +38,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.N
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class PowFunction implements FunctionRenderer, FunctionInvoker {
+public class PowFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final PowFunction INSTANCE = new PowFunction();
 
@@ -51,8 +54,9 @@ public class PowFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("POW")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withArgument("base", NUMERIC)
-                .withArgument("power", NUMERIC)
+                .withMetadata(DocumentationMetadataDefinition.localized("POW"))
+                .withArgument("base", NUMERIC, DocumentationMetadataDefinition.localized("POW_BASE"))
+                .withArgument("power", NUMERIC, DocumentationMetadataDefinition.localized("POW_POWER"))
                 .build();
         domainBuilder.withFunctionTypeResolver("POW", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }

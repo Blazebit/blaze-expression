@@ -20,11 +20,13 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CharacterTypeAdapter implements TypeAdapter<Character, String> {
+public class CharacterTypeAdapter implements TypeAdapter<Character, String>, Serializable {
 
     public static final CharacterTypeAdapter INSTANCE = new CharacterTypeAdapter();
 

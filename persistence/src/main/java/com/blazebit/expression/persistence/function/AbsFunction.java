@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
@@ -34,7 +37,7 @@ import java.util.function.Consumer;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class AbsFunction implements FunctionRenderer, FunctionInvoker {
+public class AbsFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final AbsFunction INSTANCE = new AbsFunction();
 
@@ -50,7 +53,9 @@ public class AbsFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("ABS")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("ABS"))
                 .withExactArgumentCount(1)
+                .withArgument("number", DocumentationMetadataDefinition.localized("ABS_ARG"))
                 .build();
         domainBuilder.withFunctionTypeResolver("ABS", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
     }

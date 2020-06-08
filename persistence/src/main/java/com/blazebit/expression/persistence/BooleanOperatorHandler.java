@@ -22,11 +22,13 @@ import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class BooleanOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter {
+public class BooleanOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
 
     public static final BooleanOperatorHandler INSTANCE = new BooleanOperatorHandler();
 

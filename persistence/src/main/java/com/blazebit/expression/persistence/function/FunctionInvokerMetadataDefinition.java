@@ -20,11 +20,13 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-class FunctionInvokerMetadataDefinition implements MetadataDefinition<FunctionInvoker> {
+class FunctionInvokerMetadataDefinition implements MetadataDefinition<FunctionInvoker>, Serializable {
 
     private final FunctionInvoker functionInvoker;
 

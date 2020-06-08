@@ -1,0 +1,29 @@
+{
+  "name": "blaze-expression-example-monaco-editor",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "Monaco editor example for Blaze-Expression",
+  "author": "Blazebit",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/Blazebit/blaze-expression",
+  "homepage": "http://github.com/Blazebit/blaze-expression",
+  "dependencies": {
+    "antlr4": "^4.7.2",
+    "monaco-editor": "^0.20.0",
+    "blaze-domain": "^1.0.2",
+    "blaze-expression-monaco": "file:./../../editor/monaco/"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0",
+    "webpack": "^4.39.2",
+    "webpack-cli": "^3.3.7",
+    "monaco-editor-webpack-plugin": "^1.9.0",
+    "typescript": "^3.9.3",
+    "style-loader": "^1.2.1",
+    "css-loader": "^3.5.3",
+    "file-loader": "^6.0.0"
+  },
+  "scripts": {
+    "test": "mocha",
+    "package": "webpack"
+  }
+}

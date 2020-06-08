@@ -23,7 +23,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
@@ -77,26 +77,26 @@ public abstract class AbstractExpressionCompilerTest {
         DomainBuilder builder = new DomainBuilderImpl()
                 .createBasicType("boolean", Boolean.class)
                 .withOperator("boolean", new DomainOperator[]{ DomainOperator.NOT })
-                .withPredicate("boolean", DomainPredicateType.distinguishable())
+                .withPredicate("boolean", DomainPredicate.distinguishable())
                 .createBasicType("long", Long.class)
                 .withOperator("long", DomainOperator.arithmetic())
-                .withPredicate("long", DomainPredicateType.comparable())
+                .withPredicate("long", DomainPredicate.comparable())
                 .createBasicType("integer", Integer.class)
                 .withOperator("integer", DomainOperator.arithmetic())
-                .withPredicate("integer", DomainPredicateType.comparable())
+                .withPredicate("integer", DomainPredicate.comparable())
                 .createBasicType("bigdecimal", BigDecimal.class)
                 .withOperator("bigdecimal", DomainOperator.arithmetic())
-                .withPredicate("bigdecimal", DomainPredicateType.comparable())
+                .withPredicate("bigdecimal", DomainPredicate.comparable())
                 .createBasicType("string", String.class)
                 .withOperator("string", new DomainOperator[]{ DomainOperator.PLUS })
-                .withPredicate("string", DomainPredicateType.distinguishable())
+                .withPredicate("string", DomainPredicate.distinguishable())
                 .createBasicType("timestamp", Instant.class)
-                .withPredicate("timestamp", DomainPredicateType.comparable())
+                .withPredicate("timestamp", DomainPredicate.comparable())
                 .createEnumType("gender", Gender.class)
                     .withValue(Gender.FEMALE.name())
                     .withValue(Gender.MALE.name())
                 .build()
-                .withPredicate("gender", DomainPredicateType.distinguishable())
+                .withPredicate("gender", DomainPredicate.distinguishable())
                 .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
                 .withStringLiteralResolver(new DefaultStringLiteralResolver())
                 .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())

@@ -23,7 +23,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
@@ -145,15 +145,15 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     public Predicate visitIsNullPredicate(PredicateParser.IsNullPredicateContext ctx) {
         Expression left = ctx.expression().accept(this);
 
-        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.NULLNESS);
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.NULLNESS);
 
         if (predicateTypeResolver == null) {
-            throw missingPredicateTypeResolver(left.getType(), DomainPredicateType.NULLNESS);
+            throw missingPredicateTypeResolver(left.getType(), DomainPredicate.NULLNESS);
         } else {
             List<DomainType> operandTypes = Collections.singletonList(left.getType());
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
-                throw cannotResolvePredicateType(DomainPredicateType.NULLNESS, operandTypes);
+                throw cannotResolvePredicateType(DomainPredicate.NULLNESS, operandTypes);
             } else {
                 return new IsNullPredicate(domainType, left, ctx.NOT() != null);
             }
@@ -164,15 +164,15 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     public Predicate visitIsEmptyPredicate(PredicateParser.IsEmptyPredicateContext ctx) {
         Expression left = ctx.expression().accept(this);
 
-        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.COLLECTION);
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.COLLECTION);
 
         if (predicateTypeResolver == null) {
-            throw missingPredicateTypeResolver(left.getType(), DomainPredicateType.COLLECTION);
+            throw missingPredicateTypeResolver(left.getType(), DomainPredicate.COLLECTION);
         } else {
             List<DomainType> operandTypes = Collections.singletonList(left.getType());
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
-                throw cannotResolvePredicateType(DomainPredicateType.COLLECTION, operandTypes);
+                throw cannotResolvePredicateType(DomainPredicate.COLLECTION, operandTypes);
             } else {
                 return new IsEmptyPredicate(domainType, left, ctx.NOT() != null);
             }
@@ -235,14 +235,14 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     public Predicate createComparisonPredicate(ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator comparisonOperator) {
         List<DomainType> operandTypes = Arrays.asList(left.getType(), right.getType());
-        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), comparisonOperator.getDomainPredicateType());
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), comparisonOperator.getDomainPredicate());
 
         if (predicateTypeResolver == null) {
-            throw missingPredicateTypeResolver(left.getType(), comparisonOperator.getDomainPredicateType());
+            throw missingPredicateTypeResolver(left.getType(), comparisonOperator.getDomainPredicate());
         } else {
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
-                throw cannotResolvePredicateType(comparisonOperator.getDomainPredicateType(), operandTypes);
+                throw cannotResolvePredicateType(comparisonOperator.getDomainPredicate(), operandTypes);
             } else {
                 return new ComparisonPredicate(domainType, left, right, comparisonOperator);
             }
@@ -254,10 +254,10 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         ArithmeticExpression left = (ArithmeticExpression) ctx.expression().accept(this);
         List<ArithmeticExpression> inItems = getExpressionList(ctx.inList().expression());
 
-        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.EQUALITY);
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.EQUALITY);
 
         if (predicateTypeResolver == null) {
-            throw missingPredicateTypeResolver(left.getType(), DomainPredicateType.EQUALITY);
+            throw missingPredicateTypeResolver(left.getType(), DomainPredicate.EQUALITY);
         } else {
             List<DomainType> operandTypes = new ArrayList<>(inItems.size() + 1);
             operandTypes.add(left.getType());
@@ -267,7 +267,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             }
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
-                throw cannotResolvePredicateType(DomainPredicateType.EQUALITY, operandTypes);
+                throw cannotResolvePredicateType(DomainPredicate.EQUALITY, operandTypes);
             } else {
                 return new InPredicate(domainType, left, inItems, ctx.NOT() != null);
             }
@@ -280,15 +280,15 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         ArithmeticExpression lower = (ArithmeticExpression) ctx.start.accept(this);
         ArithmeticExpression upper = (ArithmeticExpression) ctx.end.accept(this);
 
-        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicateType.RELATIONAL);
+        DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.RELATIONAL);
 
         if (predicateTypeResolver == null) {
-            throw missingPredicateTypeResolver(left.getType(), DomainPredicateType.RELATIONAL);
+            throw missingPredicateTypeResolver(left.getType(), DomainPredicate.RELATIONAL);
         } else {
             List<DomainType> operandTypes = Arrays.asList(left.getType(), lower.getType(), upper.getType());
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
-                throw cannotResolvePredicateType(DomainPredicateType.RELATIONAL, operandTypes);
+                throw cannotResolvePredicateType(DomainPredicate.RELATIONAL, operandTypes);
             } else {
                 return new BetweenPredicate(domainType, left, upper, lower);
             }
@@ -545,7 +545,8 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(literalList.size());
             int i = 0;
             int lastIdx = function.getArguments().size() - 1;
-            for (; i < lastIdx; i++) {
+            int end = Math.min(lastIdx, literalList.size());
+            for (; i < end; i++) {
                 DomainFunctionArgument domainFunctionArgument = function.getArguments().get(i);
                 argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
                 arguments.put(domainFunctionArgument, literalList.get(i));
@@ -560,7 +561,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                         varArgs.add(literalList.get(i));
                     }
                     arguments.put(domainFunctionArgument, new Literal(new DefaultResolvedLiteral(domainFunctionArgument.getType(), varArgs)));
-                } else {
+                } else if (i < literalList.size()) {
                     argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
                     arguments.put(domainFunctionArgument, literalList.get(i));
                 }
@@ -680,7 +681,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new TypeErrorException(String.format("%s %s %s", t1, operator, t2));
     }
 
-    private DomainModelException missingPredicateTypeResolver(DomainType type, DomainPredicateType predicateType) {
+    private DomainModelException missingPredicateTypeResolver(DomainType type, DomainPredicate predicateType) {
         return new DomainModelException(String.format("Missing predicate type resolver for type %s and predicate %s", type, predicateType));
     }
 
@@ -688,7 +689,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new DomainModelException(String.format("Missing operation type resolver for type %s and operator %s", type, operator));
     }
 
-    private TypeErrorException typeError(DomainType t1, DomainType t2, DomainPredicateType predicateType) {
+    private TypeErrorException typeError(DomainType t1, DomainType t2, DomainPredicate predicateType) {
         return new TypeErrorException(String.format("%s %s %s", t1, predicateType, t2));
     }
 
@@ -708,7 +709,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new TypeErrorException(String.format("Resolved type for identifier %s is not supported", typeName));
     }
 
-    private TypeErrorException cannotResolvePredicateType(DomainPredicateType predicateType, List<DomainType> operandTypes) {
+    private TypeErrorException cannotResolvePredicateType(DomainPredicate predicateType, List<DomainType> operandTypes) {
         return new TypeErrorException(String.format("Cannot resolve predicate type for predicate %s and operand types %s", predicateType, operandTypes));
     }
 

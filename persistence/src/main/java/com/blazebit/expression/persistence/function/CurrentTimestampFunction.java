@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -35,7 +37,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.T
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker {
+public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     public static final String INSTANT_PROPERTY = "instant";
     private static final CurrentTimestampFunction INSTANCE = new CurrentTimestampFunction();
@@ -52,6 +54,7 @@ public class CurrentTimestampFunction implements FunctionRenderer, FunctionInvok
         domainBuilder.createFunction("CURRENT_TIMESTAMP")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("CURRENT_TIMESTAMP"))
                 .withExactArgumentCount(0)
                 .withResultType(TIMESTAMP)
                 .build();

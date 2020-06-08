@@ -21,11 +21,13 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.persistence.ExpressionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class StringExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer> {
+public class StringExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer>, Serializable {
 
     private final String[] expressionChunks;
     private final boolean preChunks;

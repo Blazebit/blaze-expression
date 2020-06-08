@@ -1,0 +1,41 @@
+{
+  "name": "blaze-expression-monaco",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "Monaco editor support for Blaze-Expression",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "author": "Blazebit",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/Blazebit/blaze-expression",
+  "homepage": "http://github.com/Blazebit/blaze-expression",
+  "dependencies": {
+    "antlr4": "^4.7.2",
+    "monaco-editor": "^0.20.0",
+    "blaze-domain": "^1.0.2",
+    "blaze-expression-predicate": "file:./target/blaze-expression-predicate/"
+  },
+  "devDependencies": {
+    "webpack": "^4.39.2",
+    "webpack-cli": "^3.3.7",
+    "monaco-editor-webpack-plugin": "^1.9.0",
+    "chai": "4.1.2",
+    "mocha": "^7.2.0",
+    "mochapack": "^2.0.0",
+    "typescript": "^3.9.3",
+    "ts-node": "^8.10.2",
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "ts-loader": "^7.0.5",
+    "esm": "^3.2.25",
+    "style-loader": "^1.2.1",
+    "css-loader": "^3.5.3",
+    "file-loader": "^6.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha -r ts-loader -r esm \"./src/test/typescript/*.test.ts\""
+  }
+}

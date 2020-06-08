@@ -20,11 +20,13 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<TypeAdapter> {
+public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<TypeAdapter>, Serializable {
 
     private final TypeAdapter<X, Y> typeAdapter;
     private final Class<Y> internalType;

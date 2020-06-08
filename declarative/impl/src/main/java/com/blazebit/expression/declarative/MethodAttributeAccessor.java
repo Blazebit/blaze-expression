@@ -21,13 +21,14 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.expression.spi.AttributeAccessor;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class MethodAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor {
+public class MethodAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor, Serializable {
 
     private final Method getter;
 

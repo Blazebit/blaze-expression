@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "declaration": true,
+    "target": "es5",
+    "outDir": "dist"
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "include" : [
+    "src/main/typescript/*.ts"
+  ]
+}

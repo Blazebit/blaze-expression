@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -35,7 +37,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.S
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class EndsWithFunction implements FunctionRenderer, FunctionInvoker {
+public class EndsWithFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final EndsWithFunction INSTANCE = new EndsWithFunction();
 
@@ -51,10 +53,11 @@ public class EndsWithFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("ENDS_WITH")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("ENDS_WITH"))
                 .withMinArgumentCount(2)
                 .withResultType(BOOLEAN)
-                .withArgument("string", STRING)
-                .withArgument("substring", STRING)
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("ENDS_WITH_STRING"))
+                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("ENDS_WITH_SUBSTRING"))
                 .build();
     }
 

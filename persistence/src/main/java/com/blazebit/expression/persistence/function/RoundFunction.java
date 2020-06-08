@@ -20,11 +20,14 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -38,7 +41,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.I
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class RoundFunction implements FunctionRenderer, FunctionInvoker {
+public class RoundFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final RoundFunction INSTANCE = new RoundFunction();
 
@@ -54,8 +57,9 @@ public class RoundFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("ROUND")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withArgument("value", NUMERIC)
-                .withArgument("precision", INTEGER)
+                .withMetadata(DocumentationMetadataDefinition.localized("ROUND"))
+                .withArgument("value", NUMERIC, DocumentationMetadataDefinition.localized("ROUND_VALUE"))
+                .withArgument("precision", INTEGER, DocumentationMetadataDefinition.localized("ROUND_PRECISION"))
                 .withMinArgumentCount(1)
                 .build();
         domainBuilder.withFunctionTypeResolver("ROUND", StaticDomainFunctionTypeResolvers.returning(NUMERIC));

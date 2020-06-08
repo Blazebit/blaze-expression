@@ -21,10 +21,12 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -35,7 +37,7 @@ import static com.blazebit.expression.persistence.PersistenceDomainContributor.S
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
+public class SubstringFunction implements FunctionRenderer, FunctionInvoker, Serializable {
 
     private static final SubstringFunction INSTANCE = new SubstringFunction();
 
@@ -51,11 +53,12 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker {
         domainBuilder.createFunction("SUBSTRING")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(DocumentationMetadataDefinition.localized("SUBSTRING"))
                 .withMinArgumentCount(2)
                 .withResultType(STRING)
-                .withArgument("string", STRING)
-                .withArgument("start", INTEGER)
-                .withArgument("count", INTEGER)
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("SUBSTRING_STRING"))
+                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_START"))
+                .withArgument("count", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_COUNT"))
                 .build();
     }
 

@@ -23,11 +23,13 @@ import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.persistence.spi.ServiceProvider;
 import com.blazebit.persistence.view.metamodel.MappingAttribute;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class MappingExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer> {
+public class MappingExpressionRendererImpl implements ExpressionRenderer, MetadataDefinition<ExpressionRenderer>, Serializable {
 
     private final MappingAttribute<?, ?> mappingAttribute;
 

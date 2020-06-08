@@ -34,7 +34,7 @@ expression
     | PLUS expression                                                                           # UnaryPlusExpression
     | literal                                                                                   # LiteralExpression
     | path                                                                                      # PathExpression
-    | function                                                                                  # FunctionExpression
+    | functionInvocation                                                                        # FunctionExpression
     ;
 
 predicate
@@ -52,7 +52,7 @@ predicate
     | lhs=expression LESS_EQUAL rhs=expression                                                  # LessThanOrEqualPredicate
     | expression NOT? IN inList                                                                 # InPredicate
     | lhs=expression NOT? BETWEEN start=expression AND end=expression                           # BetweenPredicate
-    | function                                                                                  # BooleanFunction
+    | functionInvocation                                                                        # BooleanFunction
     ;
 
 predicateOrExpression
@@ -83,7 +83,7 @@ collectionLiteral
     : LB (literal (COMMA literal)*)? RB
     ;
 
-function
+functionInvocation
     : name=identifier LP ((predicateOrExpression COMMA)* predicateOrExpression)? RP                                      #IndexedFunctionInvocation
     | name=identifier LP ((identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression)? RP    #NamedInvocation
     ;

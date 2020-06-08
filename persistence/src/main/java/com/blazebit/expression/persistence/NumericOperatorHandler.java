@@ -23,6 +23,7 @@ import com.blazebit.expression.persistence.util.ConversionUtils;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -30,7 +31,7 @@ import java.math.BigInteger;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class NumericOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter {
+public class NumericOperatorHandler implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
 
     public static final NumericOperatorHandler INSTANCE = new NumericOperatorHandler();
 

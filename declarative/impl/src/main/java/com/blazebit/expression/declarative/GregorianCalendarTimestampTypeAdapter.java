@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.GregorianCalendar;
 
@@ -27,7 +28,7 @@ import java.util.GregorianCalendar;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class GregorianCalendarTimestampTypeAdapter implements TypeAdapter<GregorianCalendar, Instant> {
+public class GregorianCalendarTimestampTypeAdapter implements TypeAdapter<GregorianCalendar, Instant>, Serializable {
 
     public static final GregorianCalendarTimestampTypeAdapter INSTANCE = new GregorianCalendarTimestampTypeAdapter();
 

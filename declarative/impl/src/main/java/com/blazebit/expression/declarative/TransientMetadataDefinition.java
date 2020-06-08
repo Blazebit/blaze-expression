@@ -20,13 +20,14 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.declarative.Transient;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public final class TransientMetadataDefinition implements MetadataDefinition<Transient>, Transient {
+public final class TransientMetadataDefinition implements MetadataDefinition<Transient>, Transient, Serializable {
 
     public static final TransientMetadataDefinition INSTANCE = new TransientMetadataDefinition();
 

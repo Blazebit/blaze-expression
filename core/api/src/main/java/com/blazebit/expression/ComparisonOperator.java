@@ -16,7 +16,7 @@
 
 package com.blazebit.expression;
 
-import com.blazebit.domain.runtime.model.DomainPredicateType;
+import com.blazebit.domain.runtime.model.DomainPredicate;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,27 +33,27 @@ public enum ComparisonOperator {
     /**
      * The &gt; operator.
      */
-    GREATER(">", DomainPredicateType.RELATIONAL),
+    GREATER(">", DomainPredicate.RELATIONAL),
     /**
      * The &gt;= operator.
      */
-    GREATER_OR_EQUAL(">=", DomainPredicateType.RELATIONAL),
+    GREATER_OR_EQUAL(">=", DomainPredicate.RELATIONAL),
     /**
      * The &lt; operator.
      */
-    LOWER("<", DomainPredicateType.RELATIONAL),
+    LOWER("<", DomainPredicate.RELATIONAL),
     /**
      * The &lt;= operator.
      */
-    LOWER_OR_EQUAL("<=", DomainPredicateType.RELATIONAL),
+    LOWER_OR_EQUAL("<=", DomainPredicate.RELATIONAL),
     /**
      * The = operator.
      */
-    EQUAL("=", DomainPredicateType.EQUALITY),
+    EQUAL("=", DomainPredicate.EQUALITY),
     /**
      * The != or &lt;&gt; operator.
      */
-    NOT_EQUAL("!=", DomainPredicateType.EQUALITY);
+    NOT_EQUAL("!=", DomainPredicate.EQUALITY);
 
     private static final Map<String, ComparisonOperator> OPERATOR_MAP;
 
@@ -69,11 +69,11 @@ public enum ComparisonOperator {
     }
 
     private final String operator;
-    private final DomainPredicateType domainPredicateType;
+    private final DomainPredicate domainPredicate;
 
-    private ComparisonOperator(String operator, DomainPredicateType domainPredicateType) {
+    private ComparisonOperator(String operator, DomainPredicate domainPredicate) {
         this.operator = operator;
-        this.domainPredicateType = domainPredicateType;
+        this.domainPredicate = domainPredicate;
     }
 
     /**
@@ -90,8 +90,8 @@ public enum ComparisonOperator {
      *
      * @return the corresponding domain predicate type
      */
-    public DomainPredicateType getDomainPredicateType() {
-        return domainPredicateType;
+    public DomainPredicate getDomainPredicate() {
+        return domainPredicate;
     }
 
     /**

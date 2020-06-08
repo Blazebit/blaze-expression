@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -28,7 +29,7 @@ import java.time.ZonedDateTime;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ZonedDateTimeTimestampTypeAdapter implements TypeAdapter<ZonedDateTime, Instant> {
+public class ZonedDateTimeTimestampTypeAdapter implements TypeAdapter<ZonedDateTime, Instant>, Serializable {
 
     public static final ZonedDateTimeTimestampTypeAdapter INSTANCE = new ZonedDateTimeTimestampTypeAdapter();
 

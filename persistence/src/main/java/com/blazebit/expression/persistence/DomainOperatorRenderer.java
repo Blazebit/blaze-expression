@@ -18,23 +18,15 @@ package com.blazebit.expression.persistence;
 
 import com.blazebit.expression.ChainingArithmeticExpression;
 
+import java.io.Serializable;
+
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
 public interface DomainOperatorRenderer {
 
-    public static final DomainOperatorRenderer SIMPLE = new DomainOperatorRenderer() {
-        @Override
-        public void render(ChainingArithmeticExpression e, PersistenceExpressionSerializer serializer) {
-            StringBuilder sb = serializer.getStringBuilder();
-            e.getLeft().accept(serializer);
-            sb.append(' ');
-            sb.append(e.getOperator().getOperator());
-            sb.append(' ');
-            e.getRight().accept(serializer);
-        }
-    };
+    public static final DomainOperatorRenderer SIMPLE = new SimpleDomainOperatorRenderer();
 
     /**
      * Renders the given domain operator for the given expression.
@@ -44,4 +36,20 @@ public interface DomainOperatorRenderer {
      */
     void render(ChainingArithmeticExpression expression, PersistenceExpressionSerializer serializer);
 
+    /**
+     *
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    class SimpleDomainOperatorRenderer implements DomainOperatorRenderer, Serializable {
+        @Override
+        public void render(ChainingArithmeticExpression e, PersistenceExpressionSerializer serializer) {
+            StringBuilder sb = serializer.getStringBuilder();
+            e.getLeft().accept(serializer);
+            sb.append(' ');
+            sb.append(e.getOperator().getOperator());
+            sb.append(' ');
+            e.getRight().accept(serializer);
+        }
+    }
 }

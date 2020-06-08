@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date;
 
@@ -27,7 +28,7 @@ import java.util.Date;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class JavaUtilDateTimestampTypeAdapter implements TypeAdapter<Date, Instant> {
+public class JavaUtilDateTimestampTypeAdapter implements TypeAdapter<Date, Instant>, Serializable {
 
     public static final JavaUtilDateTimestampTypeAdapter INSTANCE = new JavaUtilDateTimestampTypeAdapter();
 
