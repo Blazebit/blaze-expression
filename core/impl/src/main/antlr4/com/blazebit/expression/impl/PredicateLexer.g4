@@ -15,7 +15,7 @@
  */
 lexer grammar PredicateLexer;
 
-WS : ( ' ' | '\t' | '\f' | EOL ) -> skip;
+WS : ( ' ' | '\t' | '\f' | EOL ) -> channel(HIDDEN);
 fragment EOL                : [\r\n]+;
 
 fragment DIGIT              : '0'..'9';

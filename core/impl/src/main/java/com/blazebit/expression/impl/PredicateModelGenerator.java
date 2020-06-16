@@ -594,22 +594,22 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         } else {
             List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
             List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
-            Map<DomainFunctionArgument, Expression> arguments = new LinkedHashMap<>(literalList.size());
-            if (function.getArgumentCount() != -1 && arguments.size() > function.getArgumentCount()) {
+            if (function.getArgumentCount() != -1 && literalList.size() > function.getArgumentCount()) {
                 throw new DomainModelException(String.format("Function '%s' expects at most %d arguments but found %d",
                         function.getName(),
                         function.getArgumentCount(),
-                        arguments.size()
+                        literalList.size()
                 ));
             }
-            if (arguments.size() < function.getMinArgumentCount()) {
+            if (literalList.size() < function.getMinArgumentCount()) {
                 throw new DomainModelException(String.format("Function '%s' expects at least %d arguments but found %d",
                                                              function.getName(),
                                                              function.getMinArgumentCount(),
-                                                             arguments.size()
+                                                             literalList.size()
                 ));
             }
-            Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(arguments.size());
+            Map<DomainFunctionArgument, Expression> arguments = new LinkedHashMap<>(literalList.size());
+            Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(literalList.size());
             for (int i = 0; i < literalList.size(); i++) {
                 DomainFunctionArgument domainFunctionArgument = function.getArgument(argNames.get(i).getText());
                 argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());

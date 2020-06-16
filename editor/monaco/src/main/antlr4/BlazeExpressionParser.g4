@@ -17,3 +17,6 @@ parser grammar BlazeExpressionParser;
 import PredicateParser;
 
 options { tokenVocab=BlazeExpressionLexer; }
+
+parsePredicateOrExpression
+    : predicateOrExpression EOF;

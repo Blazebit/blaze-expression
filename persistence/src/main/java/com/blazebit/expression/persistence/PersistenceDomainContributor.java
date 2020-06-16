@@ -97,6 +97,7 @@ public class PersistenceDomainContributor implements DomainContributor {
         createBasicType(domainBuilder, INTEGER, "Integer", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
         createBasicType(domainBuilder, NUMERIC, "Numeric", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
         createBasicType(domainBuilder, STRING, "String", new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
+        // TODO: Need interval type
         createBasicType(domainBuilder, TIMESTAMP, "Timestamp", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
         createBasicType(domainBuilder, TIME, "Time", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
         createBasicType(domainBuilder, BOOLEAN, "Boolean", new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
@@ -104,6 +105,7 @@ public class PersistenceDomainContributor implements DomainContributor {
         domainBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
         domainBuilder.withTemporalLiteralResolver(TEMPORAL_LITERAL_TYPE_RESOLVER);
         domainBuilder.withBooleanLiteralResolver(BOOLEAN_LITERAL_TYPE_RESOLVER);
+        // TODO: operation type resolvers shouldn't allow all operand types!
 
         for (Class<?> type : Arrays.asList(INTEGER, NUMERIC)) {
             domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(INTEGER));

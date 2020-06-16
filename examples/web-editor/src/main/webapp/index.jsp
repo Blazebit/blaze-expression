@@ -23,7 +23,7 @@
                             meta: [],
                             attrs: [
                                 { name: "id", type: "Integer", meta: [] },
-                                { name: "name", type: "String", meta: [] }
+                                { name: "name", type: "String", meta: [{doc: "The name of the user"}] }
                             ]
                         },
                         {
@@ -33,9 +33,9 @@
                             meta: [],
                             attrs: [
                                 { name: "id", type: "Integer", meta: [] },
-                                { name: "name", type: "String", meta: [] },
-                                { name: "writer", type: "User", meta: [] },
-                                { name: "comments", type: "Collection<Comment>", meta: [] }
+                                { name: "name", type: "String", meta: [{doc: "The name/title of a post"}] },
+                                { name: "writer", type: "User", meta: [{doc: "The user that wrote this post"}] },
+                                { name: "comments", type: "Collection[Comment]", meta: [{doc: "The comments for a post"}] }
                             ]
                         },
                         {
@@ -45,12 +45,12 @@
                             meta: [],
                             attrs: [
                                 { name: "id", type: "Integer", meta: [] },
-                                { name: "content", type: "String", meta: [] },
-                                { name: "writer", type: "User", meta: [] }
+                                { name: "content", type: "String", meta: [{doc: "The content of a comment"}] },
+                                { name: "writer", type: "User", meta: [{doc: "The user that wrote this comment"}] }
                             ]
                         },
                         {
-                            name: "Collection<Comment>",
+                            name: "Collection[Comment]",
                             kind: "C",
                             preds: ["C"],
                             meta: []
@@ -100,7 +100,7 @@
                         {name: "Collection[Timestamp]", kind: "C", preds: ["C"]},
                         {name: "Collection[Boolean]", kind: "C", preds: ["C"]},
                         {name: "Collection[Time]", kind: "C", preds: ["C"]},
-                        {name: "Collection[UserView]", kind: "C", preds: ["C"]},
+                        {name: "Collection[Comment]", kind: "C", preds: ["C"]},
                         {name: "Collection[String]", kind: "C", preds: ["C"]},
                         {name: "Collection[Integer]", kind: "C", preds: ["C"]},
                         {name: "Collection[Numeric]", kind: "C", preds: ["C"]}
@@ -215,13 +215,6 @@
                             typeResolver: {"FixedDomainFunctionTypeResolver": ["Numeric"]},
                             args: [{name: "number", meta: [{doc: "The value whose arc sine is to be determined"}]}],
                             meta: [{doc: "Returns the arc sine of a value."}]
-                        },
-                        {
-                            name: "contains",
-                            argCount: 2,
-                            minArgCount: 2,
-                            type: "Boolean",
-                            args: [{name: "arg0"}, {name: "arg1", type: "Integer"}]
                         },
                         {
                             name: "UPPER",
@@ -536,14 +529,14 @@
                         }
                     ],
                     symbols: {
-                        post: "Post"
+                        post: {type: "Post", doc: "The current post"}
                     }
                 })
             );
 
         });
     </script>
-    <div id="container" style="width:800px;height:600px;border:1px solid grey">
+    <div id="container" style="width:800px;height:1.2em;border:1px solid grey">
         <textarea style="display: none">SUBSTRING(post.writer.name, 1)</textarea>
     </div>
 </body>

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as monaco from 'monaco-editor';
-console.log(monaco.languages);
 import * as domain from '../../main/typescript/index';
 import { expect } from 'chai';
 import 'mocha';
