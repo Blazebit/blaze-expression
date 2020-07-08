@@ -26,6 +26,7 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.DomainTypeResolverException;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
@@ -91,6 +92,11 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     @Override
     public Expression visitParseExpression(PredicateParser.ParseExpressionContext ctx) {
         return ctx.expression().accept(this);
+    }
+
+    @Override
+    public Expression visitParseExpressionOrPredicate(PredicateParser.ParseExpressionOrPredicateContext ctx) {
+        return ctx.predicateOrExpression().accept(this);
     }
 
     @Override
@@ -567,8 +573,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 }
             }
             DomainFunctionTypeResolver functionTypeResolver = domainModel.getFunctionTypeResolver(functionName);
-            DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
-            return new FunctionInvocation(function, arguments, functionType);
+            try {
+                DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
+                return new FunctionInvocation(function, arguments, functionType);
+            } catch (DomainTypeResolverException ex) {
+                throw new DomainModelException(ex.getMessage(), ex);
+            }
         }
     }
 
@@ -581,6 +591,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             if (type instanceof EntityDomainType) {
                 EntityDomainType entityDomainType = (EntityDomainType) type;
                 List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
+                argNames.remove(0);
                 List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
                 Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
                 for (int i = 0; i < literalList.size(); i++) {
@@ -593,6 +604,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             }
         } else {
             List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
+            argNames.remove(0);
             List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
             if (function.getArgumentCount() != -1 && literalList.size() > function.getArgumentCount()) {
                 throw new DomainModelException(String.format("Function '%s' expects at most %d arguments but found %d",
@@ -616,8 +628,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 arguments.put(domainFunctionArgument, literalList.get(i));
             }
             DomainFunctionTypeResolver functionTypeResolver = domainModel.getFunctionTypeResolver(entityOrFunctionName);
-            DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
-            return new FunctionInvocation(function, arguments, functionType);
+            try {
+                DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
+                return new FunctionInvocation(function, arguments, functionType);
+            } catch (DomainTypeResolverException ex) {
+                throw new DomainModelException(ex.getMessage(), ex);
+            }
         }
     }
 

@@ -23,8 +23,10 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Map;
@@ -35,9 +37,25 @@ import java.util.Map;
  */
 public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker>, FunctionInvoker, Serializable {
 
-    private final Method function;
+    private static final Field FUNCTION;
+    private static final Field VAR_ARG_COMPONENT_TYPE;
+
+    static {
+        try {
+            Field field = MethodFunctionInvoker.class.getDeclaredField("function");
+            field.setAccessible(true);
+            FUNCTION = field;
+            field = MethodFunctionInvoker.class.getDeclaredField("varArgComponentType");
+            field.setAccessible(true);
+            VAR_ARG_COMPONENT_TYPE = field;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private final transient Method function;
     private final boolean usesInterpreterContext;
-    private final Class<?> varArgComponentType;
+    private final transient Class<?> varArgComponentType;
     private final int parameterCount;
 
     public MethodFunctionInvoker(Method function, int parameterCount) {
@@ -84,4 +102,29 @@ public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker
     public FunctionInvoker build(MetadataDefinitionHolder<?> definitionHolder) {
         return this;
     }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.writeUTF(function.getDeclaringClass().getName());
+        out.writeUTF(function.getName());
+        if (varArgComponentType == null) {
+            out.writeUTF(null);
+        } else {
+            out.writeUTF(varArgComponentType.getName());
+        }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        String className = in.readUTF();
+        String methodName = in.readUTF();
+        String varArgComponentType = in.readUTF();
+        try {
+            Method method = Class.forName(className).getDeclaredMethod(methodName);
+            method.setAccessible(true);
+            FUNCTION.set(this, method);
+            VAR_ARG_COMPONENT_TYPE.set(this, Class.forName(varArgComponentType));
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
 }

@@ -23,6 +23,9 @@ parsePredicate
 parseExpression
     : expression EOF;
 
+parseExpressionOrPredicate
+    : predicateOrExpression EOF;
+
 expression
     : LP expression RP                                                                          # GroupedExpression
     | lhs=expression ASTERISK rhs=expression                                                    # MultiplicationExpression
@@ -84,8 +87,8 @@ collectionLiteral
     ;
 
 functionInvocation
-    : name=identifier LP ((predicateOrExpression COMMA)* predicateOrExpression)? RP                                      #IndexedFunctionInvocation
-    | name=identifier LP ((identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression)? RP    #NamedInvocation
+    : name=identifier LP ((identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression)? RP    #NamedInvocation
+    | name=identifier LP ((predicateOrExpression COMMA)* predicateOrExpression)? RP                                      #IndexedFunctionInvocation
     ;
 
 timestampLiteral

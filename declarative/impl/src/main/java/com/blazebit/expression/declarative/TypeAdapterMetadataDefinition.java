@@ -20,7 +20,9 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.expression.spi.TypeAdapter;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 
 /**
  * @author Christian Beikov
@@ -28,8 +30,20 @@ import java.io.Serializable;
  */
 public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<TypeAdapter>, Serializable {
 
+    private static final Field INTERNAL_TYPE;
+
+    static {
+        try {
+            Field field = TypeAdapterMetadataDefinition.class.getDeclaredField("internalType");
+            field.setAccessible(true);
+            INTERNAL_TYPE = field;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private final TypeAdapter<X, Y> typeAdapter;
-    private final Class<Y> internalType;
+    private final transient Class<Y> internalType;
 
     public TypeAdapterMetadataDefinition(TypeAdapter<X, Y> typeAdapter, Class<Y> internalType) {
         this.typeAdapter = typeAdapter;
@@ -48,5 +62,20 @@ public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<T
     @Override
     public TypeAdapter build(MetadataDefinitionHolder<?> definitionHolder) {
         return typeAdapter;
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(internalType.getName());
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        String className = in.readUTF();
+        try {
+            INTERNAL_TYPE.set(this, Class.forName(className));
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 }

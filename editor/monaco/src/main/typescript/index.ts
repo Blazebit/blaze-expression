@@ -28,6 +28,7 @@ import {
     EntityAttribute,
     EntityDomainType,
     EntityLiteral,
+    EnumLiteral,
     EnumDomainType,
     LiteralKind,
     LiteralResolver
@@ -148,12 +149,12 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
     };
 
     registerIfAbsent("BooleanLiteralResolver", function(): LiteralResolver {
-        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType {
+        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
             return domainModel.types['Boolean'];
         }};
     });
     registerIfAbsent("NumericLiteralResolver", function(): LiteralResolver {
-        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType {
+        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
             if (isNaN(parseInt(value as string))) {
                 return domainModel.types['Numeric'];
             } else {
@@ -162,12 +163,12 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
         }};
     });
     registerIfAbsent("StringLiteralResolver", function(): LiteralResolver {
-        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType {
+        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
             return domainModel.types['String'];
         }};
     });
     registerIfAbsent("TemporalLiteralResolver", function(type: string): LiteralResolver {
-        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | CollectionLiteral): DomainType {
+        return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
             if (kind == LiteralKind.INTERVAL) {
                 return domainModel.types['Interval'];
             } else {
@@ -404,7 +405,10 @@ export class PredicateCompletionProvider implements monaco.languages.CompletionI
             var paramInfo = "| | |\n" +
                 "|-------------|-------------|\n" +
                 "| Params         | |\n| |";
-            let documentation: string = f.documentation;
+            let documentation: string = "";
+            if (f.documentation != null) {
+                documentation += f.documentation + "\n\n";
+            }
             for (var i = 0; i < f.arguments.length; i++) {
                 if (i != 0) {
                     label += ", ";
@@ -1082,11 +1086,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                     if (this.symbolTable.model.enumLiteralResolver == null) {
                         return type;
                     } else {
-                        // TODO: enable after blaze-domain update
-                        // return this.symbolTable.model.enumLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENUM, {
-                        //     enumType: type,
-                        //     value: value
-                        // });
+                        return this.symbolTable.model.enumLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENUM, {
+                            enumType: type,
+                            value: value
+                        });
                     }
                 }
             }
@@ -1155,7 +1158,7 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                     argumentTypes.push(literalList[i]);
                 }
             }
-            return this.resultTypeResolve(this.symbolTable.model, func, argumentTypes);
+            return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
         }
     }
     
@@ -1193,19 +1196,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                 let domainFunctionArgument = func.arguments[argNames[i].getText()];
                 argumentTypes[domainFunctionArgument.position] = literalList[i];
             }
-            return this.resultTypeResolve(this.symbolTable.model, func, argumentTypes);
+            return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
         }
     }
 
-    private resultTypeResolve(model: DomainModel, func: DomainFunction, argumentTypes: DomainType[]): DomainType {
-        if (func.resultType == null) {
-            return func.resultTypeResolver.resolveType(model, func, argumentTypes);
-        } else {
-            // TODO: validate argument types match
-            return func.resultType;
-        }
-    }
-    
     visitTerminal(node: TerminalNode) {
         if (node.getSymbol().type == BlazeExpressionLexer.EOF) {
             return null;

@@ -76,6 +76,25 @@ public interface ExpressionCompiler {
     public Predicate createPredicate(String expressionString, Context compileContext);
 
     /**
+     * Creates and compiles the given expression string with an empty compile context.
+     *
+     * @param expressionString The expression string to compile
+     * @return The compiled expression
+     */
+    public default Expression createExpressionOrPredicate(String expressionString) {
+        return createExpressionOrPredicate(expressionString, createContext(Collections.emptyMap()));
+    }
+
+    /**
+     * Creates and compiles the given expression string with the given compile context.
+     *
+     * @param expressionString The expression string to compile
+     * @param compileContext The compile context to use
+     * @return The compiled expression
+     */
+    public Expression createExpressionOrPredicate(String expressionString, Context compileContext);
+
+    /**
      * A compiler context that returns the domain type for available root variables.
      *
      * @author Christian Beikov

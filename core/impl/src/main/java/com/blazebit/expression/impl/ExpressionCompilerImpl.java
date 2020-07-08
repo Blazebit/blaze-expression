@@ -57,6 +57,12 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
             return parser.parseExpression();
         }
     };
+    private static final RuleInvoker<Expression> EXPRESSION_OR_PREDICATE_RULE_INVOKER = new RuleInvoker<Expression>() {
+        @Override
+        public ParserRuleContext invokeRule(PredicateParser parser) {
+            return parser.parseExpressionOrPredicate();
+        }
+    };
 
     private final DomainModel domainModel;
     private final LiteralFactory literalFactory;
@@ -79,6 +85,11 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
     @Override
     public Predicate createPredicate(String expressionString, Context compileContext) {
         return parse(expressionString, PREDICATE_RULE_INVOKER, compileContext);
+    }
+
+    @Override
+    public Expression createExpressionOrPredicate(String expressionString, Context compileContext) {
+        return parse(expressionString, EXPRESSION_OR_PREDICATE_RULE_INVOKER, compileContext);
     }
 
     public LiteralFactory getLiteralFactory() {

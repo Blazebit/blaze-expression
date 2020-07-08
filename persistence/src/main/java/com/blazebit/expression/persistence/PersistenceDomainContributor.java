@@ -28,6 +28,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
+import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
@@ -97,34 +98,44 @@ public class PersistenceDomainContributor implements DomainContributor {
         createBasicType(domainBuilder, INTEGER, "Integer", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
         createBasicType(domainBuilder, NUMERIC, "Numeric", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
         createBasicType(domainBuilder, STRING, "String", new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
-        // TODO: Need interval type
         createBasicType(domainBuilder, TIMESTAMP, "Timestamp", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
         createBasicType(domainBuilder, TIME, "Time", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
+        createBasicType(domainBuilder, INTERVAL, "Interval", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorHandler.INSTANCE, "INTERVAL"));
         createBasicType(domainBuilder, BOOLEAN, "Boolean", new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
         domainBuilder.withNumericLiteralResolver(NUMERIC_LITERAL_TYPE_RESOLVER);
         domainBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
         domainBuilder.withTemporalLiteralResolver(TEMPORAL_LITERAL_TYPE_RESOLVER);
         domainBuilder.withBooleanLiteralResolver(BOOLEAN_LITERAL_TYPE_RESOLVER);
-        // TODO: operation type resolvers shouldn't allow all operand types!
 
         for (Class<?> type : Arrays.asList(INTEGER, NUMERIC)) {
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(INTEGER));
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.widest(NUMERIC, INTEGER));
             domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_MINUS, StaticDomainOperationTypeResolvers.returning(type));
             domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_PLUS, StaticDomainOperationTypeResolvers.returning(type));
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(NUMERIC));
-            for (DomainOperator domainOperator : Arrays.asList(DomainOperator.PLUS, DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(NUMERIC, INTEGER, NUMERIC));
+            for (DomainOperator domainOperator : Arrays.asList(DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
                 domainBuilder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(NUMERIC, INTEGER));
             }
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(STRING, NUMERIC, INTEGER));
+
+            withPredicateTypeResolvers(domainBuilder, type, INTEGER, NUMERIC);
         }
 
-        domainBuilder.withOperationTypeResolver(STRING, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(STRING));
+        domainBuilder.withOperationTypeResolver(STRING, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(STRING, STRING, INTEGER, NUMERIC));
+        withPredicateTypeResolvers(domainBuilder, STRING, STRING);
         domainBuilder.withOperationTypeResolver(BOOLEAN, DomainOperator.NOT, StaticDomainOperationTypeResolvers.returning(BOOLEAN));
+        withPredicateTypeResolvers(domainBuilder, BOOLEAN, BOOLEAN);
 
-        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP));
-        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP));
+        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP, INTERVAL));
+        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP, INTERVAL));
+        withPredicateTypeResolvers(domainBuilder, TIMESTAMP, TIMESTAMP);
 
-        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME));
-        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME));
+        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME, INTERVAL));
+        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME, INTERVAL));
+        withPredicateTypeResolvers(domainBuilder, TIME, TIME);
+
+        domainBuilder.withOperationTypeResolver(INTERVAL, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP, TIME, INTERVAL));
+        domainBuilder.withOperationTypeResolver(INTERVAL, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP, TIME, INTERVAL));
+        withPredicateTypeResolvers(domainBuilder, INTERVAL, INTERVAL);
 
         CurrentTimestampFunction.addFunction(domainBuilder);
         CurrentDateFunction.addFunction(domainBuilder);
@@ -152,6 +163,12 @@ public class PersistenceDomainContributor implements DomainContributor {
         GreatestFunction.addFunction(domainBuilder);
         LeastFunction.addFunction(domainBuilder);
         SizeFunction.addFunction(domainBuilder);
+    }
+
+    private static void withPredicateTypeResolvers(DomainBuilder domainBuilder, Class<?> type, Class<?>... supportedTypes) {
+        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(type).getName())) {
+            domainBuilder.withPredicateTypeResolver(type, domainPredicate, StaticDomainPredicateTypeResolvers.returning(BOOLEAN, supportedTypes));
+        }
     }
 
     private <T extends ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance, String documentationKey) {

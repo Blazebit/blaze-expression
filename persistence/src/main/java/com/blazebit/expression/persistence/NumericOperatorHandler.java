@@ -19,7 +19,6 @@ package com.blazebit.expression.persistence;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ComparisonOperator;
-import com.blazebit.expression.persistence.util.ConversionUtils;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
@@ -94,9 +93,11 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
                 return null;
             }
 
-            if (leftValue instanceof BigInteger && rightValue instanceof BigInteger) {
-                BigInteger l = ConversionUtils.getBigInteger(leftValue);
-                BigInteger r = ConversionUtils.getBigInteger(rightValue);
+            if (rightValue instanceof String) {
+                return leftValue + rightValue.toString();
+            } else if (leftValue instanceof BigInteger && rightValue instanceof BigInteger) {
+                BigInteger l = (BigInteger) leftValue;
+                BigInteger r = (BigInteger) rightValue;
 
                 switch (operator) {
                     case PLUS:

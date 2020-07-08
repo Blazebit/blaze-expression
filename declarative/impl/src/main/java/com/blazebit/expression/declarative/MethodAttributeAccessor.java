@@ -21,7 +21,9 @@ import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.expression.spi.AttributeAccessor;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -30,7 +32,19 @@ import java.lang.reflect.Method;
  */
 public class MethodAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor, Serializable {
 
-    private final Method getter;
+    private static final Field GETTER;
+
+    static {
+        try {
+            Field field = MethodAttributeAccessor.class.getDeclaredField("getter");
+            field.setAccessible(true);
+            GETTER = field;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private final transient Method getter;
 
     public MethodAttributeAccessor(Method getter) {
         this.getter = getter;
@@ -54,4 +68,21 @@ public class MethodAttributeAccessor implements MetadataDefinition<AttributeAcce
     public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
         return this;
     }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.writeUTF(getter.getDeclaringClass().getName());
+        out.writeUTF(getter.getName());
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        String className = in.readUTF();
+        String methodName = in.readUTF();
+        try {
+            Method method = Class.forName(className).getDeclaredMethod(methodName);
+            GETTER.set(this, method);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
 }
