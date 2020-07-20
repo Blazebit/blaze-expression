@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "target/blaze-expression-predicate/**/*"
   ],
   "author": "Blazebit",
   "license": "Apache-2.0",
@@ -14,7 +15,7 @@
   "dependencies": {
     "antlr4": "^4.7.2",
     "monaco-editor": "^0.20.0",
-    "blaze-domain": "file:./../../../blaze-domain/typescript",
+    "blaze-domain": "^1.0.6",
     "blaze-expression-predicate": "file:./target/blaze-expression-predicate/"
   },
   "devDependencies": {
