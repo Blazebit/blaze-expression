@@ -13,6 +13,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-expression-declarative-entity-view</artifactId>
             <version>${project.version}</version>
@@ -21,6 +25,28 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-expression-editor-monaco</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-domain-declarative-integration-cdi</artifactId>
+            <version>${version.blaze-domain}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-integration-hibernate-5</artifactId>
+            <version>${version.blaze-persistence}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-core-impl</artifactId>
+            <version>${version.blaze-persistence}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-integration-entity-view-cdi</artifactId>
+            <version>${version.blaze-persistence}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>

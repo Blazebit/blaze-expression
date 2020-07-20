@@ -596,6 +596,9 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
                 for (int i = 0; i < literalList.size(); i++) {
                     EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(argNames.get(i).getText());
+                    if (attribute == null) {
+                        throw new DomainModelException("Invalid attribute name '" + argNames.get(i).getText() + "'! Entity '" + entityDomainType.getName() + "' expects the following attribute names: " + entityDomainType.getAttributes().keySet());
+                    }
                     arguments.put(attribute, literalList.get(i));
                 }
                 return new Literal(literalFactory.ofEntityAttributeValues(entityDomainType, arguments));
@@ -624,6 +627,13 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             Map<DomainFunctionArgument, DomainType> argumentTypes = new HashMap<>(literalList.size());
             for (int i = 0; i < literalList.size(); i++) {
                 DomainFunctionArgument domainFunctionArgument = function.getArgument(argNames.get(i).getText());
+                if (domainFunctionArgument == null) {
+                    List<String> argumentNames = new ArrayList<>(function.getArguments().size());
+                    for (DomainFunctionArgument argument : function.getArguments()) {
+                        argumentNames.add(argument.getName());
+                    }
+                    throw new DomainModelException("Invalid argument name '" + argNames.get(i).getText() + "'! Function '" + function.getName() + "' expects the following argument names: " + argumentNames);
+                }
                 argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
                 arguments.put(domainFunctionArgument, literalList.get(i));
             }

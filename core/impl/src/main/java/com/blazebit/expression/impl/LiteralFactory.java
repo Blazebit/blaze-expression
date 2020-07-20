@@ -89,7 +89,11 @@ public class LiteralFactory {
         if (enumLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for enum literals defined");
         }
-        return enumLiteralResolver.resolveLiteral(domainModel, domainEnumValue);
+        ResolvedLiteral literal = enumLiteralResolver.resolveLiteral(domainModel, domainEnumValue);
+        if (literal == null) {
+            throw new DomainModelException("Could not resolve enum literal for: " + domainEnumValue);
+        }
+        return literal;
     }
 
     public void appendEnumValue(StringBuilder sb, EnumDomainTypeValue domainEnumValue) {
@@ -98,16 +102,24 @@ public class LiteralFactory {
 
     public ResolvedLiteral ofEntityAttributeValues(EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, Expression> attributeValues) {
         if (entityLiteralResolver == null) {
-            throw new DomainModelException("No literal resolver for enum literals defined");
+            throw new DomainModelException("No literal resolver for entity literals defined");
         }
-        return entityLiteralResolver.resolveLiteral(domainModel, entityDomainType, attributeValues);
+        ResolvedLiteral literal = entityLiteralResolver.resolveLiteral(domainModel, entityDomainType, attributeValues);
+        if (literal == null) {
+            throw new DomainModelException("Could not resolve entity literal for type '" + entityDomainType + "' and attribute values: " + attributeValues);
+        }
+        return literal;
     }
 
     public ResolvedLiteral ofCollectionValues(CollectionDomainType collectionDomainType, Collection<Expression> expressions) {
         if (collectionLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for collection literals defined");
         }
-        return collectionLiteralResolver.resolveLiteral(domainModel, collectionDomainType, expressions);
+        ResolvedLiteral literal = collectionLiteralResolver.resolveLiteral(domainModel, collectionDomainType, expressions);
+        if (literal == null) {
+            throw new DomainModelException("Could not resolve collection literal for type '" + collectionDomainType + "' and expressions: " + expressions);
+        }
+        return literal;
     }
 
     public ResolvedLiteral ofTemporalIntervalString(String intervalString) {

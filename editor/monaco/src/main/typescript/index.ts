@@ -25,11 +25,12 @@ import {
     DomainOperator,
     DomainPredicate,
     DomainType,
+    DomainTypeResolverException,
     EntityAttribute,
     EntityDomainType,
     EntityLiteral,
-    EnumLiteral,
     EnumDomainType,
+    EnumLiteral,
     LiteralKind,
     LiteralResolver
 } from 'blaze-domain';
@@ -41,11 +42,10 @@ import {BlazeExpressionParser} from "blaze-expression-predicate/BlazeExpressionP
 import {BlazeExpressionParserVisitor} from "blaze-expression-predicate/BlazeExpressionParserVisitor.js"
 import ILineTokens = monaco.languages.ILineTokens;
 import IToken = monaco.languages.IToken;
-import type = Mocha.utils.type;
 
 let symbolTables: StringMap<SymbolTable> = {};
 
-export function createEditor(monaco, domElement: HTMLElement, input: string, extensions?: any, options?: monaco.editor.IStandaloneEditorConstructionOptions) {
+export function createEditor(monaco, domElement: HTMLElement, input: string, singleLineMode: boolean, extensions?: any, options?: monaco.editor.IStandaloneEditorConstructionOptions) {
     if (monaco.languages.getEncodedLanguageId('predicate') == 0) {
         monaco.languages.register({id: 'predicate'});
         monaco.languages.setTokensProvider('predicate', new PredicateTokensProvider());
@@ -58,8 +58,8 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
                 { open: '"', close: '"' },
             ],
             autoClosingPairs: [
-                { open: '[', close: ']' },
-                { open: '(', close: ')' },
+                { open: '[', close: ']', notIn: ['string'] },
+                { open: '(', close: ')', notIn: ['string'] },
                 { open: "'", close: "'", notIn: ['string'] },
                 { open: '"', close: '"', notIn: ['string'] },
             ]
@@ -127,18 +127,11 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
             ]
         });
 
-        // TODO: HoverProvider
-        // monaco.languages.registerHoverProvider('predicate', {provideHover: function (model, position, token) {
-        //
-        // }});
-        // TODO: SignatureHelpProvider
-        // monaco.languages.registerSignatureHelpProvider('predicate', {provideSignatureHelp: function(model, position, token, context) {
-        //
-        // }});
+        monaco.languages.registerHoverProvider('predicate', new PredicateHoverProvider());
+        monaco.languages.registerSignatureHelpProvider('predicate', new PredicateSignatureHelpProvider());
         monaco.languages.registerCompletionItemProvider('predicate', new PredicateCompletionProvider());
     }
 
-    let singleLineMode = true;
     if (typeof extensions === "undefined") {
         extensions = {};
     }
@@ -167,7 +160,7 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
             return domainModel.types['String'];
         }};
     });
-    registerIfAbsent("TemporalLiteralResolver", function(type: string): LiteralResolver {
+    registerIfAbsent("TemporalLiteralResolver", function(): LiteralResolver {
         return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
             if (kind == LiteralKind.INTERVAL) {
                 return domainModel.types['Interval'];
@@ -184,44 +177,58 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
     textModel.onWillDispose(function() {
         symbolTables[textModel.id] = null;
     });
+    let singleLineOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
+        theme: 'blazeTheme',
+        contextmenu: false,
+        wordWrap: 'off',
+        lineNumbers: 'off',
+        lineNumbersMinChars: 0,
+        overviewRulerLanes: 0,
+        overviewRulerBorder: false,
+        lineDecorationsWidth: 0,
+        hideCursorInOverviewRuler: true,
+        glyphMargin: false,
+        folding: false,
+        scrollBeyondLastColumn: 0,
+        scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
+        find: { addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false },
+        minimap: { enabled: false },
+        suggest: { showWords: false }
+    };
+    let multiLineOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
+        theme: 'blazeTheme',
+        contextmenu: false,
+        wordWrap: 'off',
+        lineNumbers: 'off',
+        lineNumbersMinChars: 0,
+        overviewRulerLanes: 0,
+        overviewRulerBorder: false,
+        lineDecorationsWidth: 0,
+        hideCursorInOverviewRuler: true,
+        glyphMargin: false,
+        folding: false,
+        scrollBeyondLastColumn: 0,
+        scrollbar: {horizontal: 'hidden', vertical: 'hidden'},
+        find: {addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false},
+        minimap: {enabled: false},
+        suggest: {showWords: false},
+    };
     if (typeof options !== 'object') {
         if (singleLineMode) {
+            options = singleLineOptions;
+        } else {
+            options = multiLineOptions;
+        }
+    } else {
+        if (singleLineMode) {
             options = {
-                theme: 'blazeTheme',
-                contextmenu: false,
-                wordWrap: 'off',
-                lineNumbers: 'off',
-                lineNumbersMinChars: 0,
-                overviewRulerLanes: 0,
-                overviewRulerBorder: false,
-                lineDecorationsWidth: 0,
-                hideCursorInOverviewRuler: true,
-                glyphMargin: false,
-                folding: false,
-                scrollBeyondLastColumn: 0,
-                scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
-                find: { addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false },
-                minimap: { enabled: false },
-                suggest: { showWords: false },
+                ...singleLineOptions,
+                ...options
             };
         } else {
             options = {
-                theme: 'blazeTheme',
-                contextmenu: false,
-                wordWrap: 'off',
-                lineNumbers: 'off',
-                lineNumbersMinChars: 0,
-                overviewRulerLanes: 0,
-                overviewRulerBorder: false,
-                lineDecorationsWidth: 0,
-                hideCursorInOverviewRuler: true,
-                glyphMargin: false,
-                folding: false,
-                scrollBeyondLastColumn: 0,
-                scrollbar: {horizontal: 'hidden', vertical: 'hidden'},
-                find: {addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false},
-                minimap: {enabled: false},
-                suggest: {showWords: false},
+                ...multiLineOptions,
+                ...options
             };
         }
     }
@@ -239,12 +246,28 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
         });
         editor.onDidPaste(e => {
            if (e.range.endLineNumber > 1) {
-               let newContent = "";
+               let newContent = textModel.getValueInRange({
+                   startLineNumber: 1,
+                   startColumn: e.range.startColumn,
+                   endLineNumber: 1,
+                   endColumn: e.range.endLineNumber > 1 ? Number.MAX_VALUE : e.range.endColumn
+               });
                let lineCount = textModel.getLineCount();
-               for (let i = 0; i < lineCount; i++) {
-                   newContent += textModel.getLineContent(i + 1);
+               for (let i = 1; i < lineCount; i++) {
+                   newContent += " " + textModel.getLineContent(i + 1);
                }
-               textModel.setValue(newContent);
+               // Undo the last paste operation which contains newlines
+               textModel['_commandManager'].undo();
+               // Instead push this new paste without newlines
+               editor.executeEdits('paste', [{
+                   range: {
+                       startLineNumber: 1,
+                       startColumn: e.range.startColumn,
+                       endLineNumber: 1,
+                       endColumn: e.range.startColumn + newContent.length
+                   },
+                   text: newContent
+               }]);
            }
         });
     }
@@ -264,7 +287,7 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, ext
                 message: e.message,
                 severity: monaco.MarkerSeverity.Error
             });
-        };
+        }
         monaco.editor.setModelMarkers(model, "owner", monacoErrors);
     });
     return editor;
@@ -334,13 +357,11 @@ export class SymbolTable {
     }
 }
 
-export class PredicateCompletionProvider implements monaco.languages.CompletionItemProvider {
+class PathResolvingProvider {
 
     identifierStart: RegExp;
     identifier: RegExp;
     pathOperators: RegExp;
-    disallowedOffendingChars: RegExp = /[")]/
-    triggerCharacters: string[] = [];
 
     constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
         this.identifierStart = identifierStart;
@@ -353,90 +374,11 @@ export class PredicateCompletionProvider implements monaco.languages.CompletionI
                 pathOperatorsRegex += "|";
             }
             pathOperatorsRegex += pathOperator.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-            if (pathOperator.length == 1) {
-                this.triggerCharacters.push(pathOperator);
-            }
         }
         this.pathOperators = new RegExp(pathOperatorsRegex);
     }
 
-    provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken): monaco.languages.CompletionList {
-        let suggestions: monaco.languages.CompletionItem[] = [];
-        let textBeforeCursor = model.getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column
-        });
-        let varSuggestion = function(v: string, s: Symbol): monaco.languages.CompletionItem {
-            return {
-                label: v,
-                kind: monaco.languages.CompletionItemKind.Variable,
-                detail: s.type.name,
-                documentation: s.documentation,
-                insertText: v,
-                range: null
-            }
-        };
-        let attrSuggestion = function(v: string, a: EntityAttribute): monaco.languages.CompletionItem {
-            let doc: IMarkdownString = null;
-            if (a.documentation != null) {
-                doc = {value: a.documentation, isTrusted: true};
-            }
-            return {
-                label: v,
-                kind: monaco.languages.CompletionItemKind.Field,
-                detail: a.type.name,
-                documentation: doc,
-                insertText: v,
-                range: null
-            }
-        };
-        let functionSuggestion = function(f: DomainFunction): monaco.languages.CompletionItem {
-            let label: string;
-            if (f.resultType == null) {
-                label = "any";
-            } else {
-                label = f.resultType.name;
-            }
-            label += " " + f.name + "(";
-
-            var paramInfo = "| | |\n" +
-                "|-------------|-------------|\n" +
-                "| Params         | |\n| |";
-            let documentation: string = "";
-            if (f.documentation != null) {
-                documentation += f.documentation + "\n\n";
-            }
-            for (var i = 0; i < f.arguments.length; i++) {
-                if (i != 0) {
-                    label += ", ";
-                    paramInfo += "\n| |";
-                }
-                let p = f.arguments[i];
-                if (p.type == null) {
-                    label += "any";
-                } else {
-                    label += p.type.name;
-                }
-                label += " " + p.name;
-                if (f.minArgumentCount != -1 && i >= f.minArgumentCount) {
-                    label += "?";
-                }
-                paramInfo += p.name + " - " + p.documentation;
-            }
-            label += ")";
-            documentation += "---\n\n" + paramInfo + " |";
-            return {
-                label: f.name,
-                detail: label,
-                kind: monaco.languages.CompletionItemKind.Function,
-                documentation: {value: documentation, isTrusted: true},
-                insertText: f.name + "()",
-                range: null
-            }
-        };
+    analyzePathBeforeCursor(textBeforeCursor: string): PathResult {
         let i = textBeforeCursor.length;
         var offendingChar = " ";
         // Only consider identifiers and paths
@@ -456,22 +398,391 @@ export class PredicateCompletionProvider implements monaco.languages.CompletionI
                 break;
             }
         }
+        return { text: textBeforeCursor, offendingChar: offendingChar };
+    }
+
+    analyzePathAroundCursor(model: monaco.editor.ITextModel, position: monaco.Position): PathResult {
+        let textBeforeCursor = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column
+        });
+        let pathResult = this.analyzePathBeforeCursor(textBeforeCursor);
+        let textAfterCursor = model.getValueInRange({
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: model.getLineMaxColumn(position.lineNumber)
+        });
+
+        let offendingChar = " ";
+        for (let i = 0; i < textAfterCursor.length; i++) {
+            let c = textAfterCursor.charAt(i);
+            if (this.pathOperators.test(c)) {
+                textAfterCursor = textAfterCursor.substring(0, i);
+                offendingChar = c;
+                break;
+            }
+            if (!this.identifier.test(c)) {
+                let text = textAfterCursor;
+                textAfterCursor = textAfterCursor.substring(0, i);
+                // Find the first non-whitespace offending char
+                do {
+                    if (!/\s/.test((c = text.charAt(i)))) {
+                        offendingChar = c;
+                        break;
+                    }
+                    i++;
+                } while (i != text.length);
+                break;
+            }
+        }
+        return { text: pathResult.text + textAfterCursor, offendingChar: offendingChar };
+    }
+
+    varSuggestion(v: string, s: Symbol): monaco.languages.CompletionItem {
+        return {
+            label: v,
+            kind: monaco.languages.CompletionItemKind.Variable,
+            detail: s.type.name,
+            documentation: s.documentation,
+            insertText: v,
+            range: null
+        }
+    }
+
+    attrSuggestion(v: string, a: EntityAttribute): monaco.languages.CompletionItem {
+        let doc: IMarkdownString = null;
+        if (a.documentation != null) {
+            doc = {value: a.documentation, isTrusted: true};
+        }
+        return {
+            label: v,
+            kind: monaco.languages.CompletionItemKind.Field,
+            detail: a.type.name,
+            documentation: doc,
+            insertText: v,
+            range: null
+        }
+    }
+
+    functionSuggestion(f: DomainFunction): monaco.languages.CompletionItem {
+        let label: string;
+        if (f.resultType == null) {
+            label = "any";
+        } else {
+            label = f.resultType.name;
+        }
+        label += " " + f.name + "(";
+
+        var paramInfo = "| Params | |\n" +
+            "|------------:|-------------|";
+        let documentation: string = "";
+        if (f.documentation != null) {
+            documentation += f.documentation + "\n\n";
+        }
+        for (var i = 0; i < f.arguments.length; i++) {
+            if (i != 0) {
+                label += ", ";
+            }
+            let p = f.arguments[i];
+            paramInfo += "\n| " + p.name + " | " + p.documentation;
+            if (p.type == null) {
+                label += "any";
+            } else {
+                label += p.type.name;
+            }
+            label += " " + p.name;
+            if (f.minArgumentCount != -1 && i >= f.minArgumentCount) {
+                label += "?";
+            }
+        }
+        label += ")";
+        documentation += "---\n\n" + paramInfo + " |";
+        return {
+            label: f.name,
+            detail: label,
+            kind: monaco.languages.CompletionItemKind.Function,
+            documentation: {value: documentation, isTrusted: true},
+            insertText: f.arguments.length == 0 && f.minArgumentCount == 0 ? f.name + "()" : f.name + "($0)",
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            range: null
+        }
+    }
+}
+
+interface PathResult {
+    text: string;
+    offendingChar: string;
+}
+
+export class PredicateHoverProvider extends PathResolvingProvider implements monaco.languages.HoverProvider {
+
+    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(identifierStart, identifier, pathOperators);
+    }
+
+    provideHover(model: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.Hover> {
+        let pathResult = this.analyzePathAroundCursor(model, position);
+        let path = pathResult.text;
+        let symbolTable = symbolTables[model.id];
+        let completionItem: monaco.languages.CompletionItem = null;
+        if (path.length != 0 && path.charAt(0).match(this.identifierStart)) {
+            let parts = path.split(this.pathOperators);
+            if (parts.length == 1) {
+                if (pathResult.offendingChar == "(") {
+                    let domainFunction = symbolTable.model.functions[path];
+                    if (domainFunction != null) {
+                        completionItem = this.functionSuggestion(domainFunction);
+                    }
+                } else {
+                    let variable = symbolTable.variables[path];
+                    if (variable != null) {
+                        completionItem = this.varSuggestion(path, variable);
+                    }
+                }
+            } else {
+                let domainType = symbolTable.variables[parts[0]].type;
+                let attribute = null;
+                for (let i = 1; i < parts.length; i++) {
+                    if (domainType instanceof CollectionDomainType) {
+                        domainType = domainType.elementType;
+                    }
+                    if (domainType instanceof EntityDomainType) {
+                        attribute = domainType.attributes[parts[i]];
+                        if (attribute == null) {
+                            domainType = null;
+                            break;
+                        }
+                        domainType = attribute.type;
+                    } else {
+                        domainType = null;
+                        break;
+                    }
+                }
+                if (attribute != null) {
+                    completionItem = this.attrSuggestion(path, attribute);
+                }
+            }
+        }
+        if (completionItem != null) {
+            let docVal = "";
+            let doc: string | IMarkdownString = completionItem.documentation;
+            if (doc != null) {
+                if (typeof doc === 'string' || doc instanceof String) {
+                    docVal = "\n\n" + doc;
+                } else {
+                    docVal = "\n\n" + doc.value;
+                }
+            }
+            return {
+                contents: [ { value: "```\n" + completionItem.detail + "\n```" + docVal, isTrusted: true } ]
+            };
+        }
+        return null;
+    }
+
+}
+
+export class PredicateSignatureHelpProvider extends PathResolvingProvider implements monaco.languages.SignatureHelpProvider {
+
+    readonly signatureHelpRetriggerCharacters: ReadonlyArray<string>;
+    readonly signatureHelpTriggerCharacters: ReadonlyArray<string>;
+
+    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(identifierStart, identifier, pathOperators);
+        this.signatureHelpTriggerCharacters = [',', '('];
+    }
+
+    provideSignatureHelp(model: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.SignatureHelpContext): monaco.languages.ProviderResult<monaco.languages.SignatureHelpResult> {
+        let originalPosition = position;
+        let ranges: monaco.Range[] = null;
+        do {
+            ranges = (model as any).findEnclosingBrackets(position);
+            if (ranges == null || ranges.length == 0) {
+                break;
+            }
+            let bracketType = model.getValueInRange({
+                startLineNumber: ranges[0].startLineNumber,
+                startColumn: ranges[0].startColumn,
+                endLineNumber: ranges[0].endLineNumber,
+                endColumn: ranges[0].endColumn
+            });
+            if (bracketType == '(' || bracketType == ')') {
+                break;
+            }
+            let startLineNumber = Number.MAX_VALUE;
+            let startColumn = Number.MAX_VALUE;
+            for (let i = 0; i < ranges.length; i++) {
+                if (ranges[i].startLineNumber < startLineNumber || ranges[i].startLineNumber == startLineNumber && ranges[i].startColumn < startColumn) {
+                    startLineNumber = ranges[i].startLineNumber;
+                    startColumn = ranges[i].startColumn;
+                }
+            }
+            if (startColumn == 1) {
+                if (startLineNumber == 1) {
+                    ranges = null;
+                    break;
+                } else {
+                    position = new monaco.Position(startLineNumber - 1, model.getLineMaxColumn(startLineNumber - 1));
+                }
+            } else {
+                position = new monaco.Position(startLineNumber, startColumn - 1);
+            }
+        } while (true);
+        if (ranges != null && ranges.length != 0) {
+            let startLineNumber = Number.MAX_VALUE;
+            let startColumn = Number.MAX_VALUE;
+            let endLineNumber = Number.MIN_VALUE;
+            let endColumn = Number.MIN_VALUE;
+            for (let i = 0; i < ranges.length; i++) {
+                if (ranges[i].startLineNumber < startLineNumber || ranges[i].startLineNumber == startLineNumber && ranges[i].startColumn < startColumn) {
+                    startLineNumber = ranges[i].startLineNumber;
+                    startColumn = ranges[i].startColumn;
+                }
+                if (ranges[i].startLineNumber > endLineNumber || ranges[i].endLineNumber == endLineNumber && ranges[i].endColumn > endColumn) {
+                    endLineNumber = ranges[i].endLineNumber;
+                    endColumn = ranges[i].endColumn;
+                }
+            }
+            let textBeforeCursor = model.getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: startLineNumber,
+                endColumn: startColumn
+            });
+            let pathResult = this.analyzePathBeforeCursor(textBeforeCursor);
+            let path = pathResult.text;
+
+            let symbolTable = symbolTables[model.id];
+            let completionItem = null;
+            if (path.length != 0 && path.charAt(0).match(this.identifierStart)) {
+                let parts = path.split(this.pathOperators);
+                if (parts.length == 1) {
+                    let domainFunction = symbolTable.model.functions[path];
+                    if (domainFunction != null) {
+                        let maxArgumentCount = Math.max(domainFunction.argumentCount, domainFunction.arguments.length);
+                        let activeParameter = 0;
+                        // Try to find out the active parameter
+                        let cursorOffset = model.getOffsetAt(originalPosition);
+                        let bracketOffset = model.getOffsetAt({ lineNumber: startLineNumber, column: startColumn });
+                        let cursorIndex = cursorOffset - bracketOffset;
+                        let bracketExpression = model.getValueInRange({
+                            startLineNumber: startLineNumber,
+                            startColumn: startColumn,
+                            endLineNumber: endLineNumber,
+                            endColumn: endColumn
+                        });
+
+                        // try {
+                        // let subExpression = path + bracketExpression;
+                        //     // TODO: Maybe try to somehow gracefully recover from syntax errors
+                        //     let tree = parseTree(subExpression);
+                        //     console.log(tree);
+                        //     // TODO: we have to collect the function argument parse trees and match them against the cursor
+                        // } catch (e) {
+
+                            let paramsString = bracketExpression.substring(1, bracketExpression.length - 1);
+                            cursorIndex -= 2;
+                            let startIdx = 0;
+                            let commaIndex = -1;
+                            do {
+                                let idx = paramsString.indexOf(",", commaIndex + 1);
+                                if (idx == -1 || idx > cursorIndex || activeParameter == maxArgumentCount) {
+                                    break;
+                                }
+
+                                let expr = paramsString.substring(startIdx, idx);
+                                try {
+                                    parseTree(expr);
+                                    startIdx = idx + 1;
+                                    activeParameter++;
+                                } catch (e) {}
+                                commaIndex = idx;
+                            } while (commaIndex != -1);
+                        // }
+
+                        completionItem = this.functionSuggestion(domainFunction);
+                        let params: monaco.languages.ParameterInformation[] = [];
+                        for (var i = 0; i < domainFunction.arguments.length; i++) {
+                            let p = domainFunction.arguments[i];
+                            let label;
+                            if (p.type == null) {
+                                label = "any";
+                            } else {
+                                label = p.type.name;
+                            }
+                            label += " " + p.name;
+                            if (domainFunction.minArgumentCount != -1 && i >= domainFunction.minArgumentCount) {
+                                label += "?";
+                            }
+                            params.push({ label: label, documentation: p.documentation });
+                        }
+                        let doc: IMarkdownString = null;
+                        if (domainFunction.documentation != null) {
+                            doc = { value: domainFunction.documentation, isTrusted: true };
+                        }
+                        return {
+                            value: {
+                                activeSignature: 0,
+                                activeParameter: activeParameter,
+                                signatures: [
+                                    { label: completionItem.detail, documentation: doc, parameters: params }
+                                ]
+                            },
+                            dispose() {}
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+}
+
+export class PredicateCompletionProvider extends PathResolvingProvider implements monaco.languages.CompletionItemProvider {
+
+    disallowedOffendingChars: RegExp = /[")]/
+    triggerCharacters: string[] = [];
+
+    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(identifierStart, identifier, pathOperators);
+        for (var i = 0; i < pathOperators.length; i++) {
+            let pathOperator = pathOperators[i];
+            if (pathOperator.length == 1) {
+                this.triggerCharacters.push(pathOperator);
+            }
+        }
+    }
+
+    provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken): monaco.languages.CompletionList {
+        let suggestions: monaco.languages.CompletionItem[] = [];
+        let textBeforeCursor = model.getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column
+        });
+        let pathResult = this.analyzePathBeforeCursor(textBeforeCursor);
+        textBeforeCursor = pathResult.text;
+        var offendingChar = pathResult.offendingChar;
 
         let symbolTable = symbolTables[model.id];
         if (textBeforeCursor.length != 0 && textBeforeCursor.charAt(0).match(this.identifierStart)) {
             let parts = textBeforeCursor.split(this.pathOperators);
             if (parts.length == 1) {
                 for (let v in symbolTable.variables) {
-                    suggestions.push(varSuggestion(v, symbolTable.variables[v]));
+                    suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
                 }
                 let funcs = symbolTable.model.functions;
                 for (let f in funcs) {
-                    suggestions.push(functionSuggestion(funcs[f]));
+                    suggestions.push(this.functionSuggestion(funcs[f]));
                 }
             } else {
                 let domainType = symbolTable.variables[parts[0]].type;
                 let lastIdx = parts.length - 1;
-                for (i = 1; i < lastIdx; i++) {
+                for (let i = 1; i < lastIdx; i++) {
                     if (domainType instanceof CollectionDomainType) {
                         domainType = domainType.elementType;
                     }
@@ -492,7 +803,7 @@ export class PredicateCompletionProvider implements monaco.languages.CompletionI
                 }
                 if (domainType instanceof EntityDomainType) {
                     for (let a in domainType.attributes) {
-                        suggestions.push(attrSuggestion(a, domainType.attributes[a]));
+                        suggestions.push(this.attrSuggestion(a, domainType.attributes[a]));
                     }
                 }
             }
@@ -506,11 +817,11 @@ export class PredicateCompletionProvider implements monaco.languages.CompletionI
                 };
             }
             for (let v in symbolTable.variables) {
-                suggestions.push(varSuggestion(v, symbolTable.variables[v]));
+                suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
             }
             let funcs = symbolTable.model.functions;
             for (let f in funcs) {
-                suggestions.push(functionSuggestion(funcs[f]));
+                suggestions.push(this.functionSuggestion(funcs[f]));
             }
         }
         return {
@@ -791,11 +1102,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left.getType(), [1, 2, 3]);
         } else {
-            let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, [left]);
-            if (domainType == null) {
-                throw this.cannotResolvePredicateType(ctx, DomainPredicate.NULLNESS, [left]);
-            } else {
-                return this.booleanDomainType;
+            try {
+                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, [left]);
+                if (domainType == null) {
+                    throw this.cannotResolvePredicateType(ctx, DomainPredicate.NULLNESS, [left]);
+                } else {
+                    return this.booleanDomainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -808,11 +1127,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left, [1, 2, 3]);
         } else {
-            let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, [left]);
-            if (domainType == null) {
-                throw this.cannotResolvePredicateType(ctx, DomainPredicate.COLLECTION, [left]);
-            } else {
-                return this.booleanDomainType;
+            try {
+                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, [left]);
+                if (domainType == null) {
+                    throw this.cannotResolvePredicateType(ctx, DomainPredicate.COLLECTION, [left]);
+                } else {
+                    return this.booleanDomainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -879,11 +1206,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
         } else {
-            let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolvePredicateType(ctx, domainPredicate, operandTypes);
-            } else {
-                return this.booleanDomainType;
+            try {
+                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolvePredicateType(ctx, domainPredicate, operandTypes);
+                } else {
+                    return this.booleanDomainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -898,11 +1233,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
         } else {
             operandTypes.unshift(left);
-            let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolvePredicateType(ctx, DomainPredicate.EQUALITY, operandTypes);
-            } else {
-                return this.booleanDomainType;
+            try {
+                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolvePredicateType(ctx, DomainPredicate.EQUALITY, operandTypes);
+                } else {
+                    return this.booleanDomainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -919,11 +1262,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
         } else {
             let operandTypes = [left, lower, upper];
-            let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolvePredicateType(ctx, DomainPredicate.RELATIONAL, operandTypes);
-            } else {
-                return this.booleanDomainType;
+            try {
+                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolvePredicateType(ctx, DomainPredicate.RELATIONAL, operandTypes);
+                } else {
+                    return this.booleanDomainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -993,11 +1344,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 1);
         } else {
-            let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolveOperationType(ctx, operator, operandTypes);
-            } else {
-                return domainType;
+            try {
+                let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolveOperationType(ctx, operator, operandTypes);
+                } else {
+                    return domainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -1010,11 +1369,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 0);
         } else {
-            let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolveOperationType(ctx, DomainOperator.UNARY_MINUS, operandTypes);
-            } else {
-                return domainType;
+            try {
+                let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolveOperationType(ctx, DomainOperator.UNARY_MINUS, operandTypes);
+                } else {
+                    return domainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -1027,11 +1394,19 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 0);
         } else {
-            let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
-            if (domainType == null) {
-                throw this.cannotResolveOperationType(ctx, DomainOperator.UNARY_PLUS, operandTypes);
-            } else {
-                return domainType;
+            try {
+                let domainType = operationTypeResolver.resolveType(this.symbolTable.model, operandTypes);
+                if (domainType == null) {
+                    throw this.cannotResolveOperationType(ctx, DomainOperator.UNARY_PLUS, operandTypes);
+                } else {
+                    return domainType;
+                }
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
             }
         }
     }
@@ -1158,7 +1533,15 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                     argumentTypes.push(literalList[i]);
                 }
             }
-            return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
+            try {
+                return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
+            }
         }
     }
     
@@ -1171,8 +1554,21 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                 let argNames: BlazeExpressionParser.IdentifierContext[] = ctx.identifier();
                 let literalList = this.getExpressionList(ctx.predicateOrExpression());
                 let args: StringMap<any> = {};
+                argNames.shift()
                 for (let i = 0; i < literalList.length; i++) {
-                    let attribute = type.attributes[argNames[i].getText()];
+                    let arg = argNames[i].getText();
+                    let attribute = type.attributes[arg];
+                    if (attribute == null) {
+                        let argumentNames = "[";
+                        for (let name in type.attributes) {
+                            if (argumentNames.length != 1) {
+                                argumentNames += ", ";
+                            }
+                            argumentNames += name;
+                        }
+                        argumentNames += "]";
+                        throw new DomainModelException("Invalid attribute name '" + arg + "'! Entity '" + type.name + "' expects the following attribute names: " + argumentNames, argNames[i], -1, -1, -1, -1);
+                    }
                     args[attribute.name] = literalList[i];
                 }
                 return this.symbolTable.model.entityLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENTITY, {
@@ -1191,12 +1587,39 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
             if (literalList.length < func.minArgumentCount) {
                 throw new DomainModelException("Function '" + func.name + "' expects at least " + func.minArgumentCount + " arguments but found " + literalList.length, ctx, -1, -1, -1, -1);
             }
+            argNames.shift();
             let argumentTypes: DomainType[] = new Array(func.arguments.length);
             for (let i = 0; i < literalList.length; i++) {
-                let domainFunctionArgument = func.arguments[argNames[i].getText()];
+                let domainFunctionArgument = null;
+                let arg = argNames[i].getText();
+                for (let j = 0; j < func.arguments.length; j++) {
+                    if (func.arguments[j].name == arg) {
+                        domainFunctionArgument = func.arguments[j];
+                        break;
+                    }
+                }
+                if (domainFunctionArgument == null) {
+                    let argumentNames = "[";
+                    for (let j = 0; j < func.arguments.length; j++) {
+                        if (j != 0) {
+                            argumentNames += ", ";
+                        }
+                        argumentNames += func.arguments[j].name;
+                    }
+                    argumentNames += "]";
+                    throw new DomainModelException("Invalid argument name '" + arg + "'! Function '" + func.name + "' expects the following argument names: " + argumentNames, argNames[i], -1, -1, -1, -1);
+                }
                 argumentTypes[domainFunctionArgument.position] = literalList[i];
             }
-            return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
+            try {
+                return func.resultTypeResolver.resolveType(this.symbolTable.model, func, argumentTypes);
+            } catch (e) {
+                if (e instanceof DomainTypeResolverException) {
+                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -1305,7 +1728,7 @@ export class ExpressionException extends Error {
 
     constructor(message: string, ctx: ParserRuleContext, startLine: number, endLine: number, startCol: number, endCol: number) {
         super(message);
-        Object.setPrototypeOf(this, ExpressionException.prototype);
+        Object.setPrototypeOf(this, new.target.prototype);
         if (ctx == null) {
             this.error = new ErrorEntry(startLine, endLine, startCol, endCol, message);
         } else {

@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.examples.web.editor;
+package com.blazebit.expression.examples.web.editor.view;
+
+import com.blazebit.persistence.view.IdMapping;
+
+import java.io.Serializable;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class Test {
+public interface IdHolderView extends Serializable {
+
+    @IdMapping
+    Long getId();
 }

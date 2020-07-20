@@ -12,6 +12,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-expression-declarative-api</artifactId>
             <version>${project.version}</version>
@@ -20,6 +25,11 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-expression-persistence</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-persistence-core-api</artifactId>
+            <version>${version.blaze-persistence}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
