@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.blazebit</groupId>
         <artifactId>blaze-expression-editor</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0-Alpha8</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -60,21 +60,21 @@
                                 <mkdir dir="${project.build.directory}/antlr4" />
                                 <unzip dest="${project.build.directory}/antlr4">
                                     <fileset dir="${project.build.directory}/antlr4-deps">
-                                        <include name="*.jar"/>
+                                        <include name="*.jar" />
                                     </fileset>
                                     <patternset>
-                                        <include name="**/*.g4"/>
+                                        <include name="**/*.g4" />
                                     </patternset>
-                                    <mapper type="flatten"/>
+                                    <mapper type="flatten" />
                                 </unzip>
                                 <copy todir="${project.build.directory}/antlr4">
                                     <fileset dir="${project.basedir}/src/main/antlr4">
-                                        <include name="*.g4"/>
+                                        <include name="*.g4" />
                                     </fileset>
                                 </copy>
                                 <copy todir="${project.build.directory}/blaze-expression-predicate">
                                     <fileset dir="${project.basedir}/src/main/antlr4">
-                                        <include name="*.json"/>
+                                        <include name="*.json" />
                                     </fileset>
                                 </copy>
                             </target>
