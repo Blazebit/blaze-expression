@@ -80,10 +80,15 @@ literal
     | timestampLiteral
     | temporalIntervalLiteral
     | collectionLiteral
+    | entityLiteral
     ;
 
 collectionLiteral
     : LB (literal (COMMA literal)*)? RB
+    ;
+
+entityLiteral
+    : name=identifier LP (identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression RP
     ;
 
 functionInvocation

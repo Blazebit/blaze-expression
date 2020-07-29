@@ -583,6 +583,32 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @Override
+    public Expression visitEntityLiteral(PredicateParser.EntityLiteralContext ctx) {
+        String entityOrFunctionName = ctx.name.getText();
+        DomainType type = domainModel.getType(entityOrFunctionName);
+        if (type instanceof EntityDomainType) {
+            EntityDomainType entityDomainType = (EntityDomainType) type;
+            List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
+            argNames.remove(0);
+            return createEntityLiteral(entityDomainType, argNames, getExpressionList(ctx.predicateOrExpression()));
+        } else {
+            throw unknownType(entityOrFunctionName);
+        }
+    }
+
+    protected Expression createEntityLiteral(EntityDomainType entityDomainType, List<PredicateParser.IdentifierContext> argNames, List<Expression> literalList) {
+        Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
+        for (int i = 0; i < literalList.size(); i++) {
+            EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(argNames.get(i).getText());
+            if (attribute == null) {
+                throw new DomainModelException("Invalid attribute name '" + argNames.get(i).getText() + "'! Entity '" + entityDomainType.getName() + "' expects the following attribute names: " + entityDomainType.getAttributes().keySet());
+            }
+            arguments.put(attribute, literalList.get(i));
+        }
+        return new Literal(literalFactory.ofEntityAttributeValues(entityDomainType, arguments));
+    }
+
+    @Override
     public Expression visitNamedInvocation(PredicateParser.NamedInvocationContext ctx) {
         String entityOrFunctionName = ctx.name.getText();
         DomainFunction function = domainModel.getFunction(entityOrFunctionName);
@@ -592,16 +618,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 EntityDomainType entityDomainType = (EntityDomainType) type;
                 List<PredicateParser.IdentifierContext> argNames = ctx.identifier();
                 argNames.remove(0);
-                List<Expression> literalList = getExpressionList(ctx.predicateOrExpression());
-                Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
-                for (int i = 0; i < literalList.size(); i++) {
-                    EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(argNames.get(i).getText());
-                    if (attribute == null) {
-                        throw new DomainModelException("Invalid attribute name '" + argNames.get(i).getText() + "'! Entity '" + entityDomainType.getName() + "' expects the following attribute names: " + entityDomainType.getAttributes().keySet());
-                    }
-                    arguments.put(attribute, literalList.get(i));
-                }
-                return new Literal(literalFactory.ofEntityAttributeValues(entityDomainType, arguments));
+                return createEntityLiteral(entityDomainType, argNames, getExpressionList(ctx.predicateOrExpression()));
             } else {
                 throw unknownFunction(entityOrFunctionName);
             }

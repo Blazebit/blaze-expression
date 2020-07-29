@@ -1544,6 +1544,42 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
             }
         }
     }
+
+    visitEntityLiteral(ctx: BlazeExpressionParser.EntityLiteralContext) {
+        let entityOrFunctionName = ctx.name.getText();
+        let type = this.symbolTable.model.types[entityOrFunctionName];
+        if (type instanceof EntityDomainType) {
+            let argNames: BlazeExpressionParser.IdentifierContext[] = ctx.identifier();
+            argNames.shift()
+            return this.createEntityLiteral(type, argNames, this.getExpressionList(ctx.predicateOrExpression()));
+        } else {
+            throw this.unknownType(ctx, entityOrFunctionName);
+        }
+    }
+
+    private createEntityLiteral(type: EntityDomainType, argNames: BlazeExpressionParser.IdentifierContext[], literalList: DomainType[]): DomainType {
+        let args: StringMap<any> = {};
+        for (let i = 0; i < literalList.length; i++) {
+            let arg = argNames[i].getText();
+            let attribute = type.attributes[arg];
+            if (attribute == null) {
+                let argumentNames = "[";
+                for (let name in type.attributes) {
+                    if (argumentNames.length != 1) {
+                        argumentNames += ", ";
+                    }
+                    argumentNames += name;
+                }
+                argumentNames += "]";
+                throw new DomainModelException("Invalid attribute name '" + arg + "'! Entity '" + type.name + "' expects the following attribute names: " + argumentNames, argNames[i], -1, -1, -1, -1);
+            }
+            args[attribute.name] = literalList[i];
+        }
+        return this.symbolTable.model.entityLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENTITY, {
+            entityType: type,
+            attributeValues: args
+        });
+    }
     
     visitNamedInvocation(ctx: BlazeExpressionParser.NamedInvocationContext) {
         let entityOrFunctionName = ctx.name.getText();
@@ -1552,29 +1588,8 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
             let type = this.symbolTable.model.types[entityOrFunctionName];
             if (type instanceof EntityDomainType) {
                 let argNames: BlazeExpressionParser.IdentifierContext[] = ctx.identifier();
-                let literalList = this.getExpressionList(ctx.predicateOrExpression());
-                let args: StringMap<any> = {};
                 argNames.shift()
-                for (let i = 0; i < literalList.length; i++) {
-                    let arg = argNames[i].getText();
-                    let attribute = type.attributes[arg];
-                    if (attribute == null) {
-                        let argumentNames = "[";
-                        for (let name in type.attributes) {
-                            if (argumentNames.length != 1) {
-                                argumentNames += ", ";
-                            }
-                            argumentNames += name;
-                        }
-                        argumentNames += "]";
-                        throw new DomainModelException("Invalid attribute name '" + arg + "'! Entity '" + type.name + "' expects the following attribute names: " + argumentNames, argNames[i], -1, -1, -1, -1);
-                    }
-                    args[attribute.name] = literalList[i];
-                }
-                return this.symbolTable.model.entityLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENTITY, {
-                    entityType: type,
-                    attributeValues: args
-                });
+                return this.createEntityLiteral(type, argNames, this.getExpressionList(ctx.predicateOrExpression()));
             } else {
                 throw this.unknownFunction(ctx, entityOrFunctionName);
             }

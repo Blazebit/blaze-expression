@@ -15,7 +15,7 @@
   "dependencies": {
     "antlr4": "^4.7.2",
     "monaco-editor": "^0.20.0",
-    "blaze-domain": "^1.0.6",
+    "blaze-domain": "^1.0.8",
     "blaze-expression-predicate": "file:./target/blaze-expression-predicate/"
   },
   "devDependencies": {

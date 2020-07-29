@@ -155,7 +155,7 @@ The persistence and declarative persistence modules allow to make use of some co
 
 ```java
 @DomainType
-@EntityType(Cat.class)
+@EntityView(Cat.class)
 interface CatModel {
   @EntityAttribute
   String getName();
@@ -180,7 +180,6 @@ The predicate could be evaluated against an object i.e. interpreted
 ```java
 ExpressionInterpreter interpreter = expressionServiceFactory.createInterpreter();
 ExpressionInterpreter.Context context = interpreter.createContext(
-    Collections.singletonMap("c", domain.getType("CatModel")),
     Collections.singletonMap("c", new CatModelImpl("Cat 1", 19))
 );
 Boolean result = interpreter.evaluate(predicate, context);
