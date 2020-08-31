@@ -56,6 +56,7 @@ predicate
     | expression NOT? IN inList                                                                 # InPredicate
     | lhs=expression NOT? BETWEEN start=expression AND end=expression                           # BetweenPredicate
     | functionInvocation                                                                        # BooleanFunction
+    | path                                                                                      # PathPredicate
     ;
 
 predicateOrExpression
