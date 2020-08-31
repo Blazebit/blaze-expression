@@ -52,6 +52,8 @@ import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.TypeErrorException;
+import com.blazebit.expression.impl.PredicateParser.PathContext;
+import com.blazebit.expression.impl.PredicateParser.PathPredicateContext;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -239,7 +241,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         );
     }
 
-    public Predicate createComparisonPredicate(ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator comparisonOperator) {
+    private Predicate createComparisonPredicate(ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator comparisonOperator) {
         List<DomainType> operandTypes = Arrays.asList(left.getType(), right.getType());
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), comparisonOperator.getDomainPredicate());
 
@@ -488,6 +490,18 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitPath(PredicateParser.PathContext ctx) {
+        return createPathExpression(ctx);
+    }
+    @Override
+    public Expression visitPathPredicate(PathPredicateContext ctx) {
+        Expression expression = createPathExpression(ctx.path());
+        DomainType type = expression.getType();
+        if (!type.equals(getBooleanDomainType())) {
+            throw unsupportedType(expression.getType().toString());
+        }
+        return new ExpressionPredicate(type, expression, false);
+    }
+    private Expression createPathExpression(PathContext ctx) {
         List<PredicateParser.IdentifierContext> identifiers = ctx.identifier();
         int size = identifiers.size();
         String alias = identifiers.get(0).getText();
@@ -520,7 +534,6 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                     throw unsupportedType(type.toString());
                 }
             }
-
             return new Path(alias, pathAttributes, type);
         }
     }

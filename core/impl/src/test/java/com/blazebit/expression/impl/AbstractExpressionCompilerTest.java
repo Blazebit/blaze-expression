@@ -107,6 +107,7 @@ public abstract class AbstractExpressionCompilerTest {
                     .addAttribute("age", Integer.class)
                     .addAttribute("birthday", Instant.class)
                     .addAttribute("gender", Gender.class)
+                    .addAttribute("active", Boolean.class)
                 .build();
 
         for (final Class<?> type : Arrays.asList(Integer.class, Long.class, BigDecimal.class)) {

@@ -16,11 +16,15 @@
 
 package com.blazebit.expression.impl;
 
+import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.SyntaxErrorException;
+import com.blazebit.expression.TypeErrorException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Christian Beikov
@@ -193,5 +197,30 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
                 ),
                 predicate
         );
+    }
+
+    @Test
+    public void testBooleanPathPredicate() {
+        Predicate predicate = parsePredicate("user.active");
+        assertEquals(
+                attr("user", "active"),
+                ((ExpressionPredicate) predicate).getExpression()
+        );
+        assertFalse(predicate.isNegated());
+    }
+
+    @Test
+    public void testNegatedBooleanPathPredicate() {
+        Predicate predicate = parsePredicate("!user.active");
+        assertEquals(
+                attr("user", "active"),
+                ((ExpressionPredicate) predicate).getExpression()
+        );
+        assertTrue(predicate.isNegated());
+    }
+
+    @Test(expected = TypeErrorException.class)
+    public void testNonBooleanPathPredicate() {
+        Predicate predicate = parsePredicate("user.email");
     }
 }
