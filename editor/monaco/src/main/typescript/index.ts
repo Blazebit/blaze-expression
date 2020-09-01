@@ -1445,8 +1445,18 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         };
         return this.symbolTable.model.collectionLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.COLLECTION, literal);
     }
-    
+
+    visitPathPredicate(ctx: BlazeExpressionParser.PathPredicateContext) {
+        let type = this.createPathExpression(ctx.path);
+        if (type == this.booleanDomainType) {
+            return type;
+        }
+        throw this.unsupportedType(ctx.path.identifier(), type.name);
+    }
     visitPath(ctx: BlazeExpressionParser.PathContext) {
+        return this.createPathExpression(ctx);
+    }
+    createPathExpression(ctx: BlazeExpressionParser.PathContext) {
         let identifiers = ctx.identifier();
         let alias = identifiers[0].getText();
         let symbol = this.symbolTable.variables[alias];

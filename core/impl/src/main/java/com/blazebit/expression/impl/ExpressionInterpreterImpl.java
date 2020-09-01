@@ -138,16 +138,11 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     @Override
     public Object visit(ExpressionPredicate e) {
         try {
-            Object left = e.getExpression().accept(this);
-            if (left == null) {
+            Boolean result = (Boolean)e.getExpression().accept(this);
+            if (result == null) {
                 return null;
             }
-            Boolean testValue = e.isNegated() ? Boolean.TRUE : Boolean.FALSE;
-            Boolean b = compare(e.getExpression().getType(), e.getExpression().getType(), left, left, ComparisonOperator.EQUAL);
-            if (!testValue.equals(b)) {
-                return b;
-            }
-            return testValue;
+            return (e.isNegated() != result);
         } finally {
             typeAdapter = null;
         }
