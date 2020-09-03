@@ -14,6 +14,7 @@ import com.blazebit.expression.Expressions;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.persistence.function.CurrentTimestampFunction;
 import com.blazebit.expression.spi.AttributeAccessor;
+import com.blazebit.expression.spi.TypeAdapter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,11 +39,11 @@ public class ExpressionInterpreterTest {
     private final Map<String, Object> testData = new HashMap<>();
 
     public class User {
-        Boolean status;
+        String status;
         public User(Boolean status) {
-            this.status = status;
+            this.status = status.toString();
         }
-        public Boolean getStatus() {
+        public String getStatus() {
             return status;
         }
     }
@@ -62,10 +63,41 @@ public class ExpressionInterpreterTest {
             return this;
         }
     }
+    private static class BooleanTypeAdapter implements TypeAdapter<String, Boolean> {
+        public static final BooleanTypeAdapter INSTANCE = new BooleanTypeAdapter();
+
+        @Override
+        public Boolean toInternalType(ExpressionInterpreter.Context context, String value, DomainType domainType) {
+            return value == null || value.isEmpty() ? null : Boolean.valueOf(value);
+        }
+
+        @Override
+        public String toModelType(ExpressionInterpreter.Context context, Boolean value, DomainType domainType) {
+            return value == null ? null : value.toString();
+        }
+    }
+    private static class TypeAdapterMetadataDefinition implements MetadataDefinition<TypeAdapter<?, ?>> {
+        private final TypeAdapter<?, ?> typeAdapter;
+
+        public TypeAdapterMetadataDefinition(TypeAdapter<?, ?> typeAdapter) {
+            this.typeAdapter = typeAdapter;
+        }
+
+        @Override
+        public Class<TypeAdapter<?, ?>> getJavaType() {
+            return (Class<TypeAdapter<?, ?>>) (Class<?>) TypeAdapter.class;
+        }
+
+        @Override
+        public TypeAdapter<?, ?> build(MetadataDefinitionHolder<?> definitionHolder) {
+            return typeAdapter;
+        }
+    }
 
     public ExpressionInterpreterTest() {
-        MetadataDefinition[] statusAttributeMetadata = new MetadataDefinition[1];
+        MetadataDefinition[] statusAttributeMetadata = new MetadataDefinition[2];
         statusAttributeMetadata[0] = new UserStatusAttributeAccessor();
+        statusAttributeMetadata[1] = new TypeAdapterMetadataDefinition(BooleanTypeAdapter.INSTANCE);
 
         DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder()
                 .createEntityType("user")
@@ -135,6 +167,25 @@ public class ExpressionInterpreterTest {
     @Test
     public void testBooleanVariableTrueNegated() {
         Assert.assertEquals(Boolean.FALSE, testPredicate("!user.status"));
+    }
+
+    @Test
+    public void testBooleanStringVariableTrue() {
+        Assert.assertEquals("true", interpreter.evaluateAsModelType(
+                compiler.createExpression("user.status", compiler.createContext(testTypes)),
+                createInterpreterContext(testTypes, testData)));
+    }
+    @Test
+    public void testBooleanStringVariableTrueNegated() {
+        // Currently it is allowed to use "evaluateAsModelType(Expression, ..)" for predicates as well - even tough this does not make much sense right now.
+        Assert.assertEquals(Boolean.FALSE, interpreter.evaluateAsModelType(
+                compiler.createPredicate("!user.status", compiler.createContext(testTypes)),
+                createInterpreterContext(testTypes, testData)));
+    }
+
+    @Test
+    public void testBooleanStringVariablesCombined() {
+        Assert.assertEquals(Boolean.TRUE, testPredicate("user.status and user.status"));
     }
 
 }

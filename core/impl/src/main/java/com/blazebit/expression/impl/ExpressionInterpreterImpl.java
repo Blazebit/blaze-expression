@@ -94,13 +94,13 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         };
     }
 
-    @Override
-    public <T> T evaluate(Expression expression, Context interpreterContext) {
+
+    private <T> T evaluate(Expression expression, Context interpreterContext, boolean asModelType) {
         Context oldContext = context;
         context = interpreterContext;
         try {
             Object value = expression.accept(this);
-            if (typeAdapter != null) {
+            if (typeAdapter != null && asModelType) {
                 value = typeAdapter.toModelType(context, value, expression.getType());
             }
             return (T) value;
@@ -108,6 +108,14 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             context = oldContext;
             typeAdapter = null;
         }
+    }
+    @Override
+    public <T> T evaluate(Expression expression, Context interpreterContext) {
+        return evaluate(expression, interpreterContext, false);
+    }
+    @Override
+    public <T> T evaluateAsModelType(Expression expression, Context interpreterContext) {
+        return evaluate(expression, interpreterContext, true);
     }
 
     @Override
