@@ -48,6 +48,16 @@ public interface ExpressionInterpreter {
     public default <T> T evaluate(Expression expression) {
         return evaluate(expression, createContext(Collections.emptyMap(), Collections.emptyMap()));
     }
+    /**
+     * Evaluates the given expression to the call site defined type with an empty interpreter context and converts it using the {@link com.blazebit.expression.spi.TypeAdapter} defined for the returned attribute.
+     *
+     * @param expression The expression to evaluate
+     * @param <T> The result type
+     * @return The evaluation result
+     */
+    public default <T> T evaluateAsModelType(Expression expression) {
+        return evaluateAsModelType(expression, createContext(Collections.emptyMap(), Collections.emptyMap()));
+    }
 
     /**
      * Evaluates the given expression to the call site defined type based on the given interpreter context.
@@ -58,6 +68,16 @@ public interface ExpressionInterpreter {
      * @return The evaluation result
      */
     public <T> T evaluate(Expression expression, Context interpreterContext);
+
+    /**
+     * Evaluates the given expression to the call site defined type based on the given interpreter context and converts it using the {@link com.blazebit.expression.spi.TypeAdapter} defined for the returned attribute.
+     *
+     * @param expression The expression to evaluate
+     * @param interpreterContext The interpreter context to evaluate the expression against
+     * @param <T> The result type
+     * @return The evaluation result
+     */
+    public <T> T evaluateAsModelType(Expression expression, Context interpreterContext);
 
     /**
      * Evaluates the given predicate with an empty interpreter context.
