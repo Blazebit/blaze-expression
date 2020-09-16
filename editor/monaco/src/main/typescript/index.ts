@@ -1531,11 +1531,13 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                     if (elementType instanceof CollectionDomainType) {
                         elementType = elementType.elementType;
                     }
-                    for (; i < literalList.length; i++) {
-                        if (elementType != literalList[i]) {
-                            // invalid heterogeneous use for var-args
-                            let offending = predicateOrExpressions[i];
-                            throw new DomainModelException("Function '" + func.name + "' expects the " + (i + 1) + "th argument to be of type " + elementType.name + " but was " + literalList[i].name, null, offending.start.line, offending.stop.line, offending.start.start + 1, ctx.stop.stop + 1);
+                    if (elementType != null) {
+                        for (; i < literalList.length; i++) {
+                            if (elementType != literalList[i]) {
+                                // invalid heterogeneous use for var-args
+                                let offending = predicateOrExpressions[i];
+                                throw new DomainModelException("Function '" + func.name + "' expects the " + (i + 1) + "th argument to be of type " + elementType.name + " but was " + literalList[i].name, null, offending.start.line, offending.stop.line, offending.start.start + 1, ctx.stop.stop + 1);
+                            }
                         }
                     }
                     argumentTypes.push(domainFunctionArgument.type);

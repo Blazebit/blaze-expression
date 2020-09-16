@@ -23,8 +23,11 @@ import com.blazebit.expression.spi.ExpressionSerializerFactory;
 import com.blazebit.expression.spi.ExpressionServiceFactoryProvider;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Christian Beikov
@@ -32,6 +35,7 @@ import java.util.ServiceLoader;
  */
 public class ExpressionServiceFactoryProviderImpl implements ExpressionServiceFactoryProvider {
 
+    private static final Logger LOG = Logger.getLogger(ExpressionServiceFactoryProviderImpl.class.getName());
     private final Map<Class<?>, ExpressionSerializerFactory> expressionSerializers = new HashMap<>();
 
     public ExpressionServiceFactoryProviderImpl() {
@@ -39,8 +43,20 @@ public class ExpressionServiceFactoryProviderImpl implements ExpressionServiceFa
     }
 
     private void loadDefaults() {
-        for (ExpressionSerializerFactory expressionSerializerFactory : ServiceLoader.load(ExpressionSerializerFactory.class)) {
-            expressionSerializers.put(expressionSerializerFactory.getSerializationTargetType(), expressionSerializerFactory);
+        Iterator<ExpressionSerializerFactory> iterator = ServiceLoader.load(ExpressionSerializerFactory.class).iterator();
+        while (iterator.hasNext()) {
+            String name = null;
+            try {
+                ExpressionSerializerFactory expressionSerializerFactory = iterator.next();
+                name = expressionSerializerFactory.getClass().getName();
+                expressionSerializers.put(expressionSerializerFactory.getSerializationTargetType(), expressionSerializerFactory);
+            } catch (Throwable ex) {
+                if (name == null) {
+                    LOG.log(Level.WARNING, "Ignoring expression serializer due to exception", ex);
+                } else {
+                    LOG.log(Level.WARNING, "Ignoring expression serializer " + name + " due to exception", ex);
+                }
+            }
         }
     }
 

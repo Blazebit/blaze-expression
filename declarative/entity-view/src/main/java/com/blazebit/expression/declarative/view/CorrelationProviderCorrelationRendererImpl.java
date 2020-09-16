@@ -133,6 +133,15 @@ public class CorrelationProviderCorrelationRendererImpl implements CorrelationRe
             correlated = true;
             return (JoinOnBuilder<CorrelationQueryBuilder>) (JoinOnBuilder<?>) criteriaBuilder.innerJoinOn(entityType, alias);
         }
+
+        @Override
+        public JoinOnBuilder<CorrelationQueryBuilder> correlate(String correlationPath) {
+            if (correlated) {
+                throw new IllegalArgumentException("Can not correlate with multiple entity classes!");
+            }
+            correlated = true;
+            return (JoinOnBuilder<CorrelationQueryBuilder>) (JoinOnBuilder<?>) criteriaBuilder.innerJoinOn(correlationPath, alias);
+        }
     }
 
 }
