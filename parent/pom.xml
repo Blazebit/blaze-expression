@@ -21,7 +21,7 @@
         <version.blaze-persistence>1.5.1</version.blaze-persistence>
         <version.blaze-domain>1.0.11</version.blaze-domain>
         <version.weld>2.4.5.Final</version.weld>
-        <version.junit>4.12</version.junit>
+        <version.junit>4.13.1</version.junit>
 
         <version.processor.plugin>3.3.2</version.processor.plugin>
     </properties>
