@@ -357,6 +357,66 @@ export class SymbolTable {
     }
 }
 
+abstract class QuoteMode {
+
+    abstract onChar(c: string): QuoteMode;
+
+    abstract onCharBackwards(c: string): QuoteMode;
+
+    static NONE: QuoteMode = new class extends QuoteMode {
+
+        onChar(c: string): QuoteMode {
+            if (c == '\'') {
+                return QuoteMode.SINGLE;
+            } else if (c == '\"') {
+                return QuoteMode.DOUBLE;
+            }
+
+            return QuoteMode.NONE;
+        }
+
+        onCharBackwards(c: string): QuoteMode {
+            if (c == '\'') {
+                return QuoteMode.SINGLE;
+            } else if (c == '\"') {
+                return QuoteMode.DOUBLE;
+            }
+
+            return QuoteMode.NONE;
+        }
+    };
+
+    static SINGLE: QuoteMode = new class extends QuoteMode {
+
+        onChar(c: string): QuoteMode {
+            if (c == '\'') {
+                return QuoteMode.NONE;
+            }
+
+            return QuoteMode.SINGLE;
+        }
+
+        onCharBackwards(c: string): QuoteMode {
+            return this.onChar(c);
+        }
+    };
+
+    static DOUBLE: QuoteMode = new class extends QuoteMode {
+
+        onChar(c: string): QuoteMode {
+            if (c == '"') {
+                return QuoteMode.NONE;
+            }
+
+            return QuoteMode.DOUBLE;
+        }
+
+        onCharBackwards(c: string): QuoteMode {
+            return this.onChar(c);
+        }
+    };
+}
+
 class PathResolvingProvider {
 
     identifierStart: RegExp;
@@ -381,8 +441,7 @@ class PathResolvingProvider {
     analyzePathBeforeCursor(textBeforeCursor: string): PathResult {
         let i = textBeforeCursor.length;
         var offendingChar = " ";
-        // Only consider identifiers and paths
-        while (i--) {
+        OUTER: while (i--) {
             let c = textBeforeCursor.charAt(i);
             if (!this.pathOperators.test(c) && !this.identifier.test(c)) {
                 let text = textBeforeCursor;
@@ -391,6 +450,35 @@ class PathResolvingProvider {
                 do {
                     if (!/\s/.test((c = text.charAt(i)))) {
                         offendingChar = c;
+                        if (c == ')') {
+                            // If we find a parenthesis, we try to find a matching open parenthesis
+                            let oldPos = i;
+                            let parenthesis = 1;
+                            let mode = QuoteMode.NONE;
+                            while (i-- && parenthesis != 0) {
+                                let c2 = text.charAt(i);
+                                mode = mode.onCharBackwards(c2);
+                                if (mode == QuoteMode.NONE) {
+                                    if (c2 == '(') {
+                                        parenthesis--;
+                                    } else if (c2 == ')') {
+                                        parenthesis++;
+                                    }
+                                }
+                            }
+
+                            if (parenthesis == 0) {
+                                textBeforeCursor = text;
+                                offendingChar = " ";
+                                continue OUTER;
+                            }
+                            i = oldPos;
+                        } else if (this.identifier.test(c) && this.pathOperators.test(textBeforeCursor.charAt(0))) {
+                            // To support suggestion in multi-line scenarios, we allow whitespace before a path operator character
+                            textBeforeCursor = text;
+                            offendingChar = " ";
+                            continue OUTER;
+                        }
                         break;
                     }
                     i--;
@@ -442,20 +530,24 @@ class PathResolvingProvider {
     }
 
     varSuggestion(v: string, s: Symbol): monaco.languages.CompletionItem {
+        let doc: string | IMarkdownString = "";
+        if (s.documentation != null) {
+            doc = { value: s.documentation, isTrusted: true };
+        }
         return {
             label: v,
             kind: monaco.languages.CompletionItemKind.Variable,
             detail: s.type.name,
-            documentation: s.documentation,
+            documentation: doc,
             insertText: v,
             range: null
         }
     }
 
     attrSuggestion(v: string, a: EntityAttribute): monaco.languages.CompletionItem {
-        let doc: IMarkdownString = null;
+        let doc: string | IMarkdownString = "";
         if (a.documentation != null) {
-            doc = {value: a.documentation, isTrusted: true};
+            doc = { value: a.documentation, isTrusted: true };
         }
         return {
             label: v,
@@ -487,7 +579,10 @@ class PathResolvingProvider {
                 label += ", ";
             }
             let p = f.arguments[i];
-            paramInfo += "\n| " + p.name + " | " + p.documentation;
+            paramInfo += "\n| " + p.name + " | ";
+            if (p.documentation != null) {
+                paramInfo += p.documentation;
+            }
             if (p.type == null) {
                 label += "any";
             } else {
@@ -543,26 +638,16 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                     }
                 }
             } else {
-                let domainType = symbolTable.variables[parts[0]].type;
-                let attribute = null;
-                for (let i = 1; i < parts.length; i++) {
-                    if (domainType instanceof CollectionDomainType) {
-                        domainType = domainType.elementType;
-                    }
-                    if (domainType instanceof EntityDomainType) {
-                        attribute = domainType.attributes[parts[i]];
-                        if (attribute == null) {
-                            domainType = null;
-                            break;
-                        }
-                        domainType = attribute.type;
-                    } else {
-                        domainType = null;
-                        break;
-                    }
+                let lastIdx = parts.length - 1;
+                let domainType = resolveType(path.substring(0, path.length - parts[lastIdx].length - 1), symbolTable);
+                if (domainType instanceof CollectionDomainType) {
+                    domainType = domainType.elementType;
                 }
-                if (attribute != null) {
-                    completionItem = this.attrSuggestion(path, attribute);
+                if (domainType instanceof EntityDomainType) {
+                    let attribute = domainType.attributes[parts[lastIdx]];
+                    if (attribute != null) {
+                        completionItem = this.attrSuggestion(path, attribute);
+                    }
                 }
             }
         }
@@ -717,9 +802,13 @@ export class PredicateSignatureHelpProvider extends PathResolvingProvider implem
                             if (domainFunction.minArgumentCount != -1 && i >= domainFunction.minArgumentCount) {
                                 label += "?";
                             }
-                            params.push({ label: label, documentation: p.documentation });
+                            let doc: string | IMarkdownString = "";
+                            if (p.documentation != null) {
+                                doc = { value: p.documentation, isTrusted: true };
+                            }
+                            params.push({ label: label, documentation: doc });
                         }
-                        let doc: IMarkdownString = null;
+                        let doc: string | IMarkdownString = "";
                         if (domainFunction.documentation != null) {
                             doc = { value: domainFunction.documentation, isTrusted: true };
                         }
@@ -766,7 +855,7 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
         });
         let pathResult = this.analyzePathBeforeCursor(textBeforeCursor);
         textBeforeCursor = pathResult.text;
-        var offendingChar = pathResult.offendingChar;
+        let offendingChar = pathResult.offendingChar;
 
         let symbolTable = symbolTables[model.id];
         if (textBeforeCursor.length != 0 && textBeforeCursor.charAt(0).match(this.identifierStart)) {
@@ -780,24 +869,7 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
                     suggestions.push(this.functionSuggestion(funcs[f]));
                 }
             } else {
-                let domainType = symbolTable.variables[parts[0]].type;
-                let lastIdx = parts.length - 1;
-                for (let i = 1; i < lastIdx; i++) {
-                    if (domainType instanceof CollectionDomainType) {
-                        domainType = domainType.elementType;
-                    }
-                    if (domainType instanceof EntityDomainType) {
-                        let attribute = domainType.attributes[parts[i]];
-                        if (attribute == null) {
-                            domainType = null;
-                            break;
-                        }
-                        domainType = attribute.type;
-                    } else {
-                        domainType = null;
-                        break;
-                    }
-                }
+                let domainType = resolveType(textBeforeCursor.substring(0, textBeforeCursor.length - parts[parts.length - 1].length - 1), symbolTable);
                 if (domainType instanceof CollectionDomainType) {
                     domainType = domainType.elementType;
                 }
@@ -1017,6 +1089,23 @@ class BlazeExpressionErrorStrategy extends DefaultErrorStrategy {
 
 }
 
+export function resolveType(input: string, symbolTable: SymbolTable) : DomainType {
+    const lexer = createLexer(input);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(new ConsoleErrorListener());
+
+    const parser = createParserFromLexer(lexer);
+    parser.removeErrorListeners();
+    parser._errHandler = new BlazeExpressionErrorStrategy();
+
+    try {
+        const tree = parser.parsePredicateOrExpression();
+        return tree.accept(new MyBlazeExpressionParserVisitor(symbolTable));
+    } catch (e) {
+        return null;
+    }
+}
+
 export function validate(input: string, symbolTable: SymbolTable) : ErrorEntry[] {
     let errors : ErrorEntry[] = [];
 
@@ -1044,7 +1133,7 @@ export function validate(input: string, symbolTable: SymbolTable) : ErrorEntry[]
 
 export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor {
     symbolTable: SymbolTable;
-    private booleanDomainType: BasicDomainType;
+    private readonly booleanDomainType: BasicDomainType;
 
     constructor(symbolTable: SymbolTable) {
         super();
@@ -1070,6 +1159,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
     
     visitParseExpression(ctx: BlazeExpressionParser.ParseExpressionContext) {
         return ctx.expression().accept(this);
+    }
+
+    visitParsePredicateOrExpression(ctx: BlazeExpressionParser.ParsePredicateOrExpressionContext) {
+        return ctx.predicateOrExpression().accept(this);
     }
     
     visitGroupedPredicate(ctx: BlazeExpressionParser.GroupedPredicateContext) {
@@ -1199,6 +1292,9 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
     }
     
     createComparisonPredicate(ctx: ParserRuleContext, left: DomainType, right: DomainType, domainPredicate: DomainPredicate) {
+        if (right == null) {
+            throw this.incompleteExpression(ctx);
+        }
         let operandTypes = [left, right];
         let predicateTypeResolvers = this.symbolTable.model.predicateTypeResolvers[left.name];
         let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[domainPredicate]];
@@ -1229,6 +1325,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         let predicateTypeResolvers = this.symbolTable.model.predicateTypeResolvers[left.name];
         let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.EQUALITY]];
 
+        if (operandTypes.length == 0) {
+            throw this.incompleteExpression(ctx);
+        }
+
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
         } else {
@@ -1251,9 +1351,16 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
     }
     
     visitBetweenPredicate(ctx: BlazeExpressionParser.BetweenPredicateContext) {
+        if (ctx.start == null || ctx.end == null) {
+            throw this.incompleteExpression(ctx);
+        }
+
         let left: DomainType = ctx.lhs.accept(this);
         let lower: DomainType = ctx.start.accept(this);
         let upper: DomainType = ctx.end.accept(this);
+        if (lower == null || upper == null) {
+            throw this.incompleteExpression(ctx);
+        }
 
         let predicateTypeResolvers = this.symbolTable.model.predicateTypeResolvers[left.name];
         let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.RELATIONAL]];
@@ -1338,6 +1445,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
     }
     
     createArithmeticExpression(ctx: ParserRuleContext, left: DomainType, right: DomainType, operator: DomainOperator) {
+        if (right == null) {
+            throw this.incompleteExpression(ctx);
+        }
+
         let operandTypes = [left, right];
         let operationTypeResolvers = this.symbolTable.model.operationTypeResolvers[left.name];
         let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[operator]];
@@ -1447,41 +1558,53 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
     }
 
     visitPathPredicate(ctx: BlazeExpressionParser.PathPredicateContext) {
-        let type = this.createPathExpression(ctx.path);
+        let pathCtx = ctx.path();
+        let type = this.createPathExpression(pathCtx);
         if (type == this.booleanDomainType) {
             return type;
         }
-        throw this.unsupportedType(ctx.path.identifier(), type.name);
+        throw this.unsupportedType(pathCtx.identifier(), type.name);
     }
     visitPath(ctx: BlazeExpressionParser.PathContext) {
         return this.createPathExpression(ctx);
     }
     createPathExpression(ctx: BlazeExpressionParser.PathContext) {
-        let identifiers = ctx.identifier();
-        let alias = identifiers[0].getText();
-        let symbol = this.symbolTable.variables[alias];
-        if (symbol == null) {
-            if (identifiers.length == 2) {
-                let type = this.symbolTable.model.types[alias];
-                if (type instanceof EnumDomainType) {
-                    let value = type.enumValues[identifiers[1].getText()];
-                    if (value == null) {
-                        throw new DomainModelException(this.format("The value '{0}' on the enum domain type '{1}' does not exist!", value, type.name), identifiers[1], -1, -1, -1, -1);
-                    }
-                    if (this.symbolTable.model.enumLiteralResolver == null) {
-                        return type;
-                    } else {
-                        return this.symbolTable.model.enumLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENUM, {
-                            enumType: type,
-                            value: value
-                        });
+        let identifierContext = ctx.identifier();
+        let pathAttributesContext = ctx.pathAttributes();
+        if (identifierContext == null) {
+            return this.visitPathAttributes(ctx.functionInvocation().accept(this), pathAttributesContext);
+        } else {
+            let alias = identifierContext.getText();
+            let symbol = this.symbolTable.variables[alias];
+            if (symbol == null) {
+                let identifiers;
+                if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).length == 1) {
+                    let type = this.symbolTable.model.types[alias];
+                    if (type instanceof EnumDomainType) {
+                        let value = type.enumValues[identifiers[1].getText()];
+                        if (value == null) {
+                            throw new DomainModelException(this.format("The value '{0}' on the enum domain type '{1}' does not exist!", value, type.name), identifiers[1], -1, -1, -1, -1);
+                        }
+                        if (this.symbolTable.model.enumLiteralResolver == null) {
+                            return type;
+                        } else {
+                            return this.symbolTable.model.enumLiteralResolver.resolveLiteral(this.symbolTable.model, LiteralKind.ENUM, {
+                                enumType: type,
+                                value: value
+                            });
+                        }
                     }
                 }
+                throw this.unknownType(ctx, alias);
             }
-            throw this.unknownType(identifiers[0], alias);
-        } else {
-            let type = symbol.type;
-            for (let i = 1; i < identifiers.length; i++) {
+            return this.visitPathAttributes(symbol.type, pathAttributesContext);
+        }
+    }
+
+    private visitPathAttributes(type: DomainType, pathAttributesContext: BlazeExpressionParser.PathAttributesContext): DomainType {
+        if (pathAttributesContext != null) {
+            let identifiers = pathAttributesContext.identifier();
+            for (let i = 0; i < identifiers.length; i++) {
                 let pathElement = identifiers[i].getText();
                 if (type instanceof CollectionDomainType) {
                     type = type.elementType;
@@ -1497,9 +1620,8 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                     throw this.unsupportedType(identifiers[i], type.name);
                 }
             }
-    
-            return type;
         }
+        return type;
     }
     
     visitIndexedFunctionInvocation(ctx: BlazeExpressionParser.IndexedFunctionInvocationContext) {
@@ -1698,6 +1820,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
         }
 
         return new DomainModelException(this.format("Missing predicate type resolver for type {0} and predicate {1}", type.name, symbols), null, startLine, endLine, startCol + 1, endCol + 1);
+    }
+
+    private incompleteExpression(ctx: ParserRuleContext) {
+        return new DomainModelException(this.format("Incomplete expression"), ctx, -1, -1, -1, -1);
     }
 
     private missingOperationTypeResolver(ctx: ParserRuleContext, type: DomainType, tokenIndex: number) {

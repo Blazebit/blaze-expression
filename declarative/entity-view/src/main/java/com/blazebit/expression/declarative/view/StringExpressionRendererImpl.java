@@ -59,6 +59,7 @@ public class StringExpressionRendererImpl implements ExpressionRenderer, Metadat
         // NOTE: We don't support the embedding view macro on plain expressions as that would require us to parse expressions
         // So we set null in order to cause an exception if it is used
         MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, null);
+        MutableViewJpqlMacro.withViewPath(serializer, alias);
         sb.setLength(0);
         if (preChunks) {
             sb.append(alias).append('.');

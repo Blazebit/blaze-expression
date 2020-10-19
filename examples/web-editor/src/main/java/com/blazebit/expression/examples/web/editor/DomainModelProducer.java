@@ -37,6 +37,8 @@ public class DomainModelProducer {
     @Produces
     @ApplicationScoped
     DomainModel produceDomainModel(DeclarativeDomainConfiguration configuration) {
-        return configuration.withService(EntityViewManager.class, evm).createDomainModel();
+        return configuration.withService(EntityViewManager.class, evm)
+            .addDomainFunctions(ExampleDomainFunctions.class)
+            .createDomainModel();
     }
 }

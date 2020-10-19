@@ -73,8 +73,11 @@ public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, Met
     @Override
     public String correlate(CriteriaBuilder<?> cb, String parentAlias, PersistenceExpressionSerializer serializer) {
         DefaultViewRootJpqlMacro.registerIfAbsent(serializer, parentAlias);
-        MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, parentAlias);
-        String alias = serializer.registerSubqueryProvider(new SubqueryProviderWrapper(subqueryAttribute.getSubqueryProviderFactory().create(null, Collections.emptyMap())));
+        MutableEmbeddingViewJpqlMacro embeddingViewJpqlMacro = MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, parentAlias);
+        // NOTE: The view macro is not supported in subquery providers
+        // So we set null in order to cause an exception if it is used
+        MutableViewJpqlMacro.withViewPath(serializer, null);
+        String alias = serializer.registerSubqueryProvider(new SubqueryProviderWrapper(embeddingViewJpqlMacro, parentAlias, subqueryAttribute.getSubqueryProviderFactory().create(null, Collections.emptyMap())));
         StringBuilder sb = new StringBuilder();
 
         if (preChunks) {
@@ -94,6 +97,7 @@ public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, Met
 
         String expression = sb.toString();
         sb.setLength(0);
+        ManagedViewTypeCollection.add(serializer, subqueryAttribute.getDeclaringType(), parentAlias);
         subqueryAttribute.renderSubqueryExpression(parentAlias, expression, alias, (ServiceProvider) serializer.getWhereBuilder(), sb);
         return sb.toString();
     }
@@ -120,19 +124,26 @@ public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, Met
      */
     private static final class SubqueryProviderWrapper implements SubqueryProvider {
 
+        private final MutableEmbeddingViewJpqlMacro embeddingViewJpqlMacro;
+        private final String embeddingViewPath;
         private final com.blazebit.persistence.view.SubqueryProvider subqueryProvider;
 
         /**
          * Creates a wrapper.
          *
+         * @param embeddingViewJpqlMacro The embedding view macro
+         * @param embeddingViewPath The embedding view path
          * @param subqueryProvider The subquery provider
          */
-        public SubqueryProviderWrapper(com.blazebit.persistence.view.SubqueryProvider subqueryProvider) {
+        public SubqueryProviderWrapper(MutableEmbeddingViewJpqlMacro embeddingViewJpqlMacro, String embeddingViewPath, com.blazebit.persistence.view.SubqueryProvider subqueryProvider) {
+            this.embeddingViewJpqlMacro = embeddingViewJpqlMacro;
+            this.embeddingViewPath = embeddingViewPath;
             this.subqueryProvider = subqueryProvider;
         }
 
         @Override
         public <T> T createSubquery(SubqueryInitiator<T> subqueryInitiator) {
+            embeddingViewJpqlMacro.setEmbeddingViewPath(embeddingViewPath);
             return subqueryProvider.createSubquery(subqueryInitiator);
         }
     }

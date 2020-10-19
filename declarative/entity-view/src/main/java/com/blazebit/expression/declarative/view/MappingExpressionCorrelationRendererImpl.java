@@ -23,8 +23,7 @@ import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.JoinType;
 import com.blazebit.persistence.spi.ServiceProvider;
-import com.blazebit.persistence.view.CorrelationProvider;
-import com.blazebit.persistence.view.metamodel.CorrelatedAttribute;
+import com.blazebit.persistence.view.metamodel.MappingAttribute;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -34,17 +33,17 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CorrelationProviderCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer>, Serializable {
+public class MappingExpressionCorrelationRendererImpl implements CorrelationRenderer, MetadataDefinition<CorrelationRenderer>, Serializable {
 
-    private final CorrelatedAttribute<?, ?> correlatedAttribute;
+    private final MappingAttribute<?, ?> mappingAttribute;
 
     /**
-     * Creates a new correlation renderer for a correlatedAttribute attribute.
+     * Creates a new correlation renderer for a mappingAttribute attribute.
      *
-     * @param correlatedAttribute The correlated attribute
+     * @param mappingAttribute The mapping attribute
      */
-    public CorrelationProviderCorrelationRendererImpl(CorrelatedAttribute<?, ?> correlatedAttribute) {
-        this.correlatedAttribute = correlatedAttribute;
+    public MappingExpressionCorrelationRendererImpl(MappingAttribute<?, ?> mappingAttribute) {
+        this.mappingAttribute = mappingAttribute;
     }
 
     @Override
@@ -54,22 +53,19 @@ public class CorrelationProviderCorrelationRendererImpl implements CorrelationRe
         Map<String, Object> optionalParameters = Collections.emptyMap();
         String correlationExternalAlias = serializer.nextCorrelationAlias();
         String correlationAlias;
-        if (correlatedAttribute.getLimitExpression() == null) {
+        if (mappingAttribute.getLimitExpression() == null) {
             correlationAlias = correlationExternalAlias;
         } else {
             correlationAlias = "_sub" + correlationExternalAlias;
         }
         MutableViewJpqlMacro.withViewPath(serializer, correlationAlias);
-        ManagedViewTypeCollection.add(serializer, correlatedAttribute.getDeclaringType(), parentAlias);
-        CorrelationBuilderImpl correlationBuilder = new CorrelationBuilderImpl(cb, optionalParameters, parentAlias, correlationAlias, correlationExternalAlias, JoinType.LEFT, correlatedAttribute);
+        ManagedViewTypeCollection.add(serializer, mappingAttribute.getDeclaringType(), parentAlias);
+        CorrelationBuilderImpl correlationBuilder = new CorrelationBuilderImpl(cb, optionalParameters, parentAlias, correlationAlias, correlationExternalAlias, JoinType.LEFT, mappingAttribute);
         StringBuilder sb = new StringBuilder();
-        correlatedAttribute.renderCorrelationBasis(parentAlias, (ServiceProvider) serializer.getWhereBuilder(), sb);
-        CorrelationProvider correlationProvider = correlatedAttribute.getCorrelationProviderFactory().create(null, optionalParameters);
-        correlationProvider.applyCorrelation(correlationBuilder, sb.toString());
-        sb.setLength(0);
+        mappingAttribute.renderMapping(parentAlias, (ServiceProvider) serializer.getWhereBuilder(), sb);
+        correlationBuilder.correlate(sb.toString()).end();
         correlationBuilder.finish();
-        correlatedAttribute.renderCorrelationResult(correlationBuilder.getCorrelationAlias(), (ServiceProvider) serializer.getWhereBuilder(), sb);
-        return sb.toString();
+        return correlationBuilder.getCorrelationAlias();
     }
 
     /**

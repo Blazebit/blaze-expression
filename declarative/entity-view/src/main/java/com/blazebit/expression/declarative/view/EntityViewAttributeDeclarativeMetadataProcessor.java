@@ -53,7 +53,11 @@ public class EntityViewAttributeDeclarativeMetadataProcessor implements Declarat
             if (managedViewType != null) {
                 MethodAttribute<?, ?> attribute = managedViewType.getAttribute(getAttributeName(method));
                 if (attribute instanceof MappingAttribute<?, ?>) {
-                    return new MappingExpressionRendererImpl((MappingAttribute<?, ?>) attribute);
+                    if (attribute.getLimitExpression() == null) {
+                        return new MappingExpressionRendererImpl((MappingAttribute<?, ?>) attribute);
+                    } else {
+                        return new MappingExpressionCorrelationRendererImpl((MappingAttribute<?, ?>) attribute);
+                    }
                 } else if (attribute instanceof SubqueryAttribute<?, ?>) {
                     SubqueryAttribute<?, ?> subqueryAttribute = (SubqueryAttribute<?, ?>) attribute;
                     return new SubqueryCorrelationRendererImpl(subqueryAttribute);

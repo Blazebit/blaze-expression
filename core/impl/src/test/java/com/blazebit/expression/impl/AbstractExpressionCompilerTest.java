@@ -28,6 +28,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
+import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
@@ -108,7 +109,11 @@ public abstract class AbstractExpressionCompilerTest {
                     .addAttribute("birthday", Instant.class)
                     .addAttribute("gender", Gender.class)
                     .addAttribute("active", Boolean.class)
-                .build();
+                .build()
+                .createFunction("self")
+                    .withArgument("object")
+                .build()
+                .withFunctionTypeResolver("self", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
 
         for (final Class<?> type : Arrays.asList(Integer.class, Long.class, BigDecimal.class)) {
             builder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(Integer.class));
@@ -209,6 +214,32 @@ public abstract class AbstractExpressionCompilerTest {
             }
         }
         return new Path(entity, pathAttributes, type);
+    }
+
+    protected Path attr(ArithmeticExpression base, String... attributes) {
+        EntityDomainType entityDomainType = (EntityDomainType) base.getType();
+        DomainType type = entityDomainType;
+        List<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>(attributes.length);
+        if (attributes.length != 0) {
+            for (int i = 0; ; ) {
+                EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(attributes[i]);
+                type = attribute.getType();
+                pathAttributes.add(attribute);
+                i++;
+                if (i == attributes.length) {
+                    break;
+                } else {
+                    if (type instanceof EntityDomainType) {
+                        entityDomainType = (EntityDomainType) type;
+                    } else if (type instanceof CollectionDomainType) {
+                        entityDomainType = (EntityDomainType) ((CollectionDomainType) type).getElementType();
+                    } else {
+                        throw new IllegalArgumentException("De-referencing non-entity type attribute: " + attribute);
+                    }
+                }
+            }
+        }
+        return new Path(base, pathAttributes, type);
     }
 
     protected Literal enumValue(String enumName, String enumKey) {

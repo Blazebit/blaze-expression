@@ -331,7 +331,12 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
 
     @Override
     public Object visit(Path e) {
-        Object value = context.getRoot(e.getAlias());
+        Object value;
+        if (e.getBase() == null) {
+            value = context.getRoot(e.getAlias());
+        } else {
+            value = e.getBase().accept(this);
+        }
         List<EntityDomainTypeAttribute> attributes = e.getAttributes();
         if (attributes.isEmpty()) {
             typeAdapter = null;

@@ -70,7 +70,12 @@ inList
     ;
 
 path
-    : identifier (DOT identifier)*
+    : identifier pathAttributes?
+    | functionInvocation pathAttributes
+    ;
+
+pathAttributes
+    : (DOT identifier)+
     ;
 
 literal

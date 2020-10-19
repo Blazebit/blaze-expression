@@ -49,7 +49,9 @@ public class MappingExpressionRendererImpl implements ExpressionRenderer, Metada
         // NOTE: We don't support the embedding view macro on plain expressions as that would require us to parse expressions
         // So we set null in order to cause an exception if it is used
         MutableEmbeddingViewJpqlMacro.withEmbeddingViewPath(serializer, null);
+        MutableViewJpqlMacro.withViewPath(serializer, parentAlias);
         sb.setLength(0);
+        ManagedViewTypeCollection.add(serializer, mappingAttribute.getDeclaringType(), parentAlias);
         mappingAttribute.renderMapping(parentAlias, (ServiceProvider) serializer.getWhereBuilder(), sb);
     }
 

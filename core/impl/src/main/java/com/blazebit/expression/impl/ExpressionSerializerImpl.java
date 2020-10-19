@@ -147,7 +147,11 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
 
     @Override
     public void visit(Path e) {
-        sb.append(e.getAlias());
+        if (e.getBase() == null) {
+            sb.append(e.getAlias());
+        } else {
+            e.getBase().accept(this);
+        }
         List<EntityDomainTypeAttribute> attributes = e.getAttributes();
         for (int i = 0; i < attributes.size(); i++) {
             sb.append('.');

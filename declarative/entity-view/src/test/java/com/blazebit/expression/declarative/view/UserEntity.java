@@ -17,7 +17,9 @@
 package com.blazebit.expression.declarative.view;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 @Entity
 public class UserEntity {
@@ -25,4 +27,6 @@ public class UserEntity {
     Integer id;
     String name;
     long age;
+    @ManyToOne(fetch = FetchType.LAZY)
+    UserEntity parent;
 }

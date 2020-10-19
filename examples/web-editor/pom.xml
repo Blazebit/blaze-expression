@@ -33,7 +33,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-persistence-integration-hibernate-5</artifactId>
+            <artifactId>blaze-persistence-integration-hibernate-5.3</artifactId>
             <version>${version.blaze-persistence}</version>
         </dependency>
         <dependency>

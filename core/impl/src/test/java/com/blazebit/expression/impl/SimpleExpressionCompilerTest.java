@@ -16,6 +16,7 @@
 
 package com.blazebit.expression.impl;
 
+import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.SyntaxErrorException;
@@ -222,5 +223,14 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     @Test(expected = TypeErrorException.class)
     public void testNonBooleanPathPredicate() {
         Predicate predicate = parsePredicate("user.email");
+    }
+
+    @Test
+    public void testDeReferenceFunction() {
+        Expression expression = parseArithmeticExpression("self(user).active");
+        assertEquals(
+            attr(functionInvocation("self", attr("user")), "active"),
+            expression
+        );
     }
 }

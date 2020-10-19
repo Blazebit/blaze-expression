@@ -213,8 +213,14 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     @Override
     public void visit(Path e) {
         tempSb.setLength(0);
-        String persistenceAlias = getPersistenceAlias(e.getType(), e.getAlias());
-        tempSb.append(persistenceAlias);
+        if (e.getBase() == null) {
+            tempSb.append(getPersistenceAlias(e));
+        } else {
+            StringBuilder old = sb;
+            sb = tempSb;
+            e.getBase().accept(this);
+            sb = old;
+        }
 
         List<EntityDomainTypeAttribute> attributes = e.getAttributes();
         for (int i = 0; i < attributes.size(); i++) {
@@ -247,17 +253,23 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     }
 
     /**
-     * Returns the alias in the query builder for the root variable alias.
+     * Returns the root alias in the query builder for the path.
      *
-     * @param type The domain type of the root
-     * @param alias The root variable alias
+     * @param p The path
      * @return The alias in the query builder
      * @throws IllegalStateException when the root variable has no registered query builder alias
      */
-    protected String getPersistenceAlias(DomainType type, String alias) {
+    protected String getPersistenceAlias(Path p) {
+        String alias = p.getAlias();
         Object o = context.getContextParameter(alias);
         if (o instanceof String) {
             return (String) o;
+        }
+        DomainType type;
+        if (p.getAttributes().isEmpty()) {
+            type = p.getType();
+        } else {
+            type = p.getAttributes().get(0).getOwner();
         }
         CorrelationRenderer correlationRenderer = type.getMetadata(CorrelationRenderer.class);
         if (correlationRenderer != null) {

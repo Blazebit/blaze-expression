@@ -32,8 +32,12 @@ import com.blazebit.persistence.WhereBuilder;
 import com.blazebit.persistence.testsuite.AbstractCoreTest;
 import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.EntityViewManager;
+import com.blazebit.persistence.view.EntityViewRoot;
 import com.blazebit.persistence.view.EntityViews;
+import com.blazebit.persistence.view.FetchStrategy;
 import com.blazebit.persistence.view.IdMapping;
+import com.blazebit.persistence.view.Limit;
+import com.blazebit.persistence.view.Mapping;
 import com.blazebit.persistence.view.MappingCorrelatedSimple;
 import com.blazebit.persistence.view.MappingSubquery;
 import com.blazebit.persistence.view.SubqueryProvider;
@@ -61,10 +65,12 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
     public void init() {
         super.init();
         evm = EntityViews.createDefaultConfiguration()
+            .addEntityView(UserIdView.class)
             .addEntityView(UserView.class)
             .createEntityViewManager(cbf);
         DomainModel domainModel = DeclarativeDomain.getDefaultProvider()
                 .createDefaultConfiguration()
+                .addDomainType(UserIdView.class)
                 .addDomainType(UserView.class)
                 .addDomainFunctions(Functions.class)
                 .withService(EntityViewManager.class, evm)
@@ -77,13 +83,20 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
     public void test() {
         ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
-        Predicate predicate = compiler.createPredicate("contains(user.sameAgeIds, 1) AND user.oldestNamedAge > 10", compilerContext);
+        Predicate predicate = compiler.createPredicate("contains(user.sameAgeIds, 1) AND user.oldestNamedAge > 10 AND user.parent IS NOT NULL AND user.second IS NOT NULL", compilerContext);
         ExpressionSerializer<WhereBuilder> serializer = expressionServiceFactory.createSerializer(WhereBuilder.class);
         ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "userEntity"));
         CriteriaBuilder<UserEntity> cb = cbf.create(em, UserEntity.class);
         serializer.serializeTo(serializerContext, predicate, cb);
         Assert.assertEquals("SELECT userEntity FROM UserEntity userEntity " +
-                                "JOIN UserEntity _expr_correlation_0 ON (_expr_correlation_0.age = userEntity.age) " +
+                                "LEFT JOIN UserEntity second ON (second.id = userEntity.id AND 1 = 1) " +
+                                "LEFT JOIN UserEntity _expr_correlation_0 ON (_expr_correlation_0.age = userEntity.age) " +
+                                "LEFT JOIN UserEntity _expr_correlation_1 ON (_expr_correlation_1 IN (" +
+                                    "SELECT _sub_expr_correlation_1 " +
+                                    "FROM userEntity.parent _sub_expr_correlation_1 " +
+                                    "ORDER BY _sub_expr_correlation_1.id ASC " +
+                                    "LIMIT 1" +
+                                ")) " +
                                 "WHERE _expr_correlation_0.id = 1 " +
                                 "AND (" +
                                 "SELECT subSameNamed.age " +
@@ -91,7 +104,9 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
                                 "WHERE subSameNamed.name = userEntity.name " +
                                 "ORDER BY subSameNamed.age DESC " +
                                 "LIMIT 1" +
-                                ") > 10", cb.getQueryString());
+                                ") > 10 " +
+                                "AND _expr_correlation_1 IS NOT NULL " +
+                                "AND second IS NOT NULL", cb.getQueryString());
     }
 
     @DomainFunctions
@@ -102,11 +117,21 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
 
     @EntityView(UserEntity.class)
     @com.blazebit.domain.declarative.DomainType
-    public static interface UserView {
+    public static interface UserIdView {
         @IdMapping
         Integer getId();
+    }
+
+    @EntityView(UserEntity.class)
+    @EntityViewRoot(name = "second", expression = "UserEntity[id = VIEW(id)]")
+    @com.blazebit.domain.declarative.DomainType
+    public static interface UserView extends UserIdView {
         String getName();
         long getAge();
+        @Limit(limit = "1", order = "id")
+        UserIdView getParent();
+        @Mapping("second")
+        UserIdView getSecond();
         @MappingSubquery(OldestSameNamedAgeSubqueryProvider.class)
         Long getOldestNamedAge();
         @MappingCorrelatedSimple(

@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class Path implements ArithmeticExpression {
     private final String alias;
+    private final ArithmeticExpression base;
     private final List<EntityDomainTypeAttribute> attributes;
     private final DomainType type;
 
@@ -41,17 +42,41 @@ public class Path implements ArithmeticExpression {
      */
     public Path(String alias, List<EntityDomainTypeAttribute> attributes, DomainType type) {
         this.alias = alias;
+        this.base = null;
         this.attributes = attributes;
         this.type = type;
     }
 
     /**
-     * Returns the root alias.
+     * Creates a new path expression from the given root alias and attribute dereference chain returning a result of the given domain type.
+     *
+     * @param base The base expression
+     * @param attributes The entity attribute dereference chain
+     * @param type The result domain type
+     */
+    public Path(ArithmeticExpression base, List<EntityDomainTypeAttribute> attributes, DomainType type) {
+        this.alias = null;
+        this.base = base;
+        this.attributes = attributes;
+        this.type = type;
+    }
+
+    /**
+     * Returns the root alias. May be null if a base expression is set.
      *
      * @return the root alias
      */
     public String getAlias() {
         return alias;
+    }
+
+    /**
+     * Returns the base expression. May be null if a root alias is set.
+     *
+     * @return the base expression
+     */
+    public ArithmeticExpression getBase() {
+        return base;
     }
 
     /**
@@ -101,13 +126,16 @@ public class Path implements ArithmeticExpression {
 
         Path path = (Path) o;
 
-        if (!getAlias().equals(path.getAlias())) {
+        if (getAlias() != null ? !getAlias().equals(path.getAlias()) : path.getAlias() != null) {
             return false;
         }
-        if (!getType().equals(path.getType())) {
+        if (getBase() != null ? !getBase().equals(path.getBase()) : path.getBase() != null) {
             return false;
         }
-        return getAttributes().equals(path.getAttributes());
+        if (!getAttributes().equals(path.getAttributes())) {
+            return false;
+        }
+        return getType().equals(path.getType());
     }
 
     /**
@@ -115,9 +143,10 @@ public class Path implements ArithmeticExpression {
      */
     @Override
     public int hashCode() {
-        int result = getAlias().hashCode();
-        result = 31 * result + getType().hashCode();
+        int result = getAlias() != null ? getAlias().hashCode() : 0;
+        result = 31 * result + (getBase() != null ? getBase().hashCode() : 0);
         result = 31 * result + getAttributes().hashCode();
+        result = 31 * result + getType().hashCode();
         return result;
     }
 }

@@ -19,30 +19,29 @@ package com.blazebit.expression.declarative.view;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.persistence.CommonQueryBuilder;
 import com.blazebit.persistence.spi.FunctionRenderContext;
-import com.blazebit.persistence.view.spi.EmbeddingViewJpqlMacro;
+import com.blazebit.persistence.view.spi.ViewJpqlMacro;
 
 /**
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class MutableEmbeddingViewJpqlMacro implements EmbeddingViewJpqlMacro {
+public class MutableViewJpqlMacro implements ViewJpqlMacro {
 
-    private static final String NAME = "EMBEDDING_VIEW";
+    private static final String NAME = "VIEW";
 
-    private String embeddingViewPath;
-    private boolean used;
+    private String viewPath;
 
     /**
-     * Registers a new embedding view macro if none is present and returns it.
+     * Registers a new view macro if none is present and returns it.
      *
      * @param serializer The serializer
-     * @return The embedding view macro
+     * @return The view macro
      */
-    public static MutableEmbeddingViewJpqlMacro registerIfAbsent(PersistenceExpressionSerializer serializer) {
-        MutableEmbeddingViewJpqlMacro macro = (MutableEmbeddingViewJpqlMacro) serializer.getProperties().get(NAME);
+    public static MutableViewJpqlMacro registerIfAbsent(PersistenceExpressionSerializer serializer) {
+        MutableViewJpqlMacro macro = (MutableViewJpqlMacro) serializer.getProperties().get(NAME);
         if (macro == null) {
-            macro = new MutableEmbeddingViewJpqlMacro();
+            macro = new MutableViewJpqlMacro();
             CommonQueryBuilder<?> queryBuilder = (CommonQueryBuilder<?>) serializer.getWhereBuilder();
             queryBuilder.registerMacro(NAME, macro);
             serializer.getProperties().put(NAME, macro);
@@ -57,43 +56,36 @@ public class MutableEmbeddingViewJpqlMacro implements EmbeddingViewJpqlMacro {
      * @param alias The alias
      * @return The embedding view macro
      */
-    public static MutableEmbeddingViewJpqlMacro withEmbeddingViewPath(PersistenceExpressionSerializer serializer, String alias) {
-        MutableEmbeddingViewJpqlMacro macro = registerIfAbsent(serializer);
-        macro.setEmbeddingViewPath(alias);
+    public static MutableViewJpqlMacro withViewPath(PersistenceExpressionSerializer serializer, String alias) {
+        MutableViewJpqlMacro macro = registerIfAbsent(serializer);
+        macro.setViewPath(alias);
         return macro;
     }
 
     @Override
-    public boolean usesEmbeddingView() {
-        return used;
+    public String getViewPath() {
+        return viewPath;
     }
 
     @Override
-    public String getEmbeddingViewPath() {
-        return embeddingViewPath;
-    }
-
-    @Override
-    public void setEmbeddingViewPath(String embeddingViewPath) {
-        this.embeddingViewPath = embeddingViewPath;
+    public void setViewPath(String viewPath) {
+        this.viewPath = viewPath;
     }
 
     @Override
     public void render(FunctionRenderContext context) {
         if (context.getArgumentsSize() > 1) {
-            throw new IllegalArgumentException("The EMBEDDING_VIEW macro allows maximally one argument: <expression>!");
+            throw new IllegalArgumentException("The VIEW macro allows maximally one argument: <expression>!");
         }
 
-        if (embeddingViewPath == null) {
-            throw new IllegalArgumentException("The EMBEDDING_VIEW macro is not supported in this context!");
-        } else if (embeddingViewPath.isEmpty()) {
-            used = true;
+        if (viewPath == null) {
+            throw new IllegalArgumentException("The VIEW macro is not supported in this context!");
+        } else if (viewPath.isEmpty()) {
             if (context.getArgumentsSize() > 0) {
                 context.addArgument(0);
             }
         } else {
-            used = true;
-            context.addChunk(embeddingViewPath);
+            context.addChunk(viewPath);
             if (context.getArgumentsSize() > 0) {
                 context.addChunk(".");
                 context.addArgument(0);
@@ -106,17 +98,17 @@ public class MutableEmbeddingViewJpqlMacro implements EmbeddingViewJpqlMacro {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof MutableEmbeddingViewJpqlMacro)) {
+        if (!(o instanceof MutableViewJpqlMacro)) {
             return false;
         }
 
-        MutableEmbeddingViewJpqlMacro that = (MutableEmbeddingViewJpqlMacro) o;
+        MutableViewJpqlMacro that = (MutableViewJpqlMacro) o;
 
-        return embeddingViewPath != null ? embeddingViewPath.equals(that.embeddingViewPath) : that.embeddingViewPath == null;
+        return viewPath != null ? viewPath.equals(that.viewPath) : that.viewPath == null;
     }
 
     @Override
     public int hashCode() {
-        return embeddingViewPath != null ? embeddingViewPath.hashCode() : 0;
+        return viewPath != null ? viewPath.hashCode() : 0;
     }
 }

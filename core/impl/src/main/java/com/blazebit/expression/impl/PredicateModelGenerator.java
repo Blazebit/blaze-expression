@@ -501,22 +501,37 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         }
         return new ExpressionPredicate(type, expression, false);
     }
+
     private Expression createPathExpression(PathContext ctx) {
-        List<PredicateParser.IdentifierContext> identifiers = ctx.identifier();
-        int size = identifiers.size();
-        String alias = identifiers.get(0).getText();
-        DomainType type = compileContext.getRootDomainType(alias);
-        if (type == null) {
-            if (size == 2) {
-                type = domainModel.getType(alias);
-                if (type instanceof EnumDomainType) {
-                    return new Literal(literalFactory.ofEnumValue((EnumDomainType) type, identifiers.get(1).getText()));
-                }
-            }
-            throw unknownType(alias);
+        PredicateParser.IdentifierContext identifierContext = ctx.identifier();
+        PredicateParser.PathAttributesContext pathAttributesContext = ctx.pathAttributes();
+        ArrayList<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>();
+        if (identifierContext == null) {
+            Expression base = ctx.functionInvocation().accept(this);
+            return new Path((ArithmeticExpression) base, pathAttributes, visitPathAttributes(base.getType(), pathAttributes, pathAttributesContext));
         } else {
-            List<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>(size);
-            for (int pathElemIdx = 1; pathElemIdx < size; pathElemIdx++) {
+            String alias = identifierContext.getText();
+            DomainType type = compileContext.getRootDomainType(alias);
+            if (type == null) {
+                List<PredicateParser.IdentifierContext> identifiers;
+                if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).size() == 1) {
+                    type = domainModel.getType(alias);
+                    if (type instanceof EnumDomainType) {
+                        return new Literal(literalFactory.ofEnumValue((EnumDomainType) type, identifiers.get(0).getText()));
+                    }
+                }
+                throw unknownType(alias);
+            }
+            return new Path(alias, pathAttributes, visitPathAttributes(type, pathAttributes, pathAttributesContext));
+        }
+    }
+
+    private DomainType visitPathAttributes(DomainType type, ArrayList<EntityDomainTypeAttribute> pathAttributes, PredicateParser.PathAttributesContext pathAttributesContext) {
+        if (pathAttributesContext != null) {
+            List<PredicateParser.IdentifierContext> identifiers = pathAttributesContext.identifier();
+            int size = identifiers.size();
+            pathAttributes.ensureCapacity(size);
+            for (int pathElemIdx = 0; pathElemIdx < size; pathElemIdx++) {
                 String pathElement = identifiers.get(pathElemIdx).getText();
                 if (type instanceof CollectionDomainType) {
                     type = ((CollectionDomainType) type).getElementType();
@@ -534,8 +549,8 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                     throw unsupportedType(type.toString());
                 }
             }
-            return new Path(alias, pathAttributes, type);
         }
+        return type;
     }
 
     @Override
