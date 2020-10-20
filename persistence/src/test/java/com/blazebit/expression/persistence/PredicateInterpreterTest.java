@@ -54,4 +54,6 @@ public class PredicateInterpreterTest {
     public void testBasic3() {
         Assert.assertEquals(true, testPredicate("CURRENT_TIMESTAMP() = CURRENT_TIMESTAMP()"));
     }
+
+    // TODO: Test stringly type comparison
 }

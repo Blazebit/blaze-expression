@@ -21,11 +21,11 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -49,14 +49,15 @@ public class PowFunction implements FunctionRenderer, FunctionInvoker, Serializa
      * Adds the POW function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("POW")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("POW"))
-                .withArgument("base", NUMERIC, DocumentationMetadataDefinition.localized("POW_BASE"))
-                .withArgument("power", NUMERIC, DocumentationMetadataDefinition.localized("POW_POWER"))
+                .withMetadata(DocumentationMetadataDefinition.localized("POW", classLoader))
+                .withArgument("base", NUMERIC, DocumentationMetadataDefinition.localized("POW_BASE", classLoader))
+                .withArgument("power", NUMERIC, DocumentationMetadataDefinition.localized("POW_POWER", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("POW", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }

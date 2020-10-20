@@ -21,9 +21,9 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -49,14 +49,15 @@ public class AbsFunction implements FunctionRenderer, FunctionInvoker, Serializa
      * Adds the ABS function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("ABS")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("ABS"))
+                .withMetadata(DocumentationMetadataDefinition.localized("ABS", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", DocumentationMetadataDefinition.localized("ABS_ARG"))
+                .withArgument("number", DocumentationMetadataDefinition.localized("ABS_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("ABS", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
     }

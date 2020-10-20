@@ -40,8 +40,15 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
      */
     public static final String LOCALE_PROPERTY = "locale";
 
+    /**
+     * The default base name for resource bundle properties files.
+     */
+    public static final String DEFAULT_BASE_NAME = "resource-bundles/blaze-expression";
+
     private final String documentation;
     private final Locale defaultLocale;
+    private final String baseName;
+    private final transient ClassLoader classLoader;
 
     /**
      * Creates a new documentation metadata definition.
@@ -51,11 +58,15 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
     public DocumentationMetadataDefinition(String documentation) {
         this.documentation = serialize(documentation);
         this.defaultLocale = null;
+        this.baseName = null;
+        this.classLoader = null;
     }
 
-    private DocumentationMetadataDefinition(String documentation, Locale defaultLocale) {
+    private DocumentationMetadataDefinition(String documentation, Locale defaultLocale, String baseName, ClassLoader classLoader) {
         this.documentation = documentation;
         this.defaultLocale = defaultLocale;
+        this.baseName = baseName;
+        this.classLoader = classLoader;
     }
 
     /**
@@ -65,7 +76,49 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
      * @return The documentation metadata definition
      */
     public static DocumentationMetadataDefinition localized(String documentationKey) {
-        return new DocumentationMetadataDefinition(documentationKey, Locale.ENGLISH);
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = DocumentationMetadataDefinition.class.getClassLoader();
+        }
+        return new DocumentationMetadataDefinition(documentationKey, Locale.ENGLISH, DEFAULT_BASE_NAME, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param classLoader The class loader to use for resource bundle loading
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, ClassLoader classLoader) {
+        return new DocumentationMetadataDefinition(documentationKey, Locale.ENGLISH, DEFAULT_BASE_NAME, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param resourceBundleBaseName The resource bundle base name to use
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, String resourceBundleBaseName) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = DocumentationMetadataDefinition.class.getClassLoader();
+        }
+        return new DocumentationMetadataDefinition(documentationKey, Locale.ENGLISH, resourceBundleBaseName, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param resourceBundleBaseName The resource bundle base name to use
+     * @param classLoader The class loader to use for resource bundle loading
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, String resourceBundleBaseName, ClassLoader classLoader) {
+        return new DocumentationMetadataDefinition(documentationKey, Locale.ENGLISH, resourceBundleBaseName, classLoader);
     }
 
     /**
@@ -76,7 +129,52 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
      * @return The documentation metadata definition
      */
     public static DocumentationMetadataDefinition localized(String documentationKey, Locale defaultLocale) {
-        return new DocumentationMetadataDefinition(documentationKey, defaultLocale);
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = DocumentationMetadataDefinition.class.getClassLoader();
+        }
+        return new DocumentationMetadataDefinition(documentationKey, defaultLocale, DEFAULT_BASE_NAME, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param defaultLocale The default locale to use
+     * @param classLoader The class loader to use for resource bundle loading
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, Locale defaultLocale, ClassLoader classLoader) {
+        return new DocumentationMetadataDefinition(documentationKey, defaultLocale, DEFAULT_BASE_NAME, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param defaultLocale The default locale to use
+     * @param resourceBundleBaseName The resource bundle base name to use
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, Locale defaultLocale, String resourceBundleBaseName) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = DocumentationMetadataDefinition.class.getClassLoader();
+        }
+        return new DocumentationMetadataDefinition(documentationKey, defaultLocale, resourceBundleBaseName, classLoader);
+    }
+
+    /**
+     * Creates a new documentation metadata definition.
+     *
+     * @param documentationKey The documentation resource bundle key
+     * @param defaultLocale The default locale to use
+     * @param resourceBundleBaseName The resource bundle base name to use
+     * @param classLoader The class loader to use for resource bundle loading
+     * @return The documentation metadata definition
+     */
+    public static DocumentationMetadataDefinition localized(String documentationKey, Locale defaultLocale, String resourceBundleBaseName, ClassLoader classLoader) {
+        return new DocumentationMetadataDefinition(documentationKey, defaultLocale, resourceBundleBaseName, classLoader);
     }
 
     private static String serialize(String documentation) {
@@ -109,7 +207,7 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
         } else {
             locale = defaultLocale;
         }
-        return (T) serialize(ResourceBundle.getBundle("resource-bundles/persistence", locale).getString(documentation));
+        return (T) serialize(ResourceBundle.getBundle(baseName, locale, classLoader).getString(documentation));
     }
 
     @Override

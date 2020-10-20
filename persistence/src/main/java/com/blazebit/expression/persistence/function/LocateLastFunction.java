@@ -20,8 +20,8 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -49,17 +49,18 @@ public class LocateLastFunction implements FunctionRenderer, FunctionInvoker, Se
      * Adds the LOCATE_LAST function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LOCATE_LAST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("LOCATE_LAST"))
+                .withMetadata(DocumentationMetadataDefinition.localized("LOCATE_LAST", classLoader))
                 .withMinArgumentCount(2)
                 .withResultType(INTEGER)
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_SUBSTRING"))
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_STRING"))
-                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_LAST_START"))
+                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_SUBSTRING", classLoader))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_LAST_STRING", classLoader))
+                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_LAST_START", classLoader))
                 .build();
     }
 

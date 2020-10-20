@@ -20,8 +20,8 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -47,16 +47,17 @@ public class ReplaceFunction implements FunctionRenderer, FunctionInvoker, Seria
      * Adds the REPLACE function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("REPLACE")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("REPLACE"))
+                .withMetadata(DocumentationMetadataDefinition.localized("REPLACE", classLoader))
                 .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("REPLACE_STRING"))
-                .withArgument("target", STRING, DocumentationMetadataDefinition.localized("REPLACE_TARGET"))
-                .withArgument("replacement", STRING, DocumentationMetadataDefinition.localized("REPLACE_REPLACEMENT"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("REPLACE_STRING", classLoader))
+                .withArgument("target", STRING, DocumentationMetadataDefinition.localized("REPLACE_TARGET", classLoader))
+                .withArgument("replacement", STRING, DocumentationMetadataDefinition.localized("REPLACE_REPLACEMENT", classLoader))
                 .build();
     }
 

@@ -39,7 +39,21 @@ public class DocumentationDeclarativeFunctionParameterMetadataProcessor implemen
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Documentation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
-        return DocumentationMetadataDefinition.localized(annotation.value());
+        String baseName = DocumentationMetadataDefinition.DEFAULT_BASE_NAME;
+        if (annotation.baseName().isEmpty()) {
+            Documentation methodAnnotation = method.getAnnotation(Documentation.class);
+            if (methodAnnotation != null && !methodAnnotation.baseName().isEmpty()) {
+                baseName = methodAnnotation.baseName();
+            } else {
+                Documentation classAnnotation = method.getDeclaringClass().getAnnotation(Documentation.class);
+                if (classAnnotation != null && !classAnnotation.baseName().isEmpty()) {
+                    baseName = classAnnotation.baseName();
+                }
+            }
+        } else {
+            baseName = annotation.baseName();
+        }
+        return DocumentationMetadataDefinition.localized(annotation.value(), baseName, annotatedClass.getClassLoader());
     }
 
 }

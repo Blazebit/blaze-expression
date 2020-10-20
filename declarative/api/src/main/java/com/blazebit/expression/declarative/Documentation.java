@@ -37,4 +37,12 @@ public @interface Documentation {
      * @return the documentation key
      */
     String value();
+
+    /**
+     * The resource bundle base name to use for resolving the documentation key.
+     * The base name is inherited from class level to method level and parameter level.
+     *
+     * @return the resource bundle base name
+     */
+    String baseName() default "";
 }

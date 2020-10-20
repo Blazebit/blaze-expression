@@ -20,11 +20,11 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -47,15 +47,16 @@ public class UpperFunction implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the UPPER function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("UPPER")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("UPPER"))
+                .withMetadata(DocumentationMetadataDefinition.localized("UPPER", classLoader))
                 .withExactArgumentCount(1)
                 .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("UPPER_STRING"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("UPPER_STRING", classLoader))
                 .build();
     }
 

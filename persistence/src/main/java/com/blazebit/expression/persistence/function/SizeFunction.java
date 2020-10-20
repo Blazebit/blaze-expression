@@ -23,9 +23,9 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -53,14 +53,15 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFu
      * Adds the SIZE function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("SIZE")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("SIZE"))
+                .withMetadata(DocumentationMetadataDefinition.localized("SIZE", classLoader))
                 .withExactArgumentCount(1)
-                .withCollectionArgument("collection", DocumentationMetadataDefinition.localized("SIZE_ARG"))
+                .withCollectionArgument("collection", DocumentationMetadataDefinition.localized("SIZE_ARG", classLoader))
                 .withResultType(INTEGER)
                 .build();
         domainBuilder.withFunctionTypeResolver("SIZE", INSTANCE);

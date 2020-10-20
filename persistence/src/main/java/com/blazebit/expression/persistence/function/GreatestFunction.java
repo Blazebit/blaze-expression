@@ -21,11 +21,11 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -48,16 +48,17 @@ public class GreatestFunction implements FunctionRenderer, FunctionInvoker, Seri
      * Adds the GREATEST function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("GREATEST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("GREATEST"))
+                .withMetadata(DocumentationMetadataDefinition.localized("GREATEST", classLoader))
                 .withMinArgumentCount(2)
-                .withArgument("first", DocumentationMetadataDefinition.localized("GREATEST_FIRST"))
-                .withArgument("second", DocumentationMetadataDefinition.localized("GREATEST_SECOND"))
-                .withArgument("other", DocumentationMetadataDefinition.localized("GREATEST_OTHER"))
+                .withArgument("first", DocumentationMetadataDefinition.localized("GREATEST_FIRST", classLoader))
+                .withArgument("second", DocumentationMetadataDefinition.localized("GREATEST_SECOND", classLoader))
+                .withArgument("other", DocumentationMetadataDefinition.localized("GREATEST_OTHER", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("GREATEST", StaticDomainFunctionTypeResolvers.widest(NUMERIC));
     }

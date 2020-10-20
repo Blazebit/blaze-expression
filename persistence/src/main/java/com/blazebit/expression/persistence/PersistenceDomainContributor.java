@@ -22,9 +22,12 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
+import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.DomainTypeResolverException;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
@@ -69,9 +72,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Christian Beikov
@@ -121,8 +128,12 @@ public class PersistenceDomainContributor implements DomainContributor {
             withPredicateTypeResolvers(domainBuilder, type, INTEGER, NUMERIC);
         }
 
-        domainBuilder.withOperationTypeResolver(STRING, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(STRING, STRING, INTEGER, NUMERIC));
-        withPredicateTypeResolvers(domainBuilder, STRING, STRING);
+        domainBuilder.withOperationTypeResolver(STRING, DomainOperator.PLUS, new StringlyDomainOperationTypeResolver(STRING, STRING, INTEGER, NUMERIC));
+        StringlyDomainPredicateTypeResolver stringlyDomainPredicateTypeResolver = new StringlyDomainPredicateTypeResolver(BOOLEAN, STRING);
+        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(STRING).getName())) {
+            domainBuilder.withPredicateTypeResolver(STRING, domainPredicate, stringlyDomainPredicateTypeResolver);
+        }
+
         domainBuilder.withOperationTypeResolver(BOOLEAN, DomainOperator.NOT, StaticDomainOperationTypeResolvers.returning(BOOLEAN));
         withPredicateTypeResolvers(domainBuilder, BOOLEAN, BOOLEAN);
 
@@ -138,37 +149,41 @@ public class PersistenceDomainContributor implements DomainContributor {
         domainBuilder.withOperationTypeResolver(INTERVAL, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP, TIME, INTERVAL));
         withPredicateTypeResolvers(domainBuilder, INTERVAL, INTERVAL);
 
-        CurrentTimestampFunction.addFunction(domainBuilder);
-        CurrentDateFunction.addFunction(domainBuilder);
-        CurrentTimeFunction.addFunction(domainBuilder);
-        SubstringFunction.addFunction(domainBuilder);
-        ReplaceFunction.addFunction(domainBuilder);
-        TrimFunction.addFunction(domainBuilder);
-        LTrimFunction.addFunction(domainBuilder);
-        RTrimFunction.addFunction(domainBuilder);
-        UpperFunction.addFunction(domainBuilder);
-        LowerFunction.addFunction(domainBuilder);
-        LengthFunction.addFunction(domainBuilder);
-        LocateFunction.addFunction(domainBuilder);
-        LocateLastFunction.addFunction(domainBuilder);
-        StartsWithFunction.addFunction(domainBuilder);
-        EndsWithFunction.addFunction(domainBuilder);
-        AbsFunction.addFunction(domainBuilder);
-        CeilFunction.addFunction(domainBuilder);
-        FloorFunction.addFunction(domainBuilder);
-        NumericFunction.addFunction(domainBuilder);
-        Atan2Function.addFunction(domainBuilder);
-        RoundFunction.addFunction(domainBuilder);
-        RandomFunction.addFunction(domainBuilder);
-        PowFunction.addFunction(domainBuilder);
-        GreatestFunction.addFunction(domainBuilder);
-        LeastFunction.addFunction(domainBuilder);
-        SizeFunction.addFunction(domainBuilder);
+        CurrentTimestampFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        CurrentDateFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        CurrentTimeFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        SubstringFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        ReplaceFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        TrimFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LTrimFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        RTrimFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        UpperFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LowerFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LengthFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LocateFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LocateLastFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        StartsWithFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        EndsWithFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        AbsFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        CeilFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        FloorFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        NumericFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        Atan2Function.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        RoundFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        RandomFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        PowFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        GreatestFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        LeastFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
+        SizeFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
     }
 
     private static void withPredicateTypeResolvers(DomainBuilder domainBuilder, Class<?> type, Class<?>... supportedTypes) {
-        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(type).getName())) {
-            domainBuilder.withPredicateTypeResolver(type, domainPredicate, StaticDomainPredicateTypeResolvers.returning(BOOLEAN, supportedTypes));
+        Set<DomainPredicate> enabledPredicates = domainBuilder.getEnabledPredicates(domainBuilder.getType(type).getName());
+        if (!enabledPredicates.isEmpty()) {
+            DomainPredicateTypeResolver predicateTypeResolver = StaticDomainPredicateTypeResolvers.returning(BOOLEAN, supportedTypes);
+            for (DomainPredicate domainPredicate : enabledPredicates) {
+                domainBuilder.withPredicateTypeResolver(type, domainPredicate, predicateTypeResolver);
+            }
         }
     }
 
@@ -177,7 +192,7 @@ public class PersistenceDomainContributor implements DomainContributor {
             new ComparisonOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer.SIMPLE),
-            DocumentationMetadataDefinition.localized(documentationKey)
+            DocumentationMetadataDefinition.localized(documentationKey, PersistenceDomainContributor.class.getClassLoader())
         };
     }
 
@@ -186,7 +201,7 @@ public class PersistenceDomainContributor implements DomainContributor {
             new ComparisonOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorInterpreterMetadataDefinition(instance),
             new DomainOperatorRendererMetadataDefinition(instance),
-            DocumentationMetadataDefinition.localized(documentationKey)
+            DocumentationMetadataDefinition.localized(documentationKey, PersistenceDomainContributor.class.getClassLoader())
         };
     }
 
@@ -284,10 +299,15 @@ public class PersistenceDomainContributor implements DomainContributor {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class ComparisonOperatorInterpreterMetadataDefinition implements MetadataDefinition<ComparisonOperatorInterpreter>, Serializable {
+    static class ComparisonOperatorInterpreterMetadataDefinition implements MetadataDefinition<ComparisonOperatorInterpreter>, Serializable {
 
         private final ComparisonOperatorInterpreter comparisonOperatorInterpreter;
 
+        /**
+         * Creates a metadata definition for the given {@link ComparisonOperatorInterpreter}.
+         *
+         * @param comparisonOperatorInterpreter The comparison operator interpreter
+         */
         public ComparisonOperatorInterpreterMetadataDefinition(ComparisonOperatorInterpreter comparisonOperatorInterpreter) {
             this.comparisonOperatorInterpreter = comparisonOperatorInterpreter;
         }
@@ -307,10 +327,15 @@ public class PersistenceDomainContributor implements DomainContributor {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class DomainOperatorInterpreterMetadataDefinition implements MetadataDefinition<DomainOperatorInterpreter> {
+    static class DomainOperatorInterpreterMetadataDefinition implements MetadataDefinition<DomainOperatorInterpreter> {
 
         private final DomainOperatorInterpreter domainOperatorInterpreter;
 
+        /**
+         * Creates a metadata definition for the given {@link DomainOperatorInterpreter}.
+         *
+         * @param domainOperatorInterpreter The domain operator interpreter
+         */
         public DomainOperatorInterpreterMetadataDefinition(DomainOperatorInterpreter domainOperatorInterpreter) {
             this.domainOperatorInterpreter = domainOperatorInterpreter;
         }
@@ -330,10 +355,15 @@ public class PersistenceDomainContributor implements DomainContributor {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class DomainOperatorRendererMetadataDefinition implements MetadataDefinition<DomainOperatorRenderer> {
+    static class DomainOperatorRendererMetadataDefinition implements MetadataDefinition<DomainOperatorRenderer> {
 
         private final DomainOperatorRenderer domainOperatorRenderer;
 
+        /**
+         * Creates a metadata definition for the given {@link DomainOperatorRenderer}.
+         *
+         * @param domainOperatorRenderer The domain operator renderer
+         */
         public DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer domainOperatorRenderer) {
             this.domainOperatorRenderer = domainOperatorRenderer;
         }
@@ -389,6 +419,98 @@ public class PersistenceDomainContributor implements DomainContributor {
         @Override
         public int hashCode() {
             return Objects.hash(type, value);
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class StringlyDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
+
+        private final Class<?> returningType;
+        private final Set<Class<?>> supportedJavaTypes;
+
+        public StringlyDomainOperationTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+            this.returningType = returningType;
+            this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            for (int i = 0; i < domainTypes.size(); i++) {
+                DomainType domainType = domainTypes.get(i);
+                if (!supportedJavaTypes.contains(domainType.getJavaType())) {
+                    List<DomainType> types = new ArrayList<>(supportedJavaTypes.size());
+                    for (Class<?> javaType : supportedJavaTypes) {
+                        types.add(domainModel.getType(javaType));
+                    }
+                    throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following: " + types);
+                }
+            }
+            return domainModel.getType(returningType);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"RestrictedDomainOperationTypeResolver\":[");
+            sb.append('"').append(domainModel.getType(returningType).getName()).append("\",[");
+            for (Class<?> javaType : supportedJavaTypes) {
+                sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class StringlyDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
+
+        private final Class<?> returningType;
+        private final Set<Class<?>> supportedJavaTypes;
+
+        public StringlyDomainPredicateTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+            this.returningType = returningType;
+            this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
+        }
+
+        @Override
+        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
+            for (int i = 0; i < domainTypes.size(); i++) {
+                DomainType domainType = domainTypes.get(i);
+                if (!supportedJavaTypes.contains(domainType.getJavaType())) {
+                    List<DomainType> types = new ArrayList<>(supportedJavaTypes.size());
+                    for (Class<?> javaType : supportedJavaTypes) {
+                        types.add(domainModel.getType(javaType));
+                    }
+                    throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + types);
+                }
+            }
+            return domainModel.getType(returningType);
+        }
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, DomainPredicateTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"RestrictedDomainPredicateTypeResolver\":[");
+            sb.append('"').append(domainModel.getType(returningType).getName()).append("\",[");
+            for (Class<?> javaType : supportedJavaTypes) {
+                sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
+            }
+            sb.setCharAt(sb.length() - 1, ']');
+            sb.append(']').append('}');
+            return (T) sb.toString();
         }
     }
 

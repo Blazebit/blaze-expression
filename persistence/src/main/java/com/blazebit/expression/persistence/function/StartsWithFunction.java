@@ -20,8 +20,8 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -49,17 +49,18 @@ public class StartsWithFunction implements FunctionRenderer, FunctionInvoker, Se
      * Adds the STARTS_WITH function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("STARTS_WITH")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("STARTS_WITH"))
+                .withMetadata(DocumentationMetadataDefinition.localized("STARTS_WITH", classLoader))
                 .withMinArgumentCount(2)
                 .withResultType(BOOLEAN)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_STRING"))
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_SUBSTRING"))
-                .withArgument("startIndex", INTEGER, DocumentationMetadataDefinition.localized("STARTS_WITH_START_INDEX"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_STRING", classLoader))
+                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_SUBSTRING", classLoader))
+                .withArgument("startIndex", INTEGER, DocumentationMetadataDefinition.localized("STARTS_WITH_START_INDEX", classLoader))
                 .build();
     }
 

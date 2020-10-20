@@ -21,8 +21,8 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -34,8 +34,8 @@ import java.math.RoundingMode;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
 import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
 
 /**
  * @author Christian Beikov
@@ -52,14 +52,15 @@ public class RoundFunction implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the ROUND function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("ROUND")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("ROUND"))
-                .withArgument("value", NUMERIC, DocumentationMetadataDefinition.localized("ROUND_VALUE"))
-                .withArgument("precision", INTEGER, DocumentationMetadataDefinition.localized("ROUND_PRECISION"))
+                .withMetadata(DocumentationMetadataDefinition.localized("ROUND", classLoader))
+                .withArgument("value", NUMERIC, DocumentationMetadataDefinition.localized("ROUND_VALUE", classLoader))
+                .withArgument("precision", INTEGER, DocumentationMetadataDefinition.localized("ROUND_PRECISION", classLoader))
                 .withMinArgumentCount(1)
                 .build();
         domainBuilder.withFunctionTypeResolver("ROUND", StaticDomainFunctionTypeResolvers.returning(NUMERIC));

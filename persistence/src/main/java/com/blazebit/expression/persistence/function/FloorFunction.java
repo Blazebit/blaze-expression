@@ -21,9 +21,9 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceDomainContributor;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
@@ -49,14 +49,15 @@ public class FloorFunction implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the FLOOR function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("FLOOR")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("FLOOR"))
+                .withMetadata(DocumentationMetadataDefinition.localized("FLOOR", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", DocumentationMetadataDefinition.localized("FLOOR_ARG"))
+                .withArgument("number", DocumentationMetadataDefinition.localized("FLOOR_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("FLOOR", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.INTEGER));
     }

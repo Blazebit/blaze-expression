@@ -45,7 +45,12 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
             l = (String) leftValue;
             r = (String) rightValue;
         } else {
-            throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            StringlyTypeHandler<Object> stringlyTypeHandler = rightType.getMetadata(StringlyTypeHandler.class);
+            if (stringlyTypeHandler == null) {
+                throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            }
+            l = (String) leftValue;
+            r = stringlyTypeHandler.toString(rightValue);
         }
 
         switch (operator) {
@@ -71,7 +76,12 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
     @Override
     public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (operator == DomainOperator.PLUS) {
-            return leftValue.toString().concat(rightValue.toString());
+            StringlyTypeHandler<Object> stringlyTypeHandler = rightType.getMetadata(StringlyTypeHandler.class);
+            if (stringlyTypeHandler == null) {
+                return leftValue.toString().concat(rightValue.toString());
+            } else {
+                return leftValue.toString().concat(stringlyTypeHandler.toString(rightValue));
+            }
         }
 
         throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
@@ -81,10 +91,24 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
     public void render(ChainingArithmeticExpression e, PersistenceExpressionSerializer serializer) {
         if (e.getOperator().getDomainOperator() == DomainOperator.PLUS) {
             StringBuilder sb = serializer.getStringBuilder();
+            StringlyTypeHandler<Object> stringlyTypeHandler = e.getRight().getType().getMetadata(StringlyTypeHandler.class);
             sb.append("CONCAT(");
             e.getLeft().accept(serializer);
             sb.append(", ");
-            e.getRight().accept(serializer);
+            if (stringlyTypeHandler == null) {
+                e.getRight().accept(serializer);
+            } else {
+                stringlyTypeHandler.appendToString(sb, stringBuilder -> {
+                    if (sb == stringBuilder) {
+                        e.getRight().accept(serializer);
+                    } else {
+                        int idx = sb.length();
+                        e.getRight().accept(serializer);
+                        stringBuilder.append(sb, idx, sb.length());
+                        sb.setLength(idx);
+                    }
+                });
+            }
             sb.append(')');
         } else {
             throw new DomainModelException("Can't handle the operator " + e.getOperator().getDomainOperator() + " for the arguments [" + e.getLeft() + ", " + e.getRight() + "]!");

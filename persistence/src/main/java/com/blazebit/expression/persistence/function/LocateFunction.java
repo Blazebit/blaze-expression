@@ -20,11 +20,11 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -48,17 +48,18 @@ public class LocateFunction implements FunctionRenderer, FunctionInvoker, Serial
      * Adds the LOCATE function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LOCATE")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("LOCATE"))
+                .withMetadata(DocumentationMetadataDefinition.localized("LOCATE", classLoader))
                 .withMinArgumentCount(2)
                 .withResultType(INTEGER)
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_SUBSTRING"))
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_STRING"))
-                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_START"))
+                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_SUBSTRING", classLoader))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_STRING", classLoader))
+                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_START", classLoader))
                 .build();
     }
 

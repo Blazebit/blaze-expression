@@ -38,6 +38,15 @@ public class DocumentationDeclarativeFunctionMetadataProcessor implements Declar
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Documentation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
-        return DocumentationMetadataDefinition.localized(annotation.value());
+        String baseName = DocumentationMetadataDefinition.DEFAULT_BASE_NAME;
+        if (annotation.baseName().isEmpty()) {
+            Documentation classAnnotation = method.getDeclaringClass().getAnnotation(Documentation.class);
+            if (classAnnotation != null && !classAnnotation.baseName().isEmpty()) {
+                baseName = classAnnotation.baseName();
+            }
+        } else {
+            baseName = annotation.baseName();
+        }
+        return DocumentationMetadataDefinition.localized(annotation.value(), baseName, annotatedClass.getClassLoader());
     }
 }

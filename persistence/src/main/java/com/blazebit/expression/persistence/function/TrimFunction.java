@@ -20,11 +20,11 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -47,16 +47,17 @@ public class TrimFunction implements FunctionRenderer, FunctionInvoker, Serializ
      * Adds the TRIM function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("TRIM")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("TRIM"))
+                .withMetadata(DocumentationMetadataDefinition.localized("TRIM", classLoader))
                 .withMinArgumentCount(1)
                 .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("TRIM_STRING"))
-                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("TRIM_CHARACTER"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("TRIM_STRING", classLoader))
+                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("TRIM_CHARACTER", classLoader))
                 .build();
     }
 

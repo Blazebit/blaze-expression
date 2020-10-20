@@ -20,8 +20,8 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -49,15 +49,16 @@ public class LengthFunction implements FunctionRenderer, FunctionInvoker, Serial
      * Adds the LENGTH function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LENGTH")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("LENGTH"))
+                .withMetadata(DocumentationMetadataDefinition.localized("LENGTH", classLoader))
                 .withExactArgumentCount(1)
                 .withResultType(INTEGER)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LENGTH_STRING"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LENGTH_STRING", classLoader))
                 .build();
     }
 

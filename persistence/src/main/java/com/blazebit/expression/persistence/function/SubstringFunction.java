@@ -20,8 +20,8 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -48,17 +48,18 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker, Ser
      * Adds the SUBSTRING function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("SUBSTRING")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("SUBSTRING"))
+                .withMetadata(DocumentationMetadataDefinition.localized("SUBSTRING", classLoader))
                 .withMinArgumentCount(2)
                 .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("SUBSTRING_STRING"))
-                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_START"))
-                .withArgument("count", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_COUNT"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("SUBSTRING_STRING", classLoader))
+                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_START", classLoader))
+                .withArgument("count", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_COUNT", classLoader))
                 .build();
     }
 

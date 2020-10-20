@@ -21,11 +21,11 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -48,16 +48,17 @@ public class LeastFunction implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the LEAST function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LEAST")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("LEAST"))
+                .withMetadata(DocumentationMetadataDefinition.localized("LEAST", classLoader))
                 .withMinArgumentCount(2)
-                .withArgument("first", DocumentationMetadataDefinition.localized("LEAST_FIRST"))
-                .withArgument("second", DocumentationMetadataDefinition.localized("LEAST_SECOND"))
-                .withArgument("other", DocumentationMetadataDefinition.localized("LEAST_OTHER"))
+                .withArgument("first", DocumentationMetadataDefinition.localized("LEAST_FIRST", classLoader))
+                .withArgument("second", DocumentationMetadataDefinition.localized("LEAST_SECOND", classLoader))
+                .withArgument("other", DocumentationMetadataDefinition.localized("LEAST_OTHER", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("LEAST", StaticDomainFunctionTypeResolvers.widest(NUMERIC));
     }

@@ -20,11 +20,11 @@ import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
-import com.blazebit.expression.persistence.FunctionRenderer;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -47,16 +47,17 @@ public class LTrimFunction implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the LTRIM function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LTRIM")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("LTRIM"))
+                .withMetadata(DocumentationMetadataDefinition.localized("LTRIM", classLoader))
                 .withMinArgumentCount(1)
                 .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LTRIM_STRING"))
-                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("LTRIM_CHARACTER"))
+                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LTRIM_STRING", classLoader))
+                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("LTRIM_CHARACTER", classLoader))
                 .build();
     }
 

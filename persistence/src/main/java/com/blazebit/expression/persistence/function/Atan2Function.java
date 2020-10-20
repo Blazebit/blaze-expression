@@ -21,8 +21,8 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
-import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -49,14 +49,15 @@ public class Atan2Function implements FunctionRenderer, FunctionInvoker, Seriali
      * Adds the ATAN2 function to the domain builder.
      *
      * @param domainBuilder The domain builder
+     * @param classLoader The class loader for resource bundle resolving
      */
-    public static void addFunction(DomainBuilder domainBuilder) {
+    public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("ATAN2")
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
-                .withMetadata(DocumentationMetadataDefinition.localized("ATAN2"))
-                .withArgument("y", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_Y"))
-                .withArgument("x", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_X"))
+                .withMetadata(DocumentationMetadataDefinition.localized("ATAN2", classLoader))
+                .withArgument("y", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
+                .withArgument("x", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
     }

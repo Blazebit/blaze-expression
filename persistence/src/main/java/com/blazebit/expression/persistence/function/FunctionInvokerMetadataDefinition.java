@@ -26,7 +26,7 @@ import java.io.Serializable;
  * @author Christian Beikov
  * @since 1.0.0
  */
-class FunctionInvokerMetadataDefinition implements MetadataDefinition<FunctionInvoker>, Serializable {
+public class FunctionInvokerMetadataDefinition implements MetadataDefinition<FunctionInvoker>, Serializable {
 
     private final FunctionInvoker functionInvoker;
 

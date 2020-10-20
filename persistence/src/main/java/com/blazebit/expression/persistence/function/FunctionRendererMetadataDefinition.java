@@ -26,7 +26,7 @@ import java.io.Serializable;
  * @author Christian Beikov
  * @since 1.0.0
  */
-class FunctionRendererMetadataDefinition implements MetadataDefinition<FunctionRenderer>, Serializable {
+public class FunctionRendererMetadataDefinition implements MetadataDefinition<FunctionRenderer>, Serializable {
 
     private final FunctionRenderer functionRenderer;
 
