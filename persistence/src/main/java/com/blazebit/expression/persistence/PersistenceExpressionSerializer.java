@@ -40,6 +40,7 @@ import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.MultipleSubqueryInitiator;
 import com.blazebit.persistence.WhereBuilder;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -160,6 +161,52 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
         }
     }
 
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    public static interface CollectionConsumer extends Consumer<StringBuilder> {
+
+        /**
+         * Returns the values to be consumed.
+         *
+         * @return The values
+         */
+        Collection<Expression> getValues();
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private final class CollectionConsumerImpl implements CollectionConsumer {
+
+        private final Collection<Expression> values;
+
+        public CollectionConsumerImpl(Collection<Expression> values) {
+            this.values = values;
+        }
+
+        @Override
+        public Collection<Expression> getValues() {
+            return values;
+        }
+
+        @Override
+        public void accept(StringBuilder sb) {
+            StringBuilder oldSb = PersistenceExpressionSerializer.this.sb;
+            PersistenceExpressionSerializer.this.sb = sb;
+            try {
+                for (Expression value : values) {
+                    value.accept(PersistenceExpressionSerializer.this);
+                    sb.append(", ");
+                }
+            } finally {
+                PersistenceExpressionSerializer.this.sb = oldSb;
+            }
+        }
+    }
+
     @Override
     public void visit(FunctionInvocation e) {
         FunctionRenderer renderer = e.getFunction().getMetadata(FunctionRenderer.class);
@@ -173,16 +220,44 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
             argumentRenderers = Collections.emptyMap();
         } else {
             argumentRenderers = new LinkedHashMap<>(arguments.size());
-            for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
-                argumentRenderers.put(entry.getKey(), sb -> {
-                    StringBuilder oldSb = this.sb;
-                    this.sb = sb;
-                    try {
-                        entry.getValue().accept(PersistenceExpressionSerializer.this);
-                    } finally {
-                        this.sb = oldSb;
+            int lastIdx = e.getFunction().getArguments().size() - 1;
+            DomainFunctionArgument lastArgument = e.getFunction().getArguments().get(lastIdx);
+            if (e.getFunction().getArgumentCount() == -1 && e.getArguments().containsKey(lastArgument)) {
+                // Var-args
+                for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
+                    if (lastArgument == entry.getKey()) {
+                        Literal literal = (Literal) entry.getValue();
+                        Collection<Expression> values = (Collection<Expression>) literal.getValue();
+                        if (values == null || values.isEmpty()) {
+                            argumentRenderers.put(entry.getKey(), sb -> {
+                            });
+                        } else {
+                            argumentRenderers.put(entry.getKey(), new CollectionConsumerImpl(values));
+                        }
+                    } else {
+                        argumentRenderers.put(entry.getKey(), sb -> {
+                            StringBuilder oldSb = this.sb;
+                            this.sb = sb;
+                            try {
+                                entry.getValue().accept(PersistenceExpressionSerializer.this);
+                            } finally {
+                                this.sb = oldSb;
+                            }
+                        });
                     }
-                });
+                }
+            } else {
+                for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
+                    argumentRenderers.put(entry.getKey(), sb -> {
+                        StringBuilder oldSb = this.sb;
+                        this.sb = sb;
+                        try {
+                            entry.getValue().accept(PersistenceExpressionSerializer.this);
+                        } finally {
+                            this.sb = oldSb;
+                        }
+                    });
+                }
             }
         }
 

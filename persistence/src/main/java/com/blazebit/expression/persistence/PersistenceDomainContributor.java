@@ -34,6 +34,7 @@ import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.domain.spi.DomainContributor;
 import com.blazebit.domain.spi.DomainSerializer;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.function.AbsFunction;
 import com.blazebit.expression.persistence.function.Atan2Function;
 import com.blazebit.expression.persistence.function.CeilFunction;

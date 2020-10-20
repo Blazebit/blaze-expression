@@ -23,8 +23,9 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainFunctionTypeResolver;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -69,7 +70,7 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFu
     public DomainType resolveType(DomainModel domainModel, DomainFunction function, Map<DomainFunctionArgument, DomainType> argumentTypes) {
         DomainType argumentType = argumentTypes.values().iterator().next();
         if (!(argumentType instanceof CollectionDomainType)) {
-            throw new IllegalArgumentException("SIZE only accepts a collection argument! Invalid type given: " + argumentType);
+            throw new DomainModelException("SIZE only accepts a collection argument! Invalid type given: " + argumentType);
         }
         return domainModel.getType(INTEGER);
     }
@@ -84,7 +85,7 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFu
         if (argument instanceof Collection<?>) {
             return BigInteger.valueOf(((Collection) argument).size());
         } else {
-            throw new IllegalArgumentException("Illegal argument for SIZE function: " + argument);
+            throw new DomainModelException("Illegal argument for SIZE function: " + argument);
         }
     }
 

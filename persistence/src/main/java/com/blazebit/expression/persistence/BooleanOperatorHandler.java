@@ -19,6 +19,7 @@ package com.blazebit.expression.persistence;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ComparisonOperator;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 
@@ -49,11 +50,11 @@ public class BooleanOperatorHandler implements ComparisonOperatorInterpreter, Do
                     break;
             }
         } else {
-            throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
         }
 
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 
     @Override
@@ -62,6 +63,6 @@ public class BooleanOperatorHandler implements ComparisonOperatorInterpreter, Do
             return !((boolean) leftValue);
         }
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 }

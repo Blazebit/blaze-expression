@@ -16,6 +16,7 @@
 
 package com.blazebit.expression.impl;
 
+import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
@@ -396,13 +397,19 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     public Object visit(Literal e) {
         typeAdapter = null;
         if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+            DomainType elementType = ((CollectionDomainType) e.getType()).getElementType();
             Collection<Expression> collection = (Collection<Expression>) e.getValue();
             if (collection.isEmpty()) {
                 return Collections.emptyList();
             }
             List<Object> resolved = new ArrayList<>(collection.size());
             for (Expression expression : collection) {
-                resolved.add(expression.accept(this));
+                Object value = expression.accept(this);
+                if (typeAdapter != null) {
+                    value = typeAdapter.toInternalType(context, value, elementType);
+                    typeAdapter = null;
+                }
+                resolved.add(value);
             }
             return resolved;
         } else {

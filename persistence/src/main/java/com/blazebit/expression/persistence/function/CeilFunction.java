@@ -21,8 +21,9 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceDomainContributor;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
@@ -70,7 +71,7 @@ public class CeilFunction implements FunctionRenderer, FunctionInvoker, Serializ
         if (argument instanceof Number) {
             return BigInteger.valueOf((long) Math.ceil(((Number) argument).doubleValue()));
         } else {
-            throw new IllegalArgumentException("Illegal argument for CEIL function: " + argument);
+            throw new DomainModelException("Illegal argument for CEIL function: " + argument);
         }
     }
 

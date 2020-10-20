@@ -22,6 +22,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

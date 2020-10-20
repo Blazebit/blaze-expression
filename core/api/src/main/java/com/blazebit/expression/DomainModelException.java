@@ -21,7 +21,7 @@ package com.blazebit.expression;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DomainModelException extends ExpressionParseException {
+public class DomainModelException extends ExpressionException {
 
     /**
      * Creates a new exception.

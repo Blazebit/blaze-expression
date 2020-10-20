@@ -17,7 +17,7 @@
 package com.blazebit.expression.examples.web.editor;
 
 import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

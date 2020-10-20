@@ -21,8 +21,9 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.persistence.FunctionRenderer;
@@ -145,7 +146,7 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
         if (argument instanceof Number) {
             return invoke(((Number) argument).doubleValue());
         } else {
-            throw new IllegalArgumentException("Illegal argument for " + name + " function: " + argument);
+            throw new DomainModelException("Illegal argument for " + name + " function: " + argument);
         }
     }
 

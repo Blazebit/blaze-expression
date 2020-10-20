@@ -19,6 +19,7 @@ package com.blazebit.expression.persistence;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ComparisonOperator;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
@@ -72,7 +73,7 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
                 break;
         }
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 
     @Override
@@ -126,7 +127,7 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
                     l = (BigDecimal) leftValue;
                     r = (BigDecimal) rightValue;
                 } else {
-                    throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+                    throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
                 }
 
                 switch (operator) {
@@ -146,6 +147,6 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
             }
         }
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 }

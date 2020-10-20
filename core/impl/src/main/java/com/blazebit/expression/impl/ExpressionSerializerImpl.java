@@ -39,6 +39,7 @@ import com.blazebit.expression.Predicate;
 import com.blazebit.expression.spi.LiteralRenderer;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -96,14 +97,37 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
     public void visit(FunctionInvocation e) {
         sb.append(e.getFunction().getName()).append('(');
         if (!e.getArguments().isEmpty()) {
-            for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
-                String name = entry.getKey().getName();
-                if (name != null) {
-                    sb.append(name).append(" = ");
+            int lastIdx = e.getFunction().getArguments().size() - 1;
+            DomainFunctionArgument lastArgument = e.getFunction().getArguments().get(lastIdx);
+            if (e.getFunction().getArgumentCount() == -1 && e.getArguments().containsKey(lastArgument)) {
+                // Var-args
+                for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
+                    if (lastArgument == entry.getKey()) {
+                        Literal literal = (Literal) entry.getValue();
+                        Collection<Expression> values = (Collection<Expression>) literal.getValue();
+                        if (values == null || values.isEmpty()) {
+                            sb.append(", ");
+                        } else {
+                            for (Expression value : values) {
+                                value.accept(this);
+                                sb.append(", ");
+                            }
+                        }
+                    } else {
+                        entry.getValue().accept(this);
+                        sb.append(", ");
+                    }
                 }
+            } else {
+                for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
+                    String name = entry.getKey().getName();
+                    if (name != null) {
+                        sb.append(name).append(" = ");
+                    }
 
-                entry.getValue().accept(this);
-                sb.append(", ");
+                    entry.getValue().accept(this);
+                    sb.append(", ");
+                }
             }
 
             sb.setLength(sb.length() - 2);

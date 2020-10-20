@@ -21,6 +21,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
@@ -62,10 +63,10 @@ public class TimeOperatorHandler implements ComparisonOperatorInterpreter, Domai
                     break;
             }
         } else {
-            throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
         }
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 
     @Override
@@ -101,10 +102,10 @@ public class TimeOperatorHandler implements ComparisonOperatorInterpreter, Domai
                 return interval.add(localTime);
             }
         } else {
-            throw new IllegalArgumentException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
         }
 
-        throw new IllegalArgumentException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
+        throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
     }
 
     @Override
@@ -146,6 +147,6 @@ public class TimeOperatorHandler implements ComparisonOperatorInterpreter, Domai
                 }
             }
         }
-        throw new IllegalArgumentException("Can't handle the operator " + domainOperator + " for the arguments [" + e.getLeft() + ", " + e.getRight() + "]!");
+        throw new DomainModelException("Can't handle the operator " + domainOperator + " for the arguments [" + e.getLeft() + ", " + e.getRight() + "]!");
     }
 }

@@ -21,8 +21,9 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.persistence.DocumentationMetadataDefinition;
+import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -72,7 +73,7 @@ public class AbsFunction implements FunctionRenderer, FunctionInvoker, Serializa
         } else if (argument instanceof BigInteger) {
             return ((BigInteger) argument).abs();
         } else {
-            throw new IllegalArgumentException("Illegal argument for ABS function: " + argument);
+            throw new DomainModelException("Illegal argument for ABS function: " + argument);
         }
     }
 

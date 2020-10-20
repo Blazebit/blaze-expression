@@ -21,7 +21,7 @@ package com.blazebit.expression;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TypeErrorException extends ExpressionParseException {
+public class TypeErrorException extends ExpressionException {
 
     private static final long serialVersionUID = 1L;
 
