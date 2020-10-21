@@ -17,6 +17,7 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.CollectionDomainType;
+import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
@@ -29,6 +30,7 @@ import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionPredicate;
@@ -41,6 +43,7 @@ import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.spi.AttributeAccessor;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.spi.TypeAdapter;
@@ -49,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -364,33 +366,40 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
 
     @Override
     public Object visit(FunctionInvocation e) {
-        FunctionInvoker functionInvoker = e.getFunction().getMetadata(FunctionInvoker.class);
+        DomainFunction domainFunction = e.getFunction();
+        FunctionInvoker functionInvoker = domainFunction.getMetadata(FunctionInvoker.class);
         if (functionInvoker == null) {
-            throw new IllegalArgumentException("No function invoker available for function: " + e.getFunction());
+            throw new IllegalArgumentException("No function invoker available for function: " + domainFunction);
         }
 
         Map<DomainFunctionArgument, Expression> arguments = e.getArguments();
-        Map<DomainFunctionArgument, Object> argumentValues;
+        DomainFunctionArguments argumentValues;
 
         if (arguments.isEmpty()) {
-            argumentValues = Collections.emptyMap();
+            argumentValues = DomainFunctionArguments.EMPTY;
         } else {
-            argumentValues = new LinkedHashMap<>(arguments.size());
+            int size = domainFunction.getArguments().size();
+            Object[] values = new Object[size];
+            DomainType[] types = new DomainType[size];
             for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
-                Object argumentValue = entry.getValue().accept(this);
+                DomainFunctionArgument domainFunctionArgument = entry.getKey();
+                Expression expression = entry.getValue();
+                Object argumentValue = expression.accept(this);
                 if (typeAdapter != null) {
-                    argumentValue = typeAdapter.toInternalType(context, argumentValue, entry.getKey().getType());
+                    argumentValue = typeAdapter.toInternalType(context, argumentValue, domainFunctionArgument.getType());
                 }
-                TypeAdapter argumentAdapter = entry.getKey().getMetadata(TypeAdapter.class);
+                TypeAdapter argumentAdapter = domainFunctionArgument.getMetadata(TypeAdapter.class);
                 if (argumentAdapter != null) {
-                    argumentValue = argumentAdapter.toModelType(context, argumentValue, entry.getKey().getType());
+                    argumentValue = argumentAdapter.toModelType(context, argumentValue, domainFunctionArgument.getType());
                 }
-                argumentValues.put(entry.getKey(), argumentValue);
+                types[domainFunctionArgument.getPosition()] = expression.getType();
+                values[domainFunctionArgument.getPosition()] = argumentValue;
             }
+            argumentValues = new DefaultDomainFunctionArguments(values, types, arguments.size());
         }
 
-        typeAdapter = e.getFunction().getMetadata(TypeAdapter.class);
-        return functionInvoker.invoke(context, e.getFunction(), argumentValues);
+        typeAdapter = domainFunction.getMetadata(TypeAdapter.class);
+        return functionInvoker.invoke(context, domainFunction, argumentValues);
     }
 
     @Override
@@ -431,5 +440,45 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             throw new IllegalArgumentException("No domain operator interpreter available for type: " + targetType);
         }
         return domainOperatorInterpreter.interpret(targetType, leftType, rightType, left, right, operator);
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static final class DefaultDomainFunctionArguments implements DomainFunctionArguments {
+
+        private final Object[] values;
+        private final DomainType[] types;
+        private final int assignedArguments;
+
+        public DefaultDomainFunctionArguments(Object[] values, DomainType[] types, int assignedArguments) {
+            this.values = values;
+            this.types = types;
+            this.assignedArguments = assignedArguments;
+        }
+
+        @Override
+        public Object getValue(int position) {
+            try {
+                return values[position];
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                throw new DomainModelException(ex);
+            }
+        }
+
+        @Override
+        public DomainType getType(int position) {
+            try {
+                return types[position];
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                throw new DomainModelException(ex);
+            }
+        }
+
+        @Override
+        public int assignedArguments() {
+            return assignedArguments;
+        }
     }
 }

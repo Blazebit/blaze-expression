@@ -16,7 +16,9 @@
 
 package com.blazebit.expression.examples.web.editor.view;
 
+import com.blazebit.domain.declarative.DomainAttribute;
 import com.blazebit.domain.declarative.DomainType;
+import com.blazebit.expression.examples.web.editor.entity.Gender;
 import com.blazebit.expression.examples.web.editor.entity.User;
 import com.blazebit.persistence.view.EntityView;
 
@@ -28,4 +30,6 @@ import com.blazebit.persistence.view.EntityView;
 @EntityView(User.class)
 public interface UserView extends IdHolderView {
     public String getName();
+    @DomainAttribute(typeName = "Gender")
+    public Gender getGender();
 }

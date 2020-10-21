@@ -26,6 +26,7 @@ import com.blazebit.expression.BetweenPredicate;
 import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
+import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
@@ -36,17 +37,15 @@ import com.blazebit.expression.IsNullPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.MultipleSubqueryInitiator;
 import com.blazebit.persistence.WhereBuilder;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * @author Christian Beikov
@@ -161,52 +160,6 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
         }
     }
 
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    public static interface CollectionConsumer extends Consumer<StringBuilder> {
-
-        /**
-         * Returns the values to be consumed.
-         *
-         * @return The values
-         */
-        Collection<Expression> getValues();
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private final class CollectionConsumerImpl implements CollectionConsumer {
-
-        private final Collection<Expression> values;
-
-        public CollectionConsumerImpl(Collection<Expression> values) {
-            this.values = values;
-        }
-
-        @Override
-        public Collection<Expression> getValues() {
-            return values;
-        }
-
-        @Override
-        public void accept(StringBuilder sb) {
-            StringBuilder oldSb = PersistenceExpressionSerializer.this.sb;
-            PersistenceExpressionSerializer.this.sb = sb;
-            try {
-                for (Expression value : values) {
-                    value.accept(PersistenceExpressionSerializer.this);
-                    sb.append(", ");
-                }
-            } finally {
-                PersistenceExpressionSerializer.this.sb = oldSb;
-            }
-        }
-    }
-
     @Override
     public void visit(FunctionInvocation e) {
         FunctionRenderer renderer = e.getFunction().getMetadata(FunctionRenderer.class);
@@ -214,51 +167,19 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
             throw new IllegalStateException("The domain function '" + e.getFunction().getName() + "' has no registered persistence function renderer!");
         }
         Map<DomainFunctionArgument, Expression> arguments = e.getArguments();
-        Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers;
+        DomainFunctionArgumentRenderers argumentRenderers;
 
         if (arguments.isEmpty()) {
-            argumentRenderers = Collections.emptyMap();
+            argumentRenderers = DomainFunctionArgumentRenderers.EMPTY;
         } else {
-            argumentRenderers = new LinkedHashMap<>(arguments.size());
-            int lastIdx = e.getFunction().getArguments().size() - 1;
-            DomainFunctionArgument lastArgument = e.getFunction().getArguments().get(lastIdx);
-            if (e.getFunction().getArgumentCount() == -1 && e.getArguments().containsKey(lastArgument)) {
-                // Var-args
-                for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
-                    if (lastArgument == entry.getKey()) {
-                        Literal literal = (Literal) entry.getValue();
-                        Collection<Expression> values = (Collection<Expression>) literal.getValue();
-                        if (values == null || values.isEmpty()) {
-                            argumentRenderers.put(entry.getKey(), sb -> {
-                            });
-                        } else {
-                            argumentRenderers.put(entry.getKey(), new CollectionConsumerImpl(values));
-                        }
-                    } else {
-                        argumentRenderers.put(entry.getKey(), sb -> {
-                            StringBuilder oldSb = this.sb;
-                            this.sb = sb;
-                            try {
-                                entry.getValue().accept(PersistenceExpressionSerializer.this);
-                            } finally {
-                                this.sb = oldSb;
-                            }
-                        });
-                    }
-                }
-            } else {
-                for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
-                    argumentRenderers.put(entry.getKey(), sb -> {
-                        StringBuilder oldSb = this.sb;
-                        this.sb = sb;
-                        try {
-                            entry.getValue().accept(PersistenceExpressionSerializer.this);
-                        } finally {
-                            this.sb = oldSb;
-                        }
-                    });
-                }
+            int size = e.getFunction().getArguments().size();
+            Expression[] expressions = new Expression[size];
+            for (Map.Entry<DomainFunctionArgument, Expression> entry : arguments.entrySet()) {
+                DomainFunctionArgument domainFunctionArgument = entry.getKey();
+                Expression expression = entry.getValue();
+                expressions[domainFunctionArgument.getPosition()] = expression;
             }
+            argumentRenderers = new DefaultDomainFunctionArgumentRenderers(expressions, arguments.size());
         }
 
         renderer.render(e.getFunction(), e.getType(), argumentRenderers, sb, this);
@@ -267,21 +188,32 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     @Override
     public void visit(Literal e) {
         // TODO: implement some kind of SPI contract for literal rendering which can be replaced i.e. there should be a default impl that can be replaced
-        if (e.getType().getJavaType() == String.class) {
-            sb.append('\'');
-            String value = e.getValue().toString();
-            for (int i = 0; i < value.length(); i++) {
-                final char c = value.charAt(i);
-                if (c == '\'') {
-                    sb.append('\'')
-                        .append('\'');
-                } else {
+        if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+            @SuppressWarnings("unchecked")
+            Collection<Expression> expressions = (Collection<Expression>) e.getValue();
+            if (expressions != null && !expressions.isEmpty()) {
+                for (Expression expression : expressions) {
+                    expression.accept(PersistenceExpressionSerializer.this);
+                    sb.append(", ");
+                }
+                sb.setLength(sb.length() - 2);
+            }
+        } else {
+            Object value = e.getValue();
+            if (value instanceof CharSequence) {
+                sb.append('\'');
+                CharSequence charSequence = (CharSequence) value;
+                for (int i = 0; i < charSequence.length(); i++) {
+                    final char c = charSequence.charAt(i);
+                    if (c == '\'') {
+                        sb.append('\'');
+                    }
                     sb.append(c);
                 }
+                sb.append('\'');
+            } else {
+                sb.append(value);
             }
-            sb.append('\'');
-        } else {
-            sb.append(e.getValue());
         }
     }
 
@@ -488,5 +420,73 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
             sb.append("NOT ");
         }
         sb.append("EMPTY");
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private final class DefaultDomainFunctionArgumentRenderers implements DomainFunctionArgumentRenderers {
+
+        private final Expression[] expressions;
+        private final int assignedArguments;
+
+        public DefaultDomainFunctionArgumentRenderers(Expression[] expressions, int assignedArguments) {
+            this.expressions = expressions;
+            this.assignedArguments = assignedArguments;
+        }
+
+        @Override
+        public Expression getExpression(int position) {
+            try {
+                return expressions[position];
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                throw new DomainModelException(ex);
+            }
+        }
+
+        @Override
+        public DomainType getType(int position) {
+            try {
+                return expressions[position].getType();
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                throw new DomainModelException(ex);
+            } catch (NullPointerException ex) {
+                return null;
+            }
+        }
+
+        @Override
+        public int assignedArguments() {
+            return assignedArguments;
+        }
+
+        @Override
+        public void renderArgument(StringBuilder sb, int position) {
+            StringBuilder oldSb = PersistenceExpressionSerializer.this.sb;
+            PersistenceExpressionSerializer.this.sb = sb;
+            try {
+                expressions[position].accept(PersistenceExpressionSerializer.this);
+            } finally {
+                PersistenceExpressionSerializer.this.sb = oldSb;
+            }
+        }
+
+        @Override
+        public void renderArguments(StringBuilder sb) {
+            if (assignedArguments != 0) {
+                StringBuilder oldSb = PersistenceExpressionSerializer.this.sb;
+                PersistenceExpressionSerializer.this.sb = sb;
+                try {
+                    for (int i = 0; i < assignedArguments; i++) {
+                        expressions[i].accept(PersistenceExpressionSerializer.this);
+                        sb.append(", ");
+                    }
+                    sb.setLength(sb.length() - 2);
+                } finally {
+                    PersistenceExpressionSerializer.this.sb = oldSb;
+                }
+            }
+        }
     }
 }

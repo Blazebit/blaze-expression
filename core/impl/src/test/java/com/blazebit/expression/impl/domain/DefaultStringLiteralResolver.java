@@ -18,6 +18,7 @@ package com.blazebit.expression.impl.domain;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StringLiteralResolver;
+import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
 
 /**
  * @author Christian Beikov
@@ -26,6 +27,6 @@ import com.blazebit.domain.runtime.model.StringLiteralResolver;
 public class DefaultStringLiteralResolver implements StringLiteralResolver {
     @Override
     public ResolvedLiteral resolveLiteral(DomainModel domainModel, String value) {
-        return new DefaultResolvedLiteral(domainModel.getType(String.class), value);
+        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.STRING), value);
     }
 }

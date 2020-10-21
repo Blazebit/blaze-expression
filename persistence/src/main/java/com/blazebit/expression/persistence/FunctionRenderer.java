@@ -17,12 +17,10 @@
 package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * @author Christian Beikov
@@ -47,7 +45,7 @@ public interface FunctionRenderer {
      * @param sb The StringBuilder to render to
      * @param serializer The serializer
      */
-    void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer);
+    void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer);
 
     /**
      * Returns a function renderer that renders a function as builtin function.
@@ -57,13 +55,10 @@ public interface FunctionRenderer {
      */
     static FunctionRenderer builtin(String persistenceFunctionName) {
         return (FunctionRenderer & Serializable) (function, returnType, argumentRenderers, sb, serializer) -> {
-            sb.append(persistenceFunctionName).append(", ");
-            if (!argumentRenderers.isEmpty()) {
-                for (Consumer<StringBuilder> value : argumentRenderers.values()) {
-                    value.accept(sb);
-                    sb.append(", ");
-                }
-                sb.setLength(sb.length() - 2);
+            sb.append(persistenceFunctionName);
+            if (argumentRenderers.assignedArguments() != 0) {
+                sb.append(", ");
+                argumentRenderers.renderArguments(sb);
             }
             sb.append(')');
         };
@@ -77,13 +72,10 @@ public interface FunctionRenderer {
      */
     static FunctionRenderer function(String persistenceFunctionName) {
         return (FunctionRenderer & Serializable) (function, returnType, argumentRenderers, sb, serializer) -> {
-            sb.append("FUNCTION('").append(persistenceFunctionName).append("', ");
-            if (!argumentRenderers.isEmpty()) {
-                for (Consumer<StringBuilder> value : argumentRenderers.values()) {
-                    value.accept(sb);
-                    sb.append(", ");
-                }
-                sb.setLength(sb.length() - 2);
+            sb.append("FUNCTION('").append(persistenceFunctionName).append('\'');
+            if (argumentRenderers.assignedArguments() != 0) {
+                sb.append(", ");
+                argumentRenderers.renderArguments(sb);
             }
             sb.append(')');
         };

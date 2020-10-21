@@ -29,7 +29,7 @@ import {
     EntityAttribute,
     EntityDomainType,
     EntityLiteral,
-    EnumDomainType,
+    EnumDomainType, EnumDomainTypeValue,
     EnumLiteral,
     LiteralKind,
     LiteralResolver
@@ -559,6 +559,39 @@ class PathResolvingProvider {
         }
     }
 
+    enumSuggestion(v: string, t: EnumDomainType, e: EnumDomainTypeValue): monaco.languages.CompletionItem {
+        let doc: string | IMarkdownString = "";
+        if (e.documentation != null) {
+            doc = { value: e.documentation, isTrusted: true };
+        }
+        return {
+            label: v,
+            kind: monaco.languages.CompletionItemKind.EnumMember,
+            detail: t.name,
+            documentation: doc,
+            insertText: v,
+            range: null
+        }
+    }
+
+    typeSuggestion(v: string, t: DomainType): monaco.languages.CompletionItem {
+        if (t instanceof EnumDomainType) {
+            let doc: string | IMarkdownString = "";
+            // if (t.documentation != null) {
+            //     doc = { value: t.documentation, isTrusted: true };
+            // }
+            return {
+                label: v,
+                kind: monaco.languages.CompletionItemKind.Enum,
+                detail: t.name,
+                documentation: doc,
+                insertText: v,
+                range: null
+            }
+        }
+        return null;
+    }
+
     functionSuggestion(f: DomainFunction): monaco.languages.CompletionItem {
         let label: string;
         if (f.resultType == null) {
@@ -635,18 +668,35 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                     let variable = symbolTable.variables[path];
                     if (variable != null) {
                         completionItem = this.varSuggestion(path, variable);
+                    } else {
+                        let type = symbolTable.model.types[path];
+                        if (type != null) {
+                            completionItem = this.typeSuggestion(path, type);
+                        }
                     }
                 }
             } else {
                 let lastIdx = parts.length - 1;
-                let domainType = resolveType(path.substring(0, path.length - parts[lastIdx].length - 1), symbolTable);
-                if (domainType instanceof CollectionDomainType) {
-                    domainType = domainType.elementType;
+                let basePath = path.substring(0, path.length - parts[lastIdx].length - 1);
+                if (parts.length == 2) {
+                    let type = symbolTable.model.types[basePath.trim()];
+                    if (type instanceof EnumDomainType) {
+                        let enumValue = type.enumValues[parts[lastIdx]];
+                        if (enumValue != null) {
+                            completionItem = this.enumSuggestion(path, type, enumValue);
+                        }
+                    }
                 }
-                if (domainType instanceof EntityDomainType) {
-                    let attribute = domainType.attributes[parts[lastIdx]];
-                    if (attribute != null) {
-                        completionItem = this.attrSuggestion(path, attribute);
+                if (completionItem == null) {
+                    let domainType = resolveType(basePath, symbolTable);
+                    if (domainType instanceof CollectionDomainType) {
+                        domainType = domainType.elementType;
+                    }
+                    if (domainType instanceof EntityDomainType) {
+                        let attribute = domainType.attributes[parts[lastIdx]];
+                        if (attribute != null) {
+                            completionItem = this.attrSuggestion(path, attribute);
+                        }
                     }
                 }
             }
@@ -864,18 +914,36 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
                 for (let v in symbolTable.variables) {
                     suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
                 }
+                let types = symbolTable.model.types;
+                for (let t in types) {
+                    let item = this.typeSuggestion(t, types[t])
+                    if (item != null) {
+                        suggestions.push(item);
+                    }
+                }
                 let funcs = symbolTable.model.functions;
                 for (let f in funcs) {
                     suggestions.push(this.functionSuggestion(funcs[f]));
                 }
             } else {
-                let domainType = resolveType(textBeforeCursor.substring(0, textBeforeCursor.length - parts[parts.length - 1].length - 1), symbolTable);
-                if (domainType instanceof CollectionDomainType) {
-                    domainType = domainType.elementType;
+                let basePath = textBeforeCursor.substring(0, textBeforeCursor.length - parts[parts.length - 1].length - 1);
+                if (parts.length == 2) {
+                    let type = symbolTable.model.types[basePath.trim()];
+                    if (type instanceof EnumDomainType) {
+                        for (let enumValue in type.enumValues) {
+                            suggestions.push(this.enumSuggestion(enumValue, type, type.enumValues[enumValue]));
+                        }
+                    }
                 }
-                if (domainType instanceof EntityDomainType) {
-                    for (let a in domainType.attributes) {
-                        suggestions.push(this.attrSuggestion(a, domainType.attributes[a]));
+                if (suggestions.length == 0) {
+                    let domainType = resolveType(basePath, symbolTable);
+                    if (domainType instanceof CollectionDomainType) {
+                        domainType = domainType.elementType;
+                    }
+                    if (domainType instanceof EntityDomainType) {
+                        for (let a in domainType.attributes) {
+                            suggestions.push(this.attrSuggestion(a, domainType.attributes[a]));
+                        }
                     }
                 }
             }
@@ -890,6 +958,13 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
             }
             for (let v in symbolTable.variables) {
                 suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
+            }
+            let types = symbolTable.model.types;
+            for (let t in types) {
+                let item = this.typeSuggestion(t, types[t])
+                if (item != null) {
+                    suggestions.push(item);
+                }
             }
             let funcs = symbolTable.model.functions;
             for (let f in funcs) {
@@ -1581,9 +1656,10 @@ export class MyBlazeExpressionParserVisitor extends BlazeExpressionParserVisitor
                 if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).length == 1) {
                     let type = this.symbolTable.model.types[alias];
                     if (type instanceof EnumDomainType) {
-                        let value = type.enumValues[identifiers[1].getText()];
+                        let key = identifiers[0].getText();
+                        let value = type.enumValues[key];
                         if (value == null) {
-                            throw new DomainModelException(this.format("The value '{0}' on the enum domain type '{1}' does not exist!", value, type.name), identifiers[1], -1, -1, -1, -1);
+                            throw new DomainModelException(this.format("The value '{0}' on the enum domain type '{1}' does not exist!", key, type.name), identifiers[0], -1, -1, -1, -1);
                         }
                         if (this.symbolTable.model.enumLiteralResolver == null) {
                             return type;

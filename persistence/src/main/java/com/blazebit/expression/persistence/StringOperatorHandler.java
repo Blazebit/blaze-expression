@@ -50,7 +50,7 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
                 throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
             }
             l = (String) leftValue;
-            r = stringlyTypeHandler.toString(rightValue);
+            r = stringlyTypeHandler.destruct(rightValue);
         }
 
         switch (operator) {
@@ -80,7 +80,7 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
             if (stringlyTypeHandler == null) {
                 return leftValue.toString().concat(rightValue.toString());
             } else {
-                return leftValue.toString().concat(stringlyTypeHandler.toString(rightValue));
+                return leftValue.toString().concat(stringlyTypeHandler.destruct(rightValue));
             }
         }
 
@@ -98,7 +98,7 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
             if (stringlyTypeHandler == null) {
                 e.getRight().accept(serializer);
             } else {
-                stringlyTypeHandler.appendToString(sb, stringBuilder -> {
+                stringlyTypeHandler.appendDestructTo(sb, stringBuilder -> {
                     if (sb == stringBuilder) {
                         e.getRight().accept(serializer);
                     } else {

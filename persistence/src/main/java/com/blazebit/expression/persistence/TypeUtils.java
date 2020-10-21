@@ -18,10 +18,11 @@ package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
+import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
@@ -32,12 +33,13 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.function.FunctionInvokerMetadataDefinition;
 import com.blazebit.expression.persistence.function.FunctionRendererMetadataDefinition;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 /**
  * @author Christian Beikov
@@ -114,13 +116,13 @@ public class TypeUtils {
             handler = new GlobalStringlyTypeDestructorFunctionHandler(destructorName);
             domainBuilder.createFunction(destructorName)
                 .withArgument("value", destructorArgumentMetadata)
-                .withResultType(PersistenceDomainContributor.STRING)
+                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(handler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(handler))
                 .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
                 .build();
         } else {
-            handler = (GlobalStringlyTypeDestructorFunctionHandler) ((FunctionInvokerMetadataDefinition) function.getMetadataDefinitions().get(FunctionInvokerMetadataDefinition.class)).build(null);
+            handler = (GlobalStringlyTypeDestructorFunctionHandler) ((FunctionInvokerMetadataDefinition) function.getMetadataDefinitions().get(FunctionInvoker.class)).build(null);
         }
         handler.destructors.put(typeName, (StringlyTypeHandler<Object>) stringlyTypeHandler);
     }
@@ -129,19 +131,17 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param stringlyTypeHandler The stringly type handler to register
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             DEFAULT_CONSTRUCTOR_DOCUMENTATION_KEY,
-            DEFAULT_GLOBAL_DESTRUCTOR_NAME,
+            DEFAULT_DESTRUCTOR_DOCUMENTATION_KEY,
             stringlyTypeHandler,
             typeMetadataDefinitions
         );
@@ -151,21 +151,19 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param resourceBundleClassLoader The class loader to use for loading the documentation resource bundle
      * @param stringlyTypeHandler The stringly type handler to register
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, ClassLoader resourceBundleClassLoader, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, ClassLoader resourceBundleClassLoader, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             resourceBundleClassLoader,
             DEFAULT_CONSTRUCTOR_DOCUMENTATION_KEY,
-            DEFAULT_GLOBAL_DESTRUCTOR_NAME,
+            DEFAULT_DESTRUCTOR_DOCUMENTATION_KEY,
             stringlyTypeHandler,
             typeMetadataDefinitions
         );
@@ -175,7 +173,6 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param constructorDocumentationKey The documentation key for the constructor
      * @param destructorDocumentationKey The documentation key for the destructor
@@ -183,17 +180,20 @@ public class TypeUtils {
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, String constructorDocumentationKey, String destructorDocumentationKey,
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, String constructorDocumentationKey, String destructorDocumentationKey,
                                                 StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         String upperName = name.toUpperCase();
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             upperName,
             upperName + "_TO_STRING",
+            stringlyTypeHandler.getClass().getClassLoader(),
             constructorDocumentationKey,
+            constructorDocumentationKey == null ? null : (constructorDocumentationKey + "_VALUE"),
             destructorDocumentationKey,
+            destructorDocumentationKey == null ? null : (destructorDocumentationKey + "_VALUE"),
+            true,
             stringlyTypeHandler,
             typeMetadataDefinitions
         );
@@ -203,7 +203,6 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param resourceBundleClassLoader The class loader to use for loading the documentation resource bundle
      * @param constructorDocumentationKey The documentation key for the constructor
@@ -212,18 +211,20 @@ public class TypeUtils {
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String destructorDocumentationKey,
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String destructorDocumentationKey,
                                                 StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         String upperName = name.toUpperCase();
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             upperName,
             upperName + "_TO_STRING",
             resourceBundleClassLoader,
             constructorDocumentationKey,
+            constructorDocumentationKey == null ? null : (constructorDocumentationKey + "_VALUE"),
             destructorDocumentationKey,
+            destructorDocumentationKey == null ? null : (destructorDocumentationKey + "_VALUE"),
+            true,
             stringlyTypeHandler,
             typeMetadataDefinitions
         );
@@ -233,7 +234,6 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param constructorName The name for the constructor to register
      * @param destructorName The name for the destructor to register
@@ -243,17 +243,19 @@ public class TypeUtils {
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, String constructorName, String destructorName, String constructorDocumentationKey, String destructorDocumentationKey,
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, String constructorName, String destructorName, String constructorDocumentationKey, String destructorDocumentationKey,
                                                 StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             constructorName,
             destructorName,
             stringlyTypeHandler.getClass().getClassLoader(),
             constructorDocumentationKey,
+            constructorDocumentationKey == null ? null : (constructorDocumentationKey + "_VALUE"),
             destructorDocumentationKey,
+            destructorDocumentationKey == null ? null : (destructorDocumentationKey + "_VALUE"),
+            true,
             stringlyTypeHandler,
             typeMetadataDefinitions
         );
@@ -263,7 +265,6 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param constructorName The name for the constructor to register
      * @param destructorName The name for the destructor to register
@@ -274,11 +275,10 @@ public class TypeUtils {
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, String constructorName, String destructorName, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String destructorDocumentationKey,
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, String constructorName, String destructorName, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String destructorDocumentationKey,
                                                 StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         registerStringlyType(
             domainBuilder,
-            type,
             name,
             constructorName,
             destructorName,
@@ -297,7 +297,6 @@ public class TypeUtils {
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
-     * @param type The java type for which to register a stringly type
      * @param name The type name of the stringly type to register
      * @param constructorName The name for the constructor to register
      * @param destructorName The name for the destructor to register
@@ -311,7 +310,7 @@ public class TypeUtils {
      * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
      * @param <T> The java type of the stringly type
      */
-    public static <T> void registerStringlyType(DomainBuilder domainBuilder, Class<T> type, String name, String constructorName, String destructorName, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String constructorArgumentDocumentationKey,
+    public static <T> void registerStringlyType(DomainBuilder domainBuilder, String name, String constructorName, String destructorName, ClassLoader resourceBundleClassLoader, String constructorDocumentationKey, String constructorArgumentDocumentationKey,
                                                 String destructorDocumentationKey, String destructorArgumentDocumentationKey, boolean registerGlobalDestructor, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
         if (registerGlobalDestructor) {
             registerGlobalStringlyTypeDestructor(domainBuilder, name, stringlyTypeHandler);
@@ -323,8 +322,10 @@ public class TypeUtils {
         if (constructorDocumentationKey != null) {
             metadataDefinitions[typeMetadataDefinitions.length + 2] = DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader);
         }
-        domainBuilder.createBasicType(name, type, metadataDefinitions);
-        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN, type, PersistenceDomainContributor.STRING));
+        domainBuilder.createBasicType(name, metadataDefinitions);
+        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceDomainContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
+        domainBuilder.withOperator(name, DomainOperator.PLUS);
+        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN_TYPE_NAME, name, PersistenceDomainContributor.STRING_TYPE_NAME));
         domainBuilder.withPredicate(name, DomainPredicate.distinguishable());
         StringlyTypeConstructorFunctionHandler constructorHandler = new StringlyTypeConstructorFunctionHandler(stringlyTypeHandler);
 
@@ -336,7 +337,7 @@ public class TypeUtils {
         }
 
         domainBuilder.createFunction(constructorName)
-            .withArgument("value", PersistenceDomainContributor.STRING, constructorArgumentMetadata)
+            .withArgument("value", PersistenceDomainContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
             .withResultType(name)
             .withMetadata(new FunctionRendererMetadataDefinition(constructorHandler))
             .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler))
@@ -353,7 +354,141 @@ public class TypeUtils {
             StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
             domainBuilder.createFunction(destructorName)
                 .withArgument("value", name, destructorArgumentMetadata)
-                .withResultType(PersistenceDomainContributor.STRING)
+                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
+                .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
+                .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler))
+                .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
+                .build();
+        }
+    }
+
+    /**
+     * Registers the given stringly enum type to the given domain builder along with the global destructor function support.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param enumDomainTypeBuilder The builder for the enum domain type for which to register the stringly type handler
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerStringlyEnumType(DomainBuilder domainBuilder, EnumDomainTypeBuilder enumDomainTypeBuilder) {
+        registerStringlyEnumType(
+            domainBuilder,
+            enumDomainTypeBuilder,
+            null,
+            TypeUtils.class.getClassLoader(),
+            null,
+            null,
+            true,
+            string -> string
+        );
+    }
+
+    /**
+     * Registers the given stringly enum type to the given domain builder along with the global destructor function support.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param enumDomainTypeBuilder The builder for the enum domain type for which to register the stringly type handler
+     * @param stringlyTypeHandler The stringly type handler to register
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerStringlyEnumType(DomainBuilder domainBuilder, EnumDomainTypeBuilder enumDomainTypeBuilder, StringlyTypeHandler<T> stringlyTypeHandler) {
+        registerStringlyEnumType(
+            domainBuilder,
+            enumDomainTypeBuilder,
+            null,
+            stringlyTypeHandler.getClass().getClassLoader(),
+            null,
+            null,
+            true,
+            stringlyTypeHandler
+        );
+    }
+
+    /**
+     * Registers the given stringly enum type to the given domain builder along with a destructor function and global destructor function support.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param enumDomainTypeBuilder The builder for the enum domain type for which to register the stringly type handler
+     * @param destructorName The name for the destructor to register
+     * @param destructorDocumentationKey The documentation key for the destructor
+     * @param stringlyTypeHandler The stringly type handler to register
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerStringlyEnumType(DomainBuilder domainBuilder, EnumDomainTypeBuilder enumDomainTypeBuilder, String destructorName,
+                                                    String destructorDocumentationKey, StringlyTypeHandler<T> stringlyTypeHandler) {
+        registerStringlyEnumType(
+            domainBuilder,
+            enumDomainTypeBuilder,
+            destructorName,
+            stringlyTypeHandler.getClass().getClassLoader(),
+            destructorDocumentationKey,
+            destructorDocumentationKey == null ? null : (destructorDocumentationKey + "_VALUE"),
+            true,
+            stringlyTypeHandler
+        );
+    }
+
+    /**
+     * Registers the given stringly enum type to the given domain builder along with a destructor function and global destructor function support.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param enumDomainTypeBuilder The builder for the enum domain type for which to register the stringly type handler
+     * @param destructorName The name for the destructor to register
+     * @param resourceBundleClassLoader The class loader to use for loading the documentation resource bundle
+     * @param destructorDocumentationKey The documentation key for the destructor
+     * @param stringlyTypeHandler The stringly type handler to register
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerStringlyEnumType(DomainBuilder domainBuilder, EnumDomainTypeBuilder enumDomainTypeBuilder, String destructorName, ClassLoader resourceBundleClassLoader,
+                                                    String destructorDocumentationKey, StringlyTypeHandler<T> stringlyTypeHandler) {
+        registerStringlyEnumType(
+            domainBuilder,
+            enumDomainTypeBuilder,
+            destructorName,
+            resourceBundleClassLoader,
+            destructorDocumentationKey,
+            destructorDocumentationKey == null ? null : (destructorDocumentationKey + "_VALUE"),
+            true,
+            stringlyTypeHandler
+        );
+    }
+
+    /**
+     * Registers the given stringly enum type to the given domain builder along with a destructor function.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param enumDomainTypeBuilder The builder for the enum domain type for which to register the stringly type handler
+     * @param destructorName The name for the destructor to register
+     * @param resourceBundleClassLoader The class loader to use for loading the documentation resource bundle
+     * @param destructorDocumentationKey The documentation key for the destructor
+     * @param destructorArgumentDocumentationKey The documentation key for the destructor argument
+     * @param registerGlobalDestructor Whether to register the type for so that the global destructor function can destructure it
+     * @param stringlyTypeHandler The stringly type handler to register
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerStringlyEnumType(DomainBuilder domainBuilder, EnumDomainTypeBuilder enumDomainTypeBuilder, String destructorName, ClassLoader resourceBundleClassLoader,
+                                                    String destructorDocumentationKey, String destructorArgumentDocumentationKey, boolean registerGlobalDestructor, StringlyTypeHandler<T> stringlyTypeHandler) {
+        String name = enumDomainTypeBuilder.getName();
+        if (registerGlobalDestructor) {
+            registerGlobalStringlyTypeDestructor(domainBuilder, name, stringlyTypeHandler);
+        }
+        enumDomainTypeBuilder.withMetadata(new PersistenceDomainContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler)));
+        enumDomainTypeBuilder.withMetadata(new StringlyTypeHandlerMetadataDefinition(stringlyTypeHandler));
+        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceDomainContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
+        domainBuilder.withOperator(name, DomainOperator.PLUS);
+        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN_TYPE_NAME, name, PersistenceDomainContributor.STRING_TYPE_NAME));
+        domainBuilder.withPredicate(name, DomainPredicate.distinguishable());
+
+        if (destructorName != null) {
+            MetadataDefinition[] destructorArgumentMetadata;
+            if (destructorArgumentDocumentationKey == null) {
+                destructorArgumentMetadata = new MetadataDefinition[0];
+            } else {
+                destructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(destructorArgumentDocumentationKey, resourceBundleClassLoader) };
+            }
+            StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
+            domainBuilder.createFunction(destructorName)
+                .withArgument("value", name, destructorArgumentMetadata)
+                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler))
                 .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
@@ -398,23 +533,26 @@ public class TypeUtils {
         }
 
         @Override
-        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            StringlyTypeHandler<Object> toString = destructors.get(argument.getType().getName());
-            if (toString == null) {
-                throw new DomainModelException("Unsupported type for destructure function " + name + " function: " + argument.getType().getName());
+        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+            DomainType type = arguments.getType(0);
+            if (type == null) {
+                return null;
             }
-            return toString.toString(arguments.get(argument));
+            StringlyTypeHandler<Object> toString = destructors.get(type.getName());
+            if (toString == null) {
+                throw new DomainModelException("Unsupported type for destructure function " + name + " function: " + type.getName());
+            }
+            return toString.destruct(arguments.getValue(0));
         }
 
         @Override
-        public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            StringlyTypeHandler<Object> handler = destructors.get(argument.getType().getName());
+        public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+            String argumentTypeName = argumentRenderers.getType(0).getName();
+            StringlyTypeHandler<Object> handler = destructors.get(argumentTypeName);
             if (handler == null) {
-                throw new DomainModelException("Unsupported type for destructure function " + name + " function: " + argument.getType().getName());
+                throw new DomainModelException("Unsupported type for destructure function " + this.name + " function: " + argumentTypeName);
             }
-            handler.appendToString(sb, argumentRenderers.get(argument));
+            handler.appendDestructTo(sb, subBuilder -> argumentRenderers.renderArgument(subBuilder, 0));
         }
     }
 
@@ -431,15 +569,17 @@ public class TypeUtils {
         }
 
         @Override
-        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            return stringlyTypeHandler.fromString((String) arguments.get(argument));
+        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+            Object value = arguments.getValue(0);
+            if (value == null) {
+                return null;
+            }
+            return stringlyTypeHandler.construct((String) value);
         }
 
         @Override
-        public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            stringlyTypeHandler.appendFromString(sb, argumentRenderers.get(argument));
+        public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+            stringlyTypeHandler.appendConstructTo(sb, subBuilder -> argumentRenderers.renderArgument(subBuilder, 0));
         }
     }
 
@@ -456,15 +596,17 @@ public class TypeUtils {
         }
 
         @Override
-        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            return stringlyTypeHandler.toString(arguments.get(argument));
+        public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+            Object value = arguments.getValue(0);
+            if (value == null) {
+                return null;
+            }
+            return stringlyTypeHandler.destruct(value);
         }
 
         @Override
-        public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
-            DomainFunctionArgument argument = function.getArgument(0);
-            stringlyTypeHandler.appendToString(sb, argumentRenderers.get(argument));
+        public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+            stringlyTypeHandler.appendDestructTo(sb, subBuilder -> argumentRenderers.renderArgument(subBuilder, 0));
         }
     }
 
@@ -486,7 +628,7 @@ public class TypeUtils {
             if (leftType == rightType) {
                 referenceValue = leftValue;
             } else {
-                referenceValue = handler.toString(leftValue);
+                referenceValue = handler.destruct(leftValue);
             }
             switch (operator) {
                 case EQUAL:

@@ -55,8 +55,7 @@ public final class Expressions {
         if (provider == null) {
             Iterator<ExpressionServiceFactoryProvider> iterator = ServiceLoader.load(ExpressionServiceFactoryProvider.class).iterator();
             if (iterator.hasNext()) {
-                defaultProvider = provider = iterator.next();
-                return provider;
+                return defaultProvider = iterator.next();
             }
 
             throw new IllegalStateException("No expression service factory provider available. Did you forget to add the expression-impl dependency?");

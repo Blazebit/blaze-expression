@@ -27,9 +27,9 @@ import com.blazebit.domain.runtime.model.ResolvedLiteral;
 public class DefaultEnumLiteralResolver implements EnumLiteralResolver {
     @Override
     public ResolvedLiteral resolveLiteral(DomainModel domainModel, EnumDomainTypeValue value) {
-        Class<? extends Enum> javaEnumType = value.getOwner().getJavaType();
+        Class<?> javaEnumType = value.getOwner().getJavaType();
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        Enum<?> javaEnumValue = Enum.valueOf(javaEnumType, value.getValue());
+        Enum<?> javaEnumValue = Enum.valueOf((Class<Enum>) javaEnumType, value.getValue());
         return new DefaultResolvedLiteral(value.getOwner(), javaEnumValue);
     }
 }

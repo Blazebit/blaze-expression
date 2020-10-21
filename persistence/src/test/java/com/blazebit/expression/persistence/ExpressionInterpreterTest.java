@@ -2,6 +2,7 @@ package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.Domain;
 import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainModel;
@@ -21,7 +22,9 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Currency;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,11 +43,21 @@ public class ExpressionInterpreterTest {
 
     public class User {
         String status;
-        public User(Boolean status) {
+        Locale language;
+        Currency currency;
+        public User(Boolean status, Locale language, Currency currency) {
             this.status = status.toString();
+            this.language = language;
+            this.currency = currency;
         }
         public String getStatus() {
             return status;
+        }
+        public Locale getLanguage() {
+            return language;
+        }
+        public Currency getCurrency() {
+            return currency;
         }
     }
     public static class UserStatusAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor {
@@ -53,6 +66,38 @@ public class ExpressionInterpreterTest {
         @Override
         public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
             return ((User) value).getStatus();
+        }
+        @Override
+        public Class<AttributeAccessor> getJavaType() {
+            return AttributeAccessor.class;
+        }
+        @Override
+        public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+            return this;
+        }
+    }
+    public static class UserLanguageAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor {
+        public UserLanguageAttributeAccessor() {
+        }
+        @Override
+        public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+            return ((User) value).getLanguage();
+        }
+        @Override
+        public Class<AttributeAccessor> getJavaType() {
+            return AttributeAccessor.class;
+        }
+        @Override
+        public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+            return this;
+        }
+    }
+    public static class UserCurrencyAttributeAccessor implements MetadataDefinition<AttributeAccessor>, AttributeAccessor {
+        public UserCurrencyAttributeAccessor() {
+        }
+        @Override
+        public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+            return ((User) value).getCurrency();
         }
         @Override
         public Class<AttributeAccessor> getJavaType() {
@@ -95,20 +140,33 @@ public class ExpressionInterpreterTest {
     }
 
     public ExpressionInterpreterTest() {
+        MetadataDefinition[] languageAttributeMetadata = new MetadataDefinition[1];
+        languageAttributeMetadata[0] = new UserLanguageAttributeAccessor();
+        MetadataDefinition[] currencyAttributeMetadata = new MetadataDefinition[1];
+        currencyAttributeMetadata[0] = new UserCurrencyAttributeAccessor();
+
         MetadataDefinition[] statusAttributeMetadata = new MetadataDefinition[2];
         statusAttributeMetadata[0] = new UserStatusAttributeAccessor();
         statusAttributeMetadata[1] = new TypeAdapterMetadataDefinition(BooleanTypeAdapter.INSTANCE);
 
-        DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder()
-                .createEntityType("user")
-                .addAttribute("status", Boolean.class, statusAttributeMetadata)
+        DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
+        TypeUtils.registerStringlyType(domainBuilder, "Language", string -> new Locale(string));
+        EnumDomainTypeBuilder currencyEnumBuilder = domainBuilder.createEnumType("Currency");
+        TypeUtils.registerStringlyEnumType(domainBuilder, currencyEnumBuilder, Currency::getInstance);
+        currencyEnumBuilder.withValue("EUR")
+            .withValue("USD")
+            .build();
+        domainBuilder.createEntityType("user")
+                .addAttribute("status", PersistenceDomainContributor.BOOLEAN_TYPE_NAME, statusAttributeMetadata)
+                .addAttribute("language", "Language", languageAttributeMetadata)
+                .addAttribute("currency", "Currency", currencyAttributeMetadata)
                 .build();
         this.domainModel = domainBuilder.build();
         this.expressionServiceFactory = Expressions.forModel(domainModel);
         this.compiler = expressionServiceFactory.createCompiler();
         this.interpreter = expressionServiceFactory.createInterpreter();
         this.testTypes.put("user", domainModel.getType("user"));
-        this.testData.put("user", new User(true));
+        this.testData.put("user", new User(true, new Locale("de"), Currency.getInstance("EUR")));
     }
 
     private ExpressionInterpreter.Context createInterpreterContext(Map<String, DomainType> rootDomainTypes, Map<String, Object> rootObjects) {
@@ -188,4 +246,53 @@ public class ExpressionInterpreterTest {
         Assert.assertEquals(Boolean.TRUE, testPredicate("user.status and user.status"));
     }
 
+    @Test
+    public void testStringly1() {
+        Assert.assertEquals(new Locale("de"), testExpression("user.language"));
+    }
+
+    @Test
+    public void testStringly2() {
+        Assert.assertEquals("de", testExpression("TO_STRING(user.language)"));
+    }
+
+    @Test
+    public void testStringly3() {
+        Assert.assertEquals(true, testPredicate("user.language = 'de'"));
+    }
+
+    @Test
+    public void testStringly4() {
+        Assert.assertEquals(true, testPredicate("'de' = user.language"));
+    }
+
+    @Test
+    public void testStringly5() {
+        Assert.assertEquals("de_DE", testExpression("user.language + '_DE'"));
+    }
+
+    @Test
+    public void testStringly6() {
+        Assert.assertEquals("DE_de", testExpression("'DE_' + user.language"));
+    }
+
+    @Test
+    public void testStringly7() {
+        Assert.assertEquals(true, testPredicate("user.currency = 'EUR'"));
+    }
+
+    @Test
+    public void testStringly8() {
+        Assert.assertEquals(true, testPredicate("'EUR' = user.currency"));
+    }
+
+    @Test
+    public void testStringly9() {
+        Assert.assertEquals("EUR-USD", testExpression("user.currency + '-USD'"));
+    }
+
+    @Test
+    public void testStringly10() {
+        Assert.assertEquals("USD-EUR", testExpression("'USD-' + user.currency"));
+    }
 }

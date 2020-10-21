@@ -18,24 +18,23 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -59,22 +58,22 @@ public class RoundFunction implements FunctionRenderer, FunctionInvoker, Seriali
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ROUND", classLoader))
-                .withArgument("value", NUMERIC, DocumentationMetadataDefinition.localized("ROUND_VALUE", classLoader))
-                .withArgument("precision", INTEGER, DocumentationMetadataDefinition.localized("ROUND_PRECISION", classLoader))
+                .withArgument("value", NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ROUND_VALUE", classLoader))
+                .withArgument("precision", INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("ROUND_PRECISION", classLoader))
                 .withMinArgumentCount(1)
                 .build();
-        domainBuilder.withFunctionTypeResolver("ROUND", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
+        domainBuilder.withFunctionTypeResolver("ROUND", StaticDomainFunctionTypeResolvers.returning(NUMERIC_TYPE_NAME));
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object value = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object value = arguments.getValue(0);
         if (value == null) {
             return null;
         }
         int prec = 0;
-        if (arguments.size() > 1) {
-            Object precision = arguments.get(function.getArgument(1));
+        if (arguments.assignedArguments() > 1) {
+            Object precision = arguments.getValue(1);
             if (precision == null) {
                 return null;
             }
@@ -85,13 +84,9 @@ public class RoundFunction implements FunctionRenderer, FunctionInvoker, Seriali
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("ROUND(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        if (argumentRenderers.size() > 1) {
-            sb.append(", ");
-            argumentRenderers.get(function.getArgument(1)).accept(sb);
-        }
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

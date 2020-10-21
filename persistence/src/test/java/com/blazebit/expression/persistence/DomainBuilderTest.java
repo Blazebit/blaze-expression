@@ -50,9 +50,9 @@ public class DomainBuilderTest {
         if (domainModel == null) {
             DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
             domainModel = domainBuilder.build();
-            stringType = domainModel.getType(String.class);
-            integerType = domainModel.getType(BigInteger.class);
-            decimalType = domainModel.getType(BigDecimal.class);
+            stringType = domainModel.getType(PersistenceDomainContributor.STRING_TYPE_NAME);
+            integerType = domainModel.getType(PersistenceDomainContributor.INTEGER_TYPE_NAME);
+            decimalType = domainModel.getType(PersistenceDomainContributor.NUMERIC_TYPE_NAME);
         }
     }
 

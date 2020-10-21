@@ -18,21 +18,20 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -56,19 +55,19 @@ public class PowFunction implements FunctionRenderer, FunctionInvoker, Serializa
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("POW", classLoader))
-                .withArgument("base", NUMERIC, DocumentationMetadataDefinition.localized("POW_BASE", classLoader))
-                .withArgument("power", NUMERIC, DocumentationMetadataDefinition.localized("POW_POWER", classLoader))
+                .withArgument("base", NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_BASE", classLoader))
+                .withArgument("power", NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_POWER", classLoader))
                 .build();
-        domainBuilder.withFunctionTypeResolver("POW", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
+        domainBuilder.withFunctionTypeResolver("POW", StaticDomainFunctionTypeResolvers.returning(NUMERIC_TYPE_NAME));
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object base = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object base = arguments.getValue(0);
         if (base == null) {
             return null;
         }
-        Object power = arguments.get(function.getArgument(1));
+        Object power = arguments.getValue(1);
         if (power == null) {
             return null;
         }
@@ -77,11 +76,9 @@ public class PowFunction implements FunctionRenderer, FunctionInvoker, Serializa
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("POW(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

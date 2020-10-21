@@ -18,6 +18,7 @@ package com.blazebit.expression.impl.domain;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
 
 import java.math.BigDecimal;
 
@@ -29,8 +30,8 @@ public class DefaultNumericLiteralResolver implements NumericLiteralResolver {
     @Override
     public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
         if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
-            return new DefaultResolvedLiteral(domainModel.getType(value.getClass()), value);
+            return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.BIGDECIMAL), value);
         }
-        return new DefaultResolvedLiteral(domainModel.getType(Integer.class), value.intValue());
+        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.INTEGER), value.intValue());
     }
 }

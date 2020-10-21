@@ -18,20 +18,20 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Collection;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -60,30 +60,32 @@ public class GreatestFunction implements FunctionRenderer, FunctionInvoker, Seri
                 .withArgument("second", DocumentationMetadataDefinition.localized("GREATEST_SECOND", classLoader))
                 .withArgument("other", DocumentationMetadataDefinition.localized("GREATEST_OTHER", classLoader))
                 .build();
-        domainBuilder.withFunctionTypeResolver("GREATEST", StaticDomainFunctionTypeResolvers.widest(NUMERIC));
+        domainBuilder.withFunctionTypeResolver("GREATEST", StaticDomainFunctionTypeResolvers.widest(NUMERIC_TYPE_NAME));
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Comparable greatest = null;
-        for (Object value : arguments.values()) {
-            // TODO: automatic widening of arguments?
-            if (greatest == null || greatest.compareTo(value) < 0) {
-                greatest = (Comparable) value;
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Comparable greatest = (Comparable) arguments.getValue(0);
+        Object second = arguments.getValue(1);
+        Collection<Object> other = (Collection<Object>) arguments.getValue(2);
+        if (second != null && (greatest == null || greatest.compareTo(second) < 0)) {
+            greatest = (Comparable) second;
+        }
+        if (other != null && !other.isEmpty()) {
+            for (Object value : other) {
+                // TODO: automatic widening of arguments?
+                if (value != null && (greatest == null || greatest.compareTo(value) < 0)) {
+                    greatest = (Comparable) value;
+                }
             }
         }
         return greatest;
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("GREATEST(");
-        for (Consumer<StringBuilder> consumer : argumentRenderers.values()) {
-            sb.append(", ");
-            consumer.accept(sb);
-        }
-
-        sb.setLength(sb.length() - 2);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

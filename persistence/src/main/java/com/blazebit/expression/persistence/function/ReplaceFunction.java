@@ -18,19 +18,18 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -54,24 +53,24 @@ public class ReplaceFunction implements FunctionRenderer, FunctionInvoker, Seria
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("REPLACE", classLoader))
-                .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("REPLACE_STRING", classLoader))
-                .withArgument("target", STRING, DocumentationMetadataDefinition.localized("REPLACE_TARGET", classLoader))
-                .withArgument("replacement", STRING, DocumentationMetadataDefinition.localized("REPLACE_REPLACEMENT", classLoader))
+                .withResultType(STRING_TYPE_NAME)
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("REPLACE_STRING", classLoader))
+                .withArgument("target", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("REPLACE_TARGET", classLoader))
+                .withArgument("replacement", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("REPLACE_REPLACEMENT", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        String string = (String) arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        String string = (String) arguments.getValue(0);
         if (string == null) {
             return null;
         }
-        String target = (String) arguments.get(function.getArgument(1));
+        String target = (String) arguments.getValue(1);
         if (target == null) {
             return null;
         }
-        String replacement = (String) arguments.get(function.getArgument(2));
+        String replacement = (String) arguments.getValue(2);
         if (replacement == null) {
             return null;
         }
@@ -79,13 +78,9 @@ public class ReplaceFunction implements FunctionRenderer, FunctionInvoker, Seria
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("REPLACE(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(2)).accept(sb);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

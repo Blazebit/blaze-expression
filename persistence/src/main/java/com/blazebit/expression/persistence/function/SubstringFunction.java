@@ -18,20 +18,19 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -56,20 +55,20 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker, Ser
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("SUBSTRING", classLoader))
                 .withMinArgumentCount(2)
-                .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("SUBSTRING_STRING", classLoader))
-                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_START", classLoader))
-                .withArgument("count", INTEGER, DocumentationMetadataDefinition.localized("SUBSTRING_COUNT", classLoader))
+                .withResultType(STRING_TYPE_NAME)
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("SUBSTRING_STRING", classLoader))
+                .withArgument("start", INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("SUBSTRING_START", classLoader))
+                .withArgument("count", INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("SUBSTRING_COUNT", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object string = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object string = arguments.getValue(0);
         if (string == null) {
             return null;
         }
-        Object start = arguments.get(function.getArgument(1));
+        Object start = arguments.getValue(1);
         if (start == null) {
             return null;
         }
@@ -81,7 +80,7 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker, Ser
         }
         String s = string.toString();
         int endIndex;
-        Object count = arguments.get(function.getArgument(2));
+        Object count = arguments.getValue(2);
         if (count == null) {
             endIndex = s.length() - endIndexOffset;
         } else {
@@ -94,16 +93,9 @@ public class SubstringFunction implements FunctionRenderer, FunctionInvoker, Ser
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("SUBSTRING(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
-        Consumer<StringBuilder> thirdArg = argumentRenderers.get(function.getArgument(2));
-        if (thirdArg != null) {
-            sb.append(", ");
-            thirdArg.accept(sb);
-        }
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

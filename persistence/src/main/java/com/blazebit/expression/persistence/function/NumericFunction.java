@@ -18,7 +18,6 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
@@ -26,16 +25,16 @@ import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -133,13 +132,13 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
                     .withExactArgumentCount(1)
                     .withArgument("number", DocumentationMetadataDefinition.localized(f.name + "_ARG", classLoader))
                     .build();
-            domainBuilder.withFunctionTypeResolver(f.name, StaticDomainFunctionTypeResolvers.returning(NUMERIC));
+            domainBuilder.withFunctionTypeResolver(f.name, StaticDomainFunctionTypeResolvers.returning(NUMERIC_TYPE_NAME));
         }
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object argument = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object argument = arguments.getValue(0);
         if (argument == null) {
             return null;
         }
@@ -160,9 +159,9 @@ public abstract class NumericFunction implements FunctionRenderer, FunctionInvok
     protected abstract Object invoke(double value);
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append(name).append("(");
-        argumentRenderers.values().iterator().next().accept(sb);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

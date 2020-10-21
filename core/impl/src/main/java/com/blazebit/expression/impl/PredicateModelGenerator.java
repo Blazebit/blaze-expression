@@ -30,7 +30,6 @@ import com.blazebit.domain.runtime.model.DomainTypeResolverException;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.ArithmeticOperatorType;
@@ -65,7 +64,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Christian Beikov
@@ -722,10 +720,11 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     private DomainType getBooleanDomainType() {
         if (cachedBooleanDomainType == null) {
-            cachedBooleanDomainType = domainModel.getType(Boolean.class);
-            if (cachedBooleanDomainType == null) {
+            Literal booleanTrueLiteral = getBooleanTrueLiteral();
+            if (booleanTrueLiteral == null || booleanTrueLiteral.getType() == null) {
                 throw new DomainModelException("No domain type defined for type " + Boolean.class.getName());
             }
+            cachedBooleanDomainType = booleanTrueLiteral.getType();
         }
         return cachedBooleanDomainType;
     }
@@ -788,46 +787,4 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new TypeErrorException(String.format("Cannot resolve operation type for operator %s and operand types %s", operator, operandTypes));
     }
 
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class DefaultResolvedLiteral implements ResolvedLiteral {
-
-        private final DomainType type;
-        private final Object value;
-
-        public DefaultResolvedLiteral(DomainType type, Object value) {
-            this.type = type;
-            this.value = value;
-        }
-
-        @Override
-        public DomainType getType() {
-            return type;
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            DefaultResolvedLiteral that = (DefaultResolvedLiteral) o;
-            return Objects.equals(type, that.type) &&
-                Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(type, value);
-        }
-    }
 }

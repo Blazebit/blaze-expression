@@ -128,8 +128,8 @@ To work with Blaze-Expression, a `ExpressionServiceFactory` is needed which requ
 ```java
 DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
 domainBuilder.createEntityType("Cat")
-    .addAttribute("name", String.class)
-    .addAttribute("age", Integer.class)
+    .addAttribute("name", "String")
+    .addAttribute("age", "Integer")
   .build();
 DomainModel domain = domainBuilder.build();
 ```

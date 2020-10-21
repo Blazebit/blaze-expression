@@ -28,6 +28,8 @@ import com.blazebit.domain.runtime.model.DomainPredicate;
 import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.DomainTypeResolverException;
+import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
+import com.blazebit.domain.runtime.model.EnumLiteralResolver;
 import com.blazebit.domain.runtime.model.NumericLiteralResolver;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
@@ -89,65 +91,74 @@ public class PersistenceDomainContributor implements DomainContributor {
 
     // NOTE: Copied to TypeAdapterRegistry. Keep in sync
     public static final Class<?> BOOLEAN = Boolean.class;
+    public static final String BOOLEAN_TYPE_NAME = "Boolean";
     public static final Class<?> INTEGER = BigInteger.class;
+    public static final String INTEGER_TYPE_NAME = "Integer";
     public static final Class<?> NUMERIC = BigDecimal.class;
+    public static final String NUMERIC_TYPE_NAME = "Numeric";
     public static final Class<?> TIMESTAMP = Instant.class;
+    public static final String TIMESTAMP_TYPE_NAME = "Timestamp";
     public static final Class<?> TIME = LocalTime.class;
+    public static final String TIME_TYPE_NAME = "Time";
     public static final Class<?> INTERVAL = TemporalInterval.class;
+    public static final String INTERVAL_TYPE_NAME = "Interval";
     public static final Class<?> STRING = String.class;
+    public static final String STRING_TYPE_NAME = "String";
 
     public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
     public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
     public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolverImpl();
     public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new StringLiteralResolverImpl();
+    public static final EnumLiteralResolver ENUM_LITERAL_RESOLVER = new EnumLiteralResolverImpl();
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        createBasicType(domainBuilder, INTEGER, "Integer", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
-        createBasicType(domainBuilder, NUMERIC, "Numeric", DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
-        createBasicType(domainBuilder, STRING, "String", new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
-        createBasicType(domainBuilder, TIMESTAMP, "Timestamp", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
-        createBasicType(domainBuilder, TIME, "Time", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
-        createBasicType(domainBuilder, INTERVAL, "Interval", new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorHandler.INSTANCE, "INTERVAL"));
-        createBasicType(domainBuilder, BOOLEAN, "Boolean", new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
+        createBasicType(domainBuilder, INTEGER, INTEGER_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
+        createBasicType(domainBuilder, NUMERIC, NUMERIC_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
+        createBasicType(domainBuilder, STRING, STRING_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
+        createBasicType(domainBuilder, TIMESTAMP, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
+        createBasicType(domainBuilder, TIME, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
+        createBasicType(domainBuilder, INTERVAL, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorHandler.INSTANCE, "INTERVAL"));
+        createBasicType(domainBuilder, BOOLEAN, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
         domainBuilder.withNumericLiteralResolver(NUMERIC_LITERAL_TYPE_RESOLVER);
         domainBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
         domainBuilder.withTemporalLiteralResolver(TEMPORAL_LITERAL_TYPE_RESOLVER);
         domainBuilder.withBooleanLiteralResolver(BOOLEAN_LITERAL_TYPE_RESOLVER);
+        domainBuilder.withEnumLiteralResolver(ENUM_LITERAL_RESOLVER);
 
-        for (Class<?> type : Arrays.asList(INTEGER, NUMERIC)) {
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.widest(NUMERIC, INTEGER));
+        for (String type : Arrays.asList(INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME)) {
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.widest(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
             domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_MINUS, StaticDomainOperationTypeResolvers.returning(type));
             domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_PLUS, StaticDomainOperationTypeResolvers.returning(type));
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(NUMERIC, INTEGER, NUMERIC));
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME));
             for (DomainOperator domainOperator : Arrays.asList(DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
-                domainBuilder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(NUMERIC, INTEGER));
+                domainBuilder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
             }
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(STRING, NUMERIC, INTEGER));
+            domainBuilder.withOperationTypeResolver(type, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(STRING_TYPE_NAME, NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
 
-            withPredicateTypeResolvers(domainBuilder, type, INTEGER, NUMERIC);
+            withPredicateTypeResolvers(domainBuilder, type, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME);
         }
 
-        domainBuilder.withOperationTypeResolver(STRING, DomainOperator.PLUS, new StringlyDomainOperationTypeResolver(STRING, STRING, INTEGER, NUMERIC));
-        StringlyDomainPredicateTypeResolver stringlyDomainPredicateTypeResolver = new StringlyDomainPredicateTypeResolver(BOOLEAN, STRING);
-        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(STRING).getName())) {
-            domainBuilder.withPredicateTypeResolver(STRING, domainPredicate, stringlyDomainPredicateTypeResolver);
+        domainBuilder.withOperationTypeResolver(STRING_TYPE_NAME, DomainOperator.PLUS, new StringlyDomainOperationTypeResolver(STRING_TYPE_NAME, STRING_TYPE_NAME, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME));
+        StringlyDomainPredicateTypeResolver stringlyDomainPredicateTypeResolver = new StringlyDomainPredicateTypeResolver(BOOLEAN_TYPE_NAME, STRING_TYPE_NAME);
+        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(STRING_TYPE_NAME).getName())) {
+            domainBuilder.withPredicateTypeResolver(STRING_TYPE_NAME, domainPredicate, stringlyDomainPredicateTypeResolver);
         }
 
-        domainBuilder.withOperationTypeResolver(BOOLEAN, DomainOperator.NOT, StaticDomainOperationTypeResolvers.returning(BOOLEAN));
-        withPredicateTypeResolvers(domainBuilder, BOOLEAN, BOOLEAN);
+        domainBuilder.withOperationTypeResolver(BOOLEAN_TYPE_NAME, DomainOperator.NOT, StaticDomainOperationTypeResolvers.returning(BOOLEAN_TYPE_NAME));
+        withPredicateTypeResolvers(domainBuilder, BOOLEAN_TYPE_NAME, BOOLEAN_TYPE_NAME);
 
-        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP, INTERVAL));
-        domainBuilder.withOperationTypeResolver(TIMESTAMP, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP, INTERVAL));
-        withPredicateTypeResolvers(domainBuilder, TIMESTAMP, TIMESTAMP);
+        domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, INTERVAL_TYPE_NAME));
+        domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, INTERVAL_TYPE_NAME));
+        withPredicateTypeResolvers(domainBuilder, TIMESTAMP_TYPE_NAME, TIMESTAMP_TYPE_NAME);
 
-        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME, INTERVAL));
-        domainBuilder.withOperationTypeResolver(TIME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME, INTERVAL));
-        withPredicateTypeResolvers(domainBuilder, TIME, TIME);
+        domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
+        domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
+        withPredicateTypeResolvers(domainBuilder, TIME_TYPE_NAME, TIME_TYPE_NAME);
 
-        domainBuilder.withOperationTypeResolver(INTERVAL, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP, TIME, INTERVAL));
-        domainBuilder.withOperationTypeResolver(INTERVAL, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP, TIME, INTERVAL));
-        withPredicateTypeResolvers(domainBuilder, INTERVAL, INTERVAL);
+        domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
+        domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
+        withPredicateTypeResolvers(domainBuilder, INTERVAL_TYPE_NAME, INTERVAL_TYPE_NAME);
 
         CurrentTimestampFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
         CurrentDateFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
@@ -177,10 +188,16 @@ public class PersistenceDomainContributor implements DomainContributor {
         SizeFunction.addFunction(domainBuilder, PersistenceDomainContributor.class.getClassLoader());
     }
 
-    private static void withPredicateTypeResolvers(DomainBuilder domainBuilder, Class<?> type, Class<?>... supportedTypes) {
+    @Override
+    public int priority() {
+        // We use a priority of 500 so that user contributors, which usually don't configure a priority, are guaranteed to run afterwards
+        return 500;
+    }
+
+    private static void withPredicateTypeResolvers(DomainBuilder domainBuilder, String type, String... supportedTypes) {
         Set<DomainPredicate> enabledPredicates = domainBuilder.getEnabledPredicates(domainBuilder.getType(type).getName());
         if (!enabledPredicates.isEmpty()) {
-            DomainPredicateTypeResolver predicateTypeResolver = StaticDomainPredicateTypeResolvers.returning(BOOLEAN, supportedTypes);
+            DomainPredicateTypeResolver predicateTypeResolver = StaticDomainPredicateTypeResolvers.returning(BOOLEAN_TYPE_NAME, supportedTypes);
             for (DomainPredicate domainPredicate : enabledPredicates) {
                 domainBuilder.withPredicateTypeResolver(type, domainPredicate, predicateTypeResolver);
             }
@@ -226,9 +243,10 @@ public class PersistenceDomainContributor implements DomainContributor {
 
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
-            return new DefaultResolvedLiteral(domainModel.getType(BOOLEAN), value);
+            return new DefaultResolvedLiteral(domainModel.getType(BOOLEAN_TYPE_NAME), value);
         }
     }
+
     /**
      * @author Christian Beikov
      * @since 1.0.0
@@ -245,13 +263,14 @@ public class PersistenceDomainContributor implements DomainContributor {
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
             if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
-                return new DefaultResolvedLiteral(domainModel.getType(NUMERIC), value);
+                return new DefaultResolvedLiteral(domainModel.getType(NUMERIC_TYPE_NAME), value);
             } else if (value instanceof BigInteger) {
-                return new DefaultResolvedLiteral(domainModel.getType(INTEGER), value);
+                return new DefaultResolvedLiteral(domainModel.getType(INTEGER_TYPE_NAME), value);
             }
-            return new DefaultResolvedLiteral(domainModel.getType(INTEGER), BigInteger.valueOf(value.longValue()));
+            return new DefaultResolvedLiteral(domainModel.getType(INTEGER_TYPE_NAME), BigInteger.valueOf(value.longValue()));
         }
     }
+
     /**
      * @author Christian Beikov
      * @since 1.0.0
@@ -267,14 +286,15 @@ public class PersistenceDomainContributor implements DomainContributor {
 
         @Override
         public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
-            return new DefaultResolvedLiteral(domainModel.getType(TIMESTAMP), value);
+            return new DefaultResolvedLiteral(domainModel.getType(TIMESTAMP_TYPE_NAME), value);
         }
 
         @Override
         public ResolvedLiteral resolveIntervalLiteral(DomainModel domainModel, TemporalInterval value) {
-            return new DefaultResolvedLiteral(domainModel.getType(INTERVAL), value);
+            return new DefaultResolvedLiteral(domainModel.getType(INTERVAL_TYPE_NAME), value);
         }
     }
+
     /**
      * @author Christian Beikov
      * @since 1.0.0
@@ -291,8 +311,29 @@ public class PersistenceDomainContributor implements DomainContributor {
 
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, String value) {
-            return new DefaultResolvedLiteral(domainModel.getType(STRING), value);
+            return new DefaultResolvedLiteral(domainModel.getType(STRING_TYPE_NAME), value);
         }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class EnumLiteralResolverImpl implements DomainSerializer<EnumLiteralResolver>, EnumLiteralResolver, Serializable {
+
+        @Override
+        public <T> T serialize(DomainModel domainModel, EnumLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
+            if (targetType != String.class || !"json".equals(format)) {
+                return null;
+            }
+            return (T) "\"SimpleEnumLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveLiteral(DomainModel domainModel, EnumDomainTypeValue value) {
+            return new DefaultResolvedLiteral(value.getOwner(), value);
+        }
+
     }
 
     /**
@@ -428,24 +469,26 @@ public class PersistenceDomainContributor implements DomainContributor {
      */
     private static class StringlyDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
 
-        private final Class<?> returningType;
-        private final Set<Class<?>> supportedJavaTypes;
+        private final String returningType;
+        private final Set<String> supportedTypeNames;
 
-        public StringlyDomainOperationTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+        public StringlyDomainOperationTypeResolver(String returningType, String... supportedTypeNames) {
             this.returningType = returningType;
-            this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
+            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
         }
 
         @Override
         public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
             for (int i = 0; i < domainTypes.size(); i++) {
                 DomainType domainType = domainTypes.get(i);
-                if (!supportedJavaTypes.contains(domainType.getJavaType())) {
-                    List<DomainType> types = new ArrayList<>(supportedJavaTypes.size());
-                    for (Class<?> javaType : supportedJavaTypes) {
-                        types.add(domainModel.getType(javaType));
+                if (!supportedTypeNames.contains(domainType.getName())) {
+                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
+                    for (String typeName : supportedTypeNames) {
+                        types.add(domainModel.getType(typeName));
                     }
-                    throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following: " + types);
+                    if (domainType.getMetadata(StringlyTypeHandler.class) == null) {
+                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following: " + types);
+                    }
                 }
             }
             return domainModel.getType(returningType);
@@ -458,9 +501,12 @@ public class PersistenceDomainContributor implements DomainContributor {
             }
             StringBuilder sb = new StringBuilder();
             sb.append("{\"RestrictedDomainOperationTypeResolver\":[");
-            sb.append('"').append(domainModel.getType(returningType).getName()).append("\",[");
-            for (Class<?> javaType : supportedJavaTypes) {
-                sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
+            sb.append('"').append(returningType).append("\",[");
+            for (DomainType domainType : domainModel.getTypes().values()) {
+                String typeName = domainType.getName();
+                if (supportedTypeNames.contains(typeName) || domainType.getMetadata(StringlyTypeHandler.class) != null) {
+                    sb.append('"').append(typeName).append("\",");
+                }
             }
             sb.setCharAt(sb.length() - 1, ']');
             sb.append(']').append('}');
@@ -474,24 +520,26 @@ public class PersistenceDomainContributor implements DomainContributor {
      */
     private static class StringlyDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
 
-        private final Class<?> returningType;
-        private final Set<Class<?>> supportedJavaTypes;
+        private final String returningType;
+        private final Set<String> supportedTypeNames;
 
-        public StringlyDomainPredicateTypeResolver(Class<?> returningType, Class<?>... supportedJavaTypes) {
+        public StringlyDomainPredicateTypeResolver(String returningType, String... supportedTypeNames) {
             this.returningType = returningType;
-            this.supportedJavaTypes = new HashSet<>(Arrays.asList(supportedJavaTypes));
+            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
         }
 
         @Override
         public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
             for (int i = 0; i < domainTypes.size(); i++) {
                 DomainType domainType = domainTypes.get(i);
-                if (!supportedJavaTypes.contains(domainType.getJavaType())) {
-                    List<DomainType> types = new ArrayList<>(supportedJavaTypes.size());
-                    for (Class<?> javaType : supportedJavaTypes) {
-                        types.add(domainModel.getType(javaType));
+                if (!supportedTypeNames.contains(domainType.getName())) {
+                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
+                    for (String typeName : supportedTypeNames) {
+                        types.add(domainModel.getType(typeName));
                     }
-                    throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + types);
+                    if (domainType.getMetadata(StringlyTypeHandler.class) == null) {
+                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + types);
+                    }
                 }
             }
             return domainModel.getType(returningType);
@@ -505,8 +553,11 @@ public class PersistenceDomainContributor implements DomainContributor {
             StringBuilder sb = new StringBuilder();
             sb.append("{\"RestrictedDomainPredicateTypeResolver\":[");
             sb.append('"').append(domainModel.getType(returningType).getName()).append("\",[");
-            for (Class<?> javaType : supportedJavaTypes) {
-                sb.append('"').append(domainModel.getType(javaType).getName()).append("\",");
+            for (DomainType domainType : domainModel.getTypes().values()) {
+                String typeName = domainType.getName();
+                if (supportedTypeNames.contains(typeName) || domainType.getMetadata(StringlyTypeHandler.class) != null) {
+                    sb.append('"').append(typeName).append("\",");
+                }
             }
             sb.setCharAt(sb.length() - 1, ']');
             sb.append(']').append('}');

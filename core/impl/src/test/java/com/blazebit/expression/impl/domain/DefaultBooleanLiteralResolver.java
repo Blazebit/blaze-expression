@@ -13,36 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.blazebit.expression.impl.domain;
 
-package com.blazebit.expression.examples.web.editor.entity;
-
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
+import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
+import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-@Entity
-public class User extends BaseEntity {
-
-    private String name;
-    private Gender gender;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Enumerated
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
+public class DefaultBooleanLiteralResolver implements BooleanLiteralResolver {
+    @Override
+    public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
+        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.BOOLEAN), value);
     }
 }

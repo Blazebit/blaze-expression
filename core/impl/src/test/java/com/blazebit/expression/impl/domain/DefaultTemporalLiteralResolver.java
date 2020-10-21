@@ -19,6 +19,7 @@ import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
+import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
 
 import java.time.Instant;
 
@@ -29,11 +30,11 @@ import java.time.Instant;
 public class DefaultTemporalLiteralResolver implements TemporalLiteralResolver {
     @Override
     public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
-        return new DefaultResolvedLiteral(domainModel.getType(Instant.class), value);
+        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.TIMESTAMP), value);
     }
 
     @Override
     public ResolvedLiteral resolveIntervalLiteral(DomainModel domainModel, TemporalInterval value) {
-        return new DefaultResolvedLiteral(domainModel.getType(TemporalInterval.class), value);
+        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.INTERVAL), value);
     }
 }

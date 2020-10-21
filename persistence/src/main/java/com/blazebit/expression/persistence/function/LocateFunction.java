@@ -18,20 +18,19 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -56,26 +55,30 @@ public class LocateFunction implements FunctionRenderer, FunctionInvoker, Serial
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("LOCATE", classLoader))
                 .withMinArgumentCount(2)
-                .withResultType(INTEGER)
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("LOCATE_SUBSTRING", classLoader))
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("LOCATE_STRING", classLoader))
-                .withArgument("start", INTEGER, DocumentationMetadataDefinition.localized("LOCATE_START", classLoader))
+                .withResultType(INTEGER_TYPE_NAME)
+                .withArgument("substring", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("LOCATE_SUBSTRING", classLoader))
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("LOCATE_STRING", classLoader))
+                .withArgument("start", INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("LOCATE_START", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object substring = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object substring = arguments.getValue(0);
         if (substring == null) {
             return null;
         }
-        Object string = arguments.get(function.getArgument(1));
+        Object string = arguments.getValue(1);
         if (string == null) {
             return null;
         }
-        Object start = arguments.getOrDefault(function.getArgument(2), 0);
+        Object start = arguments.getValue(2);
         if (start == null) {
-            return null;
+            if (arguments.assignedArguments() < 3) {
+                start = 0;
+            } else {
+                return null;
+            }
         }
 
         String needle = substring.toString();
@@ -85,16 +88,9 @@ public class LocateFunction implements FunctionRenderer, FunctionInvoker, Serial
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("LOCATE(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
-        Consumer<StringBuilder> thirdArg = argumentRenderers.get(function.getArgument(2));
-        if (thirdArg != null) {
-            sb.append(", ");
-            thirdArg.accept(sb);
-        }
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

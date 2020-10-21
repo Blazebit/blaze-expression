@@ -143,7 +143,7 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
                 literalFactory.appendEnumValue(sb, (EnumDomainTypeValue) value);
                 break;
             case BASIC:
-                if (e.getType() == domainModel.getType(Boolean.class)) {
+                if (value instanceof Boolean) {
                     literalFactory.appendBoolean(sb, (Boolean) value);
                 } else if (value instanceof Number) {
                     literalFactory.appendNumeric(sb, (Number) value);

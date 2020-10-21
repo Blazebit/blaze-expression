@@ -56,7 +56,7 @@ public class EntityDomainContributor implements DomainContributor {
         }
 
         // Find out the domain types that are entity view type so that we can register them in an entity literal resolver
-        Map<Class<?>, String> entityViewDomainJavaTypeIds = new HashMap<>();
+        Map<String, String> entityViewDomainJavaTypeIds = new HashMap<>();
         Metamodel metamodel = criteriaBuilderFactory.getService(Metamodel.class);
         for (DomainTypeDefinition<?> typeDefinition : domainBuilder.getTypes().values()) {
             if (typeDefinition instanceof EntityDomainTypeDefinition) {
@@ -75,7 +75,7 @@ public class EntityDomainContributor implements DomainContributor {
                             }
                         }
                         if (idAttribute != null) {
-                            entityViewDomainJavaTypeIds.put(typeDefinition.getJavaType(), idAttribute.getName());
+                            entityViewDomainJavaTypeIds.put(typeDefinition.getName(), idAttribute.getName());
                         }
                     } catch (IllegalArgumentException ex) {
                         // Ignore
@@ -89,6 +89,12 @@ public class EntityDomainContributor implements DomainContributor {
         }
     }
 
+    @Override
+    public int priority() {
+        // Ensure this runs after the PersistenceDomainContributor
+        return 550;
+    }
+
     /**
      *
      * @author Christian Beikov
@@ -98,9 +104,9 @@ public class EntityDomainContributor implements DomainContributor {
 
         private final EntityLiteralResolver delegate;
         private final com.blazebit.domain.declarative.spi.ServiceProvider<?> userServiceProvider;
-        private final Map<Class<?>, String> entityDomainJavaTypes;
+        private final Map<String, String> entityDomainJavaTypes;
 
-        public EntityEntityLiteralResolver(EntityLiteralResolver delegate, com.blazebit.domain.declarative.spi.ServiceProvider<?> userServiceProvider, Map<Class<?>, String> entityViewDomainJavaTypeIds) {
+        public EntityEntityLiteralResolver(EntityLiteralResolver delegate, com.blazebit.domain.declarative.spi.ServiceProvider<?> userServiceProvider, Map<String, String> entityViewDomainJavaTypeIds) {
             this.delegate = delegate;
             this.userServiceProvider = userServiceProvider;
             this.entityDomainJavaTypes = entityViewDomainJavaTypeIds;
@@ -108,7 +114,7 @@ public class EntityDomainContributor implements DomainContributor {
 
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ?> attributeValues) {
-            String idName = entityDomainJavaTypes.get(entityDomainType.getJavaType());
+            String idName = entityDomainJavaTypes.get(entityDomainType.getName());
             if (idName != null) {
                 return new EntityResolvedLiteral(entityDomainType, userServiceProvider, attributeValues.get(entityDomainType.getAttribute(idName)));
             }
@@ -122,8 +128,8 @@ public class EntityDomainContributor implements DomainContributor {
                 sb.append("{\"DelegatingEntityLiteralResolver\":[");
             }
             sb.append("{\"FixedEntityLiteralResolver\":[{");
-            for (Map.Entry<Class<?>, String> entry : entityDomainJavaTypes.entrySet()) {
-                sb.append("\"").append(domainModel.getType(entry.getKey()).getName()).append("\":\"").append(entry.getValue()).append("\",");
+            for (Map.Entry<String, String> entry : entityDomainJavaTypes.entrySet()) {
+                sb.append("\"").append(entry.getKey()).append("\":\"").append(entry.getValue()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, '}');
             sb.append("]}");

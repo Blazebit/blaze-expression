@@ -34,8 +34,9 @@ public interface StringlyTypeHandler<T> extends Serializable {
      *
      * @param string The string
      * @return The instance of the stringly type
+     * @throws com.blazebit.expression.DomainModelException When the string can't be converted
      */
-    T fromString(String string);
+    T construct(String string);
 
     /**
      * Renders the construction of the type to the string builder as JPQL.next expression.
@@ -45,7 +46,7 @@ public interface StringlyTypeHandler<T> extends Serializable {
      * @param sb       The string builder into which to render
      * @param renderer The consumer that renders the argument to a string builder
      */
-    default void appendFromString(StringBuilder sb, Consumer<StringBuilder> renderer) {
+    default void appendConstructTo(StringBuilder sb, Consumer<StringBuilder> renderer) {
         renderer.accept(sb);
     }
 
@@ -56,7 +57,7 @@ public interface StringlyTypeHandler<T> extends Serializable {
      * @param value The instance of the stringly type
      * @return The string representation
      */
-    default String toString(T value) {
+    default String destruct(T value) {
         return value.toString();
     }
 
@@ -68,7 +69,7 @@ public interface StringlyTypeHandler<T> extends Serializable {
      * @param sb       The string builder into which to render
      * @param renderer The consumer that renders the argument to a string builder
      */
-    default void appendToString(StringBuilder sb, Consumer<StringBuilder> renderer) {
+    default void appendDestructTo(StringBuilder sb, Consumer<StringBuilder> renderer) {
         renderer.accept(sb);
     }
 

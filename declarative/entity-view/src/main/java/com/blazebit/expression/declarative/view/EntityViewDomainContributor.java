@@ -55,13 +55,13 @@ public class EntityViewDomainContributor implements DomainContributor {
         }
 
         // Find out the domain types that are entity view type so that we can register them in an entity literal resolver
-        Map<Class<?>, String> entityViewDomainJavaTypeIds = new HashMap<>();
+        Map<String, String> entityViewDomainJavaTypeIds = new HashMap<>();
         ViewMetamodel viewMetamodel = entityViewManager.getMetamodel();
         for (DomainTypeDefinition<?> typeDefinition : domainBuilder.getTypes().values()) {
             if (typeDefinition instanceof EntityDomainTypeDefinition) {
                 ViewType<?> viewType;
                 if (typeDefinition.getJavaType() != null && (viewType = viewMetamodel.view(typeDefinition.getJavaType()))  != null) {
-                    entityViewDomainJavaTypeIds.put(typeDefinition.getJavaType(), viewType.getIdAttribute().getName());
+                    entityViewDomainJavaTypeIds.put(typeDefinition.getName(), viewType.getIdAttribute().getName());
                 }
             }
         }
@@ -69,6 +69,12 @@ public class EntityViewDomainContributor implements DomainContributor {
         if (!entityViewDomainJavaTypeIds.isEmpty()) {
             domainBuilder.withEntityLiteralResolver(new EntityViewEntityLiteralResolver(domainBuilder.getEntityLiteralResolver(), entityViewManager, entityViewDomainJavaTypeIds));
         }
+    }
+
+    @Override
+    public int priority() {
+        // Ensure this runs after the PersistenceDomainContributor and EntityDomainContributor
+        return 600;
     }
 
     /**
@@ -80,9 +86,9 @@ public class EntityViewDomainContributor implements DomainContributor {
 
         private final EntityLiteralResolver delegate;
         private final EntityViewManager entityViewManager;
-        private final Map<Class<?>, String> entityViewDomainJavaTypes;
+        private final Map<String, String> entityViewDomainJavaTypes;
 
-        public EntityViewEntityLiteralResolver(EntityLiteralResolver delegate, EntityViewManager entityViewManager, Map<Class<?>, String> entityViewDomainJavaTypeIds) {
+        public EntityViewEntityLiteralResolver(EntityLiteralResolver delegate, EntityViewManager entityViewManager, Map<String, String> entityViewDomainJavaTypeIds) {
             this.delegate = delegate;
             this.entityViewManager = entityViewManager;
             this.entityViewDomainJavaTypes = entityViewDomainJavaTypeIds;
@@ -90,7 +96,7 @@ public class EntityViewDomainContributor implements DomainContributor {
 
         @Override
         public ResolvedLiteral resolveLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ?> attributeValues) {
-            String idName = entityViewDomainJavaTypes.get(entityDomainType.getJavaType());
+            String idName = entityViewDomainJavaTypes.get(entityDomainType.getName());
             if (idName != null) {
                 Object reference = entityViewManager.getReference(entityDomainType.getJavaType(), attributeValues.get(entityDomainType.getAttribute(idName)));
                 return new EntityViewResolvedLiteral(entityDomainType, reference);
@@ -105,8 +111,8 @@ public class EntityViewDomainContributor implements DomainContributor {
                 sb.append("{\"DelegatingEntityLiteralResolver\":[");
             }
             sb.append("{\"FixedEntityLiteralResolver\":[{");
-            for (Map.Entry<Class<?>, String> entry : entityViewDomainJavaTypes.entrySet()) {
-                sb.append("\"").append(domainModel.getType(entry.getKey()).getName()).append("\":\"").append(entry.getValue()).append("\",");
+            for (Map.Entry<String, String> entry : entityViewDomainJavaTypes.entrySet()) {
+                sb.append("\"").append(entry.getKey()).append("\":\"").append(entry.getValue()).append("\",");
             }
             sb.setCharAt(sb.length() - 1, '}');
             sb.append("]}");

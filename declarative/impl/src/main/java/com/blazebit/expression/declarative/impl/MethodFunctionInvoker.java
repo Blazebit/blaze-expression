@@ -19,8 +19,8 @@ package com.blazebit.expression.declarative.impl;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.IOException;
@@ -29,7 +29,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Christian Beikov
@@ -67,7 +66,7 @@ public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
         try {
             Object[] args = new Object[parameterCount];
             int i = 0;
@@ -79,12 +78,12 @@ public class MethodFunctionInvoker implements MetadataDefinition<FunctionInvoker
             int argumentCount = function.getArguments().size();
             int end = Math.min(parameterCount - offset, argumentCount) - 1;
             for (; i < end; i++) {
-                args[i + offset] = arguments.get(function.getArgument(i));
+                args[i + offset] = arguments.getValue(i);
             }
             if (varArgComponentType == null) {
-                args[i + offset] = arguments.get(function.getArgument(i));
+                args[i + offset] = arguments.getValue(i);
             } else {
-                Collection<Object> varArgs = (Collection<Object>) arguments.get(function.getArgument(i));
+                Collection<Object> varArgs = (Collection<Object>) arguments.getValue(i);
                 args[i + offset] = varArgs.toArray((Object[]) Array.newInstance(varArgComponentType, varArgs.size()));
             }
             return this.function.invoke(null, args);

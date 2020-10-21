@@ -18,21 +18,20 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.BOOLEAN;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.BOOLEAN_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -57,26 +56,26 @@ public class StartsWithFunction implements FunctionRenderer, FunctionInvoker, Se
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("STARTS_WITH", classLoader))
                 .withMinArgumentCount(2)
-                .withResultType(BOOLEAN)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_STRING", classLoader))
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("STARTS_WITH_SUBSTRING", classLoader))
-                .withArgument("startIndex", INTEGER, DocumentationMetadataDefinition.localized("STARTS_WITH_START_INDEX", classLoader))
+                .withResultType(BOOLEAN_TYPE_NAME)
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("STARTS_WITH_STRING", classLoader))
+                .withArgument("substring", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("STARTS_WITH_SUBSTRING", classLoader))
+                .withArgument("startIndex", INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("STARTS_WITH_START_INDEX", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        String string = (String) arguments.get(function.getArgument(1));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        String string = (String) arguments.getValue(1);
         if (string == null) {
             return null;
         }
-        String substring = (String) arguments.get(function.getArgument(0));
+        String substring = (String) arguments.getValue(0);
         if (substring == null) {
             return null;
         }
         int startIndex = 0;
-        if (arguments.size() > 2) {
-            Object start = arguments.get(function.getArgument(2));
+        if (arguments.assignedArguments() > 2) {
+            Object start = arguments.getValue(2);
             if (start == null) {
                 return null;
             }
@@ -86,16 +85,15 @@ public class StartsWithFunction implements FunctionRenderer, FunctionInvoker, Se
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("LOCATE(");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        argumentRenderers.renderArgument(sb, 1);
         sb.append(", ");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        argumentRenderers.renderArgument(sb, 0);
         sb.append(')');
-        Consumer<StringBuilder> thirdArg = argumentRenderers.get(function.getArgument(2));
-        if (thirdArg != null) {
+        if (argumentRenderers.assignedArguments() > 2) {
             sb.append(" = ");
-            thirdArg.accept(sb);
+            argumentRenderers.renderArgument(sb, 2);
         } else {
             sb.append(" = 1");
         }

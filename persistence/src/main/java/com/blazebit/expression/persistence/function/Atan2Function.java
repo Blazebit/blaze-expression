@@ -18,21 +18,20 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -56,19 +55,19 @@ public class Atan2Function implements FunctionRenderer, FunctionInvoker, Seriali
                 .withMetadata(new FunctionRendererMetadataDefinition(INSTANCE))
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ATAN2", classLoader))
-                .withArgument("y", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
-                .withArgument("x", NUMERIC, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
+                .withArgument("y", NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
+                .withArgument("x", NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
                 .build();
-        domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(NUMERIC));
+        domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(NUMERIC_TYPE_NAME));
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object y = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object y = arguments.getValue(0);
         if (y == null) {
             return null;
         }
-        Object x = arguments.get(function.getArgument(1));
+        Object x = arguments.getValue(1);
         if (x == null) {
             return null;
         }
@@ -77,11 +76,9 @@ public class Atan2Function implements FunctionRenderer, FunctionInvoker, Seriali
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("ATAN2(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        sb.append(", ");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

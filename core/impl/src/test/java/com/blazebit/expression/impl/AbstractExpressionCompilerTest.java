@@ -30,6 +30,7 @@ import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
+import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.ArithmeticOperatorType;
@@ -45,6 +46,7 @@ import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.impl.domain.DefaultBooleanLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultEnumLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultNumericLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultStringLiteralResolver;
@@ -69,6 +71,15 @@ import java.util.Map;
  */
 public abstract class AbstractExpressionCompilerTest {
 
+    public static final String BOOLEAN = "boolean";
+    public static final String LONG = "long";
+    public static final String INTEGER = "integer";
+    public static final String BIGDECIMAL = "bigdecimal";
+    public static final String STRING = "string";
+    public static final String TIMESTAMP = "timestamp";
+    public static final String INTERVAL = "interval";
+    public static final String GENDER = "gender";
+
     private ExpressionCompilerImpl expressionCompiler;
     private static DomainModel defaultDomainModel;
     private DomainModel domainModel;
@@ -76,52 +87,55 @@ public abstract class AbstractExpressionCompilerTest {
     @BeforeClass
     public static void createDefaultTestDomainModel() {
         DomainBuilder builder = new DomainBuilderImpl()
-                .createBasicType("boolean", Boolean.class)
-                .withOperator("boolean", new DomainOperator[]{ DomainOperator.NOT })
-                .withPredicate("boolean", DomainPredicate.distinguishable())
-                .createBasicType("long", Long.class)
-                .withOperator("long", DomainOperator.arithmetic())
-                .withPredicate("long", DomainPredicate.comparable())
-                .createBasicType("integer", Integer.class)
-                .withOperator("integer", DomainOperator.arithmetic())
-                .withPredicate("integer", DomainPredicate.comparable())
-                .createBasicType("bigdecimal", BigDecimal.class)
-                .withOperator("bigdecimal", DomainOperator.arithmetic())
-                .withPredicate("bigdecimal", DomainPredicate.comparable())
-                .createBasicType("string", String.class)
-                .withOperator("string", new DomainOperator[]{ DomainOperator.PLUS })
-                .withPredicate("string", DomainPredicate.distinguishable())
-                .createBasicType("timestamp", Instant.class)
-                .withPredicate("timestamp", DomainPredicate.comparable())
-                .createEnumType("gender", Gender.class)
+                .createBasicType(BOOLEAN, Boolean.class)
+                .withOperator(BOOLEAN, new DomainOperator[]{ DomainOperator.NOT })
+                .withPredicate(BOOLEAN, DomainPredicate.distinguishable())
+                .createBasicType(LONG, Long.class)
+                .withOperator(LONG, DomainOperator.arithmetic())
+                .withPredicate(LONG, DomainPredicate.comparable())
+                .createBasicType(INTEGER, Integer.class)
+                .withOperator(INTEGER, DomainOperator.arithmetic())
+                .withPredicate(INTEGER, DomainPredicate.comparable())
+                .createBasicType(BIGDECIMAL, BigDecimal.class)
+                .withOperator(BIGDECIMAL, DomainOperator.arithmetic())
+                .withPredicate(BIGDECIMAL, DomainPredicate.comparable())
+                .createBasicType(STRING, String.class)
+                .withOperator(STRING, new DomainOperator[]{ DomainOperator.PLUS })
+                .withPredicate(STRING, DomainPredicate.distinguishable())
+                .createBasicType(TIMESTAMP, Instant.class)
+                .withPredicate(TIMESTAMP, DomainPredicate.comparable())
+                .createBasicType(INTERVAL, TemporalInterval.class)
+                .withPredicate(INTERVAL, DomainPredicate.comparable())
+                .createEnumType(GENDER, Gender.class)
                     .withValue(Gender.FEMALE.name())
                     .withValue(Gender.MALE.name())
                 .build()
-                .withPredicate("gender", DomainPredicate.distinguishable())
+                .withPredicate(GENDER, DomainPredicate.distinguishable())
                 .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
                 .withStringLiteralResolver(new DefaultStringLiteralResolver())
                 .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())
                 .withEnumLiteralResolver(new DefaultEnumLiteralResolver())
+                .withBooleanLiteralResolver(new DefaultBooleanLiteralResolver())
                 .createEntityType("user")
-                    .addAttribute("id", Long.class)
-                    .addAttribute("email", String.class)
-                    .addAttribute("age", Integer.class)
-                    .addAttribute("birthday", Instant.class)
-                    .addAttribute("gender", Gender.class)
-                    .addAttribute("active", Boolean.class)
+                    .addAttribute("id", LONG)
+                    .addAttribute("email", STRING)
+                    .addAttribute("age", INTEGER)
+                    .addAttribute("birthday", TIMESTAMP)
+                    .addAttribute("gender", GENDER)
+                    .addAttribute("active", BOOLEAN)
                 .build()
                 .createFunction("self")
                     .withArgument("object")
                 .build()
                 .withFunctionTypeResolver("self", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
 
-        for (final Class<?> type : Arrays.asList(Integer.class, Long.class, BigDecimal.class)) {
-            builder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(Integer.class));
+        for (final String type : Arrays.asList(INTEGER, LONG, BIGDECIMAL)) {
+            builder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(INTEGER));
             builder.withOperationTypeResolver(type, DomainOperator.UNARY_MINUS, StaticDomainOperationTypeResolvers.returning(type));
             builder.withOperationTypeResolver(type, DomainOperator.UNARY_PLUS, StaticDomainOperationTypeResolvers.returning(type));
-            builder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(BigDecimal.class));
+            builder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(BIGDECIMAL));
             for (DomainOperator domainOperator : Arrays.asList(DomainOperator.PLUS, DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
-                builder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(BigDecimal.class, Integer.class));
+                builder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(BIGDECIMAL, INTEGER));
             }
         }
 
@@ -315,7 +329,7 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     private DomainType booleanDomainType() {
-        return domainModel.getType(Boolean.class);
+        return domainModel.getType(BOOLEAN);
     }
 
     interface ExpectedExpressionProducer<T extends AbstractExpressionCompilerTest> {

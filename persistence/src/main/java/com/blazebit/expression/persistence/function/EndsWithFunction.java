@@ -18,20 +18,19 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.BOOLEAN;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.BOOLEAN_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -56,19 +55,19 @@ public class EndsWithFunction implements FunctionRenderer, FunctionInvoker, Seri
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ENDS_WITH", classLoader))
                 .withMinArgumentCount(2)
-                .withResultType(BOOLEAN)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("ENDS_WITH_STRING", classLoader))
-                .withArgument("substring", STRING, DocumentationMetadataDefinition.localized("ENDS_WITH_SUBSTRING", classLoader))
+                .withResultType(BOOLEAN_TYPE_NAME)
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("ENDS_WITH_STRING", classLoader))
+                .withArgument("substring", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("ENDS_WITH_SUBSTRING", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        String string = (String) arguments.get(function.getArgument(1));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        String string = (String) arguments.getValue(1);
         if (string == null) {
             return null;
         }
-        String substring = (String) arguments.get(function.getArgument(0));
+        String substring = (String) arguments.getValue(0);
         if (substring == null) {
             return null;
         }
@@ -76,15 +75,15 @@ public class EndsWithFunction implements FunctionRenderer, FunctionInvoker, Seri
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("LOCATE(");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        argumentRenderers.renderArgument(sb, 1);
         sb.append(", ");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        argumentRenderers.renderArgument(sb, 0);
         sb.append(") = LENGTH(");
-        argumentRenderers.get(function.getArgument(1)).accept(sb);
+        argumentRenderers.renderArgument(sb, 1);
         sb.append(") - LENGTH(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
+        argumentRenderers.renderArgument(sb, 0);
         sb.append(')');
     }
 

@@ -18,19 +18,18 @@ package com.blazebit.expression.persistence.function;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.STRING_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -55,21 +54,25 @@ public class RTrimFunction implements FunctionRenderer, FunctionInvoker, Seriali
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("RTRIM", classLoader))
                 .withMinArgumentCount(1)
-                .withResultType(STRING)
-                .withArgument("string", STRING, DocumentationMetadataDefinition.localized("RTRIM_STRING", classLoader))
-                .withArgument("character", STRING, DocumentationMetadataDefinition.localized("RTRIM_CHARACTER", classLoader))
+                .withResultType(STRING_TYPE_NAME)
+                .withArgument("string", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("RTRIM_STRING", classLoader))
+                .withArgument("character", STRING_TYPE_NAME, DocumentationMetadataDefinition.localized("RTRIM_CHARACTER", classLoader))
                 .build();
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object string = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object string = arguments.getValue(0);
         if (string == null) {
             return null;
         }
-        String character = (String) arguments.getOrDefault(function.getArgument(1), " ");
+        String character = (String) arguments.getValue(1);
         if (character == null) {
-            return null;
+            if (arguments.assignedArguments() < 2) {
+                character = " ";
+            } else {
+                return null;
+            }
         }
 
         String s = string.toString();
@@ -85,14 +88,9 @@ public class RTrimFunction implements FunctionRenderer, FunctionInvoker, Seriali
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("RTRIM(");
-        argumentRenderers.get(function.getArgument(0)).accept(sb);
-        Consumer<StringBuilder> secondArg = argumentRenderers.get(function.getArgument(1));
-        if (secondArg != null) {
-            sb.append(", ");
-            secondArg.accept(sb);
-        }
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

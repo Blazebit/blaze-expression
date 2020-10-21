@@ -75,7 +75,7 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
                 .addDomainFunctions(Functions.class)
                 .withService(EntityViewManager.class, evm)
                 .createDomainModel();
-        domainType = domainModel.getType(UserView.class);
+        domainType = domainModel.getType(UserView.class.getSimpleName());
         expressionServiceFactory = Expressions.forModel(domainModel);
     }
 

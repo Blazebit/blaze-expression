@@ -16,33 +16,12 @@
 
 package com.blazebit.expression.examples.web.editor.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-@Entity
-public class User extends BaseEntity {
-
-    private String name;
-    private Gender gender;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Enumerated
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
+public enum Gender {
+    MALE,
+    FEMALE,
+    UNKNOWN
 }

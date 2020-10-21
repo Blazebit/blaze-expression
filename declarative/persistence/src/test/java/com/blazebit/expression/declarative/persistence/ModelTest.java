@@ -63,7 +63,7 @@ public class ModelTest {
                 .addDomainType(User.class)
                 .addDomainFunctions(Functions.class)
                 .createDomainModel();
-        domainType = domainModel.getType(User.class);
+        domainType = domainModel.getType(User.class.getSimpleName());
         this.expressionServiceFactory = Expressions.forModel(domainModel);
     }
 

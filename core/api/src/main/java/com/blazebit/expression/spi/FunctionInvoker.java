@@ -17,10 +17,7 @@
 package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.expression.ExpressionInterpreter;
-
-import java.util.Map;
 
 /**
  * An interpreter for invoking domain functions that is registered as metadata on a domain function.
@@ -38,5 +35,5 @@ public interface FunctionInvoker {
      * @param arguments The domain function argument assignments
      * @return the function invocation result
      */
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments);
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments);
 }

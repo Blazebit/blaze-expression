@@ -19,16 +19,14 @@ package com.blazebit.expression.declarative.persistence;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainFunction;
-import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * A function renderer that renders function arguments into 1-based parameter placeholders.
@@ -101,12 +99,12 @@ public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRe
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         for (int i = 0; i < chunks.length; i++) {
             sb.append(chunks[i]);
 
             if (i < parameterIndices.length) {
-                argumentRenderers.get(function.getArgument(parameterIndices[i])).accept(sb);
+                argumentRenderers.renderArgument(sb, parameterIndices[i]);
             }
         }
     }

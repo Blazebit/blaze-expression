@@ -28,15 +28,16 @@ import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
+import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Consumer;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER;
+import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
 
 /**
  * @author Christian Beikov
@@ -62,7 +63,7 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFu
                 .withMetadata(DocumentationMetadataDefinition.localized("SIZE", classLoader))
                 .withExactArgumentCount(1)
                 .withCollectionArgument("collection", DocumentationMetadataDefinition.localized("SIZE_ARG", classLoader))
-                .withResultType(INTEGER)
+                .withResultType(INTEGER_TYPE_NAME)
                 .build();
         domainBuilder.withFunctionTypeResolver("SIZE", INSTANCE);
     }
@@ -73,27 +74,27 @@ public class SizeFunction implements FunctionRenderer, FunctionInvoker, DomainFu
         if (!(argumentType instanceof CollectionDomainType)) {
             throw new DomainModelException("SIZE only accepts a collection argument! Invalid type given: " + argumentType);
         }
-        return domainModel.getType(INTEGER);
+        return domainModel.getType(INTEGER_TYPE_NAME);
     }
 
     @Override
-    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, Map<DomainFunctionArgument, Object> arguments) {
-        Object argument = arguments.get(function.getArgument(0));
+    public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
+        Object argument = arguments.getValue(0);
         if (argument == null) {
             return null;
         }
 
         if (argument instanceof Collection<?>) {
-            return BigInteger.valueOf(((Collection) argument).size());
+            return BigInteger.valueOf(((Collection<?>) argument).size());
         } else {
             throw new DomainModelException("Illegal argument for SIZE function: " + argument);
         }
     }
 
     @Override
-    public void render(DomainFunction function, DomainType returnType, Map<DomainFunctionArgument, Consumer<StringBuilder>> argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
+    public void render(DomainFunction function, DomainType returnType, DomainFunctionArgumentRenderers argumentRenderers, StringBuilder sb, PersistenceExpressionSerializer serializer) {
         sb.append("SIZE(");
-        argumentRenderers.values().iterator().next().accept(sb);
+        argumentRenderers.renderArguments(sb);
         sb.append(')');
     }
 }

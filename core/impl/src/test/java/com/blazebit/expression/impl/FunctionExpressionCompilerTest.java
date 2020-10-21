@@ -36,9 +36,9 @@ public class FunctionExpressionCompilerTest extends AbstractExpressionCompilerTe
     @BeforeClass
     public static void defineTestDomainModel() {
         testDomainModel = new DomainBuilderImpl()
-                .createBasicType("timestamp", Instant.class)
+                .createBasicType(TIMESTAMP, Instant.class)
                 .createFunction("CURRENT_TIMESTAMP")
-                    .withResultType(Instant.class)
+                    .withResultType(TIMESTAMP)
                     .build()
                 .build();
     }
