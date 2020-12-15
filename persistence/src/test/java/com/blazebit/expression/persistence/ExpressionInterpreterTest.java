@@ -7,7 +7,9 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.domain.runtime.model.DomainTypeResolverException;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
+import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionServiceFactory;
@@ -22,6 +24,8 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Locale;
@@ -33,6 +37,7 @@ import java.util.Map;
  */
 public class ExpressionInterpreterTest {
 
+    private static final int SECONDS_PER_DAY = 86400;
     private final DomainModel domainModel;
     private final ExpressionServiceFactory expressionServiceFactory;
     private Instant instant;
@@ -202,6 +207,36 @@ public class ExpressionInterpreterTest {
     public void testBasic3() {
         this.instant = Instant.ofEpochMilli(0);
         Assert.assertEquals(instant, testExpression("CURRENT_TIMESTAMP()"));
+    }
+
+    @Test
+    public void testBasic4() {
+        this.instant = Instant.ofEpochMilli(0);
+        Assert.assertEquals(instant.plus(10, ChronoUnit.SECONDS), testExpression("CURRENT_TIMESTAMP() + INTERVAL 10 SECONDS"));
+        this.instant = Instant.ofEpochMilli(0);
+        Assert.assertEquals(instant.plus(10, ChronoUnit.SECONDS), testExpression("INTERVAL 10 SECONDS + CURRENT_TIMESTAMP()"));
+    }
+
+    @Test
+    public void testBasic5() {
+        this.instant = Instant.ofEpochMilli(0);
+        Assert.assertEquals(LocalTime.ofSecondOfDay(Math.floorMod(instant.getEpochSecond() + 10, SECONDS_PER_DAY)), testExpression("CURRENT_TIME() + INTERVAL 10 SECONDS"));
+        this.instant = Instant.ofEpochMilli(0);
+        Assert.assertEquals(LocalTime.ofSecondOfDay(Math.floorMod(instant.getEpochSecond() + 10, SECONDS_PER_DAY)), testExpression("INTERVAL 10 SECONDS + CURRENT_TIME()"));
+    }
+
+    @Test
+    public void testBasic6() {
+        Assert.assertEquals(new TemporalInterval(0, 0, 0, 0, 0, 20), testExpression("INTERVAL 10 SECONDS + INTERVAL 10 SECONDS"));
+    }
+
+    @Test
+    public void testBasic7() {
+        try {
+            testExpression("CURRENT_TIMESTAMP() + CURRENT_TIMESTAMP()");
+        } catch (DomainTypeResolverException ex) {
+            Assert.assertTrue(ex.getMessage().contains("[Interval]"));
+        }
     }
 
     @Test
