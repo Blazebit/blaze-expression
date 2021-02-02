@@ -11,6 +11,7 @@
     <artifactId>blaze-expression-declarative-entity-view</artifactId>
 
     <properties>
+        <module.name>com.blazebit.expression.declarative.view</module.name>
         <version.hibernate>5.4.6.Final</version.hibernate>
     </properties>
 

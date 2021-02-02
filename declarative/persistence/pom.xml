@@ -10,6 +10,10 @@
 
     <artifactId>blaze-expression-declarative-persistence</artifactId>
 
+    <properties>
+        <module.name>com.blazebit.expression.declarative.persistence</module.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>javax</groupId>

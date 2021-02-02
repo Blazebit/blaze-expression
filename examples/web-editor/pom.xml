@@ -11,6 +11,10 @@
     <artifactId>blaze-expression-examples-web-editor</artifactId>
     <packaging>war</packaging>
 
+    <properties>
+        <module.name>com.blazebit.expression.examples.web.editor</module.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>javax</groupId>
