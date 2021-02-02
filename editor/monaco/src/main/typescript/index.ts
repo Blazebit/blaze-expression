@@ -45,7 +45,32 @@ import IToken = monaco.languages.IToken;
 
 let symbolTables: StringMap<SymbolTable> = {};
 
-export function createEditor(monaco, domElement: HTMLElement, input: string, singleLineMode: boolean, extensions?: any, options?: monaco.editor.IStandaloneEditorConstructionOptions) {
+export interface BlazeExpressionConstructOptions {
+    domElement: HTMLElement;
+    jsonContext: string;
+    singleLineMode?: boolean;
+    extensions?: any;
+    expectedResultTypes: string[];
+    wrongResultTypeErrorMessage: string;
+}
+
+export function createEditor(monaco, opts: BlazeExpressionConstructOptions, options?: monaco.editor.IStandaloneEditorConstructionOptions) {
+    let domElement = opts.domElement;
+    let input = opts.jsonContext;
+    let singleLineMode = typeof opts.singleLineMode === 'undefined' ? false : opts.singleLineMode;
+    let extensions = opts.extensions;
+    let expectedResultTypes = typeof opts.expectedResultTypes === 'undefined' ? [] : opts.expectedResultTypes;
+    let wrongResultTypeErrorMessage;
+    if (typeof opts.wrongResultTypeErrorMessage === 'undefined') {
+        wrongResultTypeErrorMessage = 'Expected one of the following the following types ['
+        wrongResultTypeErrorMessage += expectedResultTypes[0];
+        for (let i = 1; i < expectedResultTypes.length; i++) {
+            wrongResultTypeErrorMessage += ", " + expectedResultTypes[i];
+        }
+        wrongResultTypeErrorMessage += "] but got: ";
+    } else {
+        wrongResultTypeErrorMessage = opts.wrongResultTypeErrorMessage;
+    }
     if (monaco.languages.getEncodedLanguageId('predicate') == 0) {
         monaco.languages.register({id: 'predicate'});
         monaco.languages.setTokensProvider('predicate', new PredicateTokensProvider());
@@ -276,7 +301,7 @@ export function createEditor(monaco, domElement: HTMLElement, input: string, sin
         textArea.innerText = code;
         var model = editor.getModel();
         let symbolTable = symbolTables[model.id];
-        var syntaxErrors = validate(code, symbolTable);
+        var syntaxErrors = validate(code, symbolTable, expectedResultTypes, wrongResultTypeErrorMessage);
         var monacoErrors: monaco.editor.IMarkerData[] = [];
         for (var e of syntaxErrors) {
             monacoErrors.push({
@@ -1181,7 +1206,7 @@ export function resolveType(input: string, symbolTable: SymbolTable) : DomainTyp
     }
 }
 
-export function validate(input: string, symbolTable: SymbolTable) : ErrorEntry[] {
+export function validate(input: string, symbolTable: SymbolTable, expectedResultTypes: string[], errorMessage: string) : ErrorEntry[] {
     let errors : ErrorEntry[] = [];
 
     const lexer = createLexer(input);
@@ -1195,7 +1220,15 @@ export function validate(input: string, symbolTable: SymbolTable) : ErrorEntry[]
 
     const tree = parser.parsePredicateOrExpression();
     try {
-        tree.accept(new MyBlazeExpressionParserVisitor(symbolTable));
+        let resultType: DomainType = tree.accept(new MyBlazeExpressionParserVisitor(symbolTable));
+        if (expectedResultTypes && expectedResultTypes.length != 0) {
+            for (let expectedResultType of expectedResultTypes) {
+                if (resultType.name == expectedResultType) {
+                    return errors;
+                }
+            }
+            errors.push(new ErrorEntry(0, 0, 0, 0, errorMessage + resultType.name));
+        }
     } catch (e) {
         if (e instanceof ExpressionException) {
             errors.push(e.error);

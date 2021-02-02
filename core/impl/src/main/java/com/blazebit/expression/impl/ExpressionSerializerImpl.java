@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
+import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.BetweenPredicate;
@@ -49,10 +50,10 @@ import java.util.Map;
  */
 public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionSerializer<StringBuilder> {
 
-    private final DomainModel domainModel;
-    private final LiteralFactory literalFactory;
-    private StringBuilder sb;
-    private Context context;
+    protected final DomainModel domainModel;
+    protected final LiteralFactory literalFactory;
+    protected StringBuilder sb;
+    protected Context context;
 
     public ExpressionSerializerImpl(DomainModel domainModel, LiteralFactory literalFactory) {
         this(domainModel, literalFactory, new StringBuilder());
@@ -145,12 +146,19 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             case BASIC:
                 if (value instanceof Boolean) {
                     literalFactory.appendBoolean(sb, (Boolean) value);
+                    break;
                 } else if (value instanceof Number) {
                     literalFactory.appendNumeric(sb, (Number) value);
+                    break;
                 } else if (value instanceof String) {
                     literalFactory.appendString(sb, (String) value);
+                    break;
                 } else if (value instanceof Instant) {
                     literalFactory.appendInstant(sb, (Instant) value);
+                    break;
+                } else if (value instanceof TemporalInterval) {
+                    literalFactory.appendInterval(sb, (TemporalInterval) value);
+                    break;
                 }
             //CHECKSTYLE:OFF: FallThrough
             case ENTITY:

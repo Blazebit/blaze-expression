@@ -18,9 +18,11 @@ You can parse the JSON representation of a domain model with symbols and create 
 import * as expression from 'blaze-expression-monaco';
 expression.BlazeExpressionContributor.createEditor(
     monaco,
-    document.getElementById('editorId'),
-    modelAndSymbolJsonPayload,
-    true // Single-line mode
+    {
+        domElement: document.getElementById('editorId'),
+        jsonContext: modelAndSymbolJsonPayload,
+        singleLineMode: true
+    }
 );
 ```
 
@@ -55,9 +57,11 @@ In a web application this will roughly look like the following
                     // Create the monaco editor for the div with the id containerSingleLine
                     BlazeExpressionContributor.createEditor(
                         monaco,
-                        document.getElementById('containerSingleLine'),
-                        modelAndSymbolJsonPayload,
-                        true // Single-line mode
+                        {
+                            domElement: document.getElementById('containerSingleLine'),
+                            jsonContext: modelAndSymbolJsonPayload,
+                            singleLineMode: true
+                        }
                     );
                 } else {
                     console.warn(request.statusText, request.responseText);

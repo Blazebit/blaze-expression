@@ -20,15 +20,19 @@
                     });
                     BlazeExpressionContributor.createEditor(
                         monaco,
-                        document.getElementById('containerSingleLine'),
-                        json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
-                        true
+                        {
+                            domElement: document.getElementById('containerSingleLine'),
+                            jsonContext: json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
+                            singleLineMode: true
+                        }
                     );
                     BlazeExpressionContributor.createEditor(
                         monaco,
-                        document.getElementById('containerMultiLine'),
-                        json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
-                        false
+                        {
+                            domElement: document.getElementById('containerMultiLine'),
+                            jsonContext: json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
+                            singleLineMode: false
+                        }
                     );
                 } else {
                     console.warn(request.statusText, request.responseText);

@@ -188,6 +188,10 @@ public class LiteralFactory {
         return temporalLiteralResolver.resolveIntervalLiteral(domainModel, interval);
     }
 
+    public void appendInterval(StringBuilder sb, TemporalInterval value) {
+        sb.append("INTERVAL ").append(value);
+    }
+
     public ResolvedLiteral ofQuotedString(String quotedString) {
         final char quoteChar;
         if (quotedString.length() >= 2 && ((quoteChar = quotedString.charAt(0)) == '\'' || quoteChar == '"') && quotedString.charAt(quotedString.length() - 1) == quoteChar) {

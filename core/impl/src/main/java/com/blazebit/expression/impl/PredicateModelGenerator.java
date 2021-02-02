@@ -71,12 +71,12 @@ import java.util.Map;
  */
 public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expression> {
 
-    private final DomainModel domainModel;
-    private final LiteralFactory literalFactory;
-    private final ExpressionCompiler.Context compileContext;
-    private DomainType cachedBooleanDomainType;
-    private Literal cachedBooleanTrueLiteral;
-    private Literal cachedBooleanFalseLiteral;
+    protected final DomainModel domainModel;
+    protected final LiteralFactory literalFactory;
+    protected final ExpressionCompiler.Context compileContext;
+    protected DomainType cachedBooleanDomainType;
+    protected Literal cachedBooleanTrueLiteral;
+    protected Literal cachedBooleanFalseLiteral;
 
     public PredicateModelGenerator(DomainModel domainModel, LiteralFactory literalFactory, ExpressionCompiler.Context compileContext) {
         this.domainModel = domainModel;
@@ -239,7 +239,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         );
     }
 
-    private Predicate createComparisonPredicate(ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator comparisonOperator) {
+    protected Predicate createComparisonPredicate(ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator comparisonOperator) {
         List<DomainType> operandTypes = Arrays.asList(left.getType(), right.getType());
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), comparisonOperator.getDomainPredicate());
 
@@ -365,7 +365,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         );
     }
 
-    private Expression createArithmeticExpression(ArithmeticExpression left, ArithmeticExpression right, ArithmeticOperatorType operator) {
+    protected Expression createArithmeticExpression(ArithmeticExpression left, ArithmeticExpression right, ArithmeticOperatorType operator) {
         List<DomainType> operandTypes = Arrays.asList(left.getType(), right.getType());
         DomainOperationTypeResolver operationTypeResolver = domainModel.getOperationTypeResolver(left.getType().getName(), operator.getDomainOperator());
         if (operationTypeResolver == null) {
@@ -455,7 +455,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new Literal(literalFactory.ofTemporalAmounts(years, months, days, hours, minutes, seconds));
     }
 
-    private int parseTemporalAmount(Token token, String field) {
+    protected static int parseTemporalAmount(Token token, String field) {
         if (token == null) {
             return 0;
         }
@@ -490,6 +490,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     public Expression visitPath(PredicateParser.PathContext ctx) {
         return createPathExpression(ctx);
     }
+
     @Override
     public Expression visitPathPredicate(PathPredicateContext ctx) {
         Expression expression = createPathExpression(ctx.path());
@@ -500,7 +501,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return new ExpressionPredicate(type, expression, false);
     }
 
-    private Expression createPathExpression(PathContext ctx) {
+    protected Expression createPathExpression(PathContext ctx) {
         PredicateParser.IdentifierContext identifierContext = ctx.identifier();
         PredicateParser.PathAttributesContext pathAttributesContext = ctx.pathAttributes();
         ArrayList<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>();
@@ -524,7 +525,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         }
     }
 
-    private DomainType visitPathAttributes(DomainType type, ArrayList<EntityDomainTypeAttribute> pathAttributes, PredicateParser.PathAttributesContext pathAttributesContext) {
+    protected DomainType visitPathAttributes(DomainType type, ArrayList<EntityDomainTypeAttribute> pathAttributes, PredicateParser.PathAttributesContext pathAttributesContext) {
         if (pathAttributesContext != null) {
             List<PredicateParser.IdentifierContext> identifiers = pathAttributesContext.identifier();
             int size = identifiers.size();
@@ -710,7 +711,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @SuppressWarnings("unchecked")
-    private <T> List<T> getExpressionList(List<? extends ParserRuleContext> items) {
+    protected final <T> List<T> getExpressionList(List<? extends ParserRuleContext> items) {
         List<T> expressions = new ArrayList<>(items.size());
         for (int i = 0; i < items.size(); i++) {
             expressions.add((T) items.get(i).accept(this));
@@ -718,7 +719,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return expressions;
     }
 
-    private DomainType getBooleanDomainType() {
+    protected DomainType getBooleanDomainType() {
         if (cachedBooleanDomainType == null) {
             Literal booleanTrueLiteral = getBooleanTrueLiteral();
             if (booleanTrueLiteral == null || booleanTrueLiteral.getType() == null) {
@@ -729,61 +730,61 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         return cachedBooleanDomainType;
     }
 
-    private Literal getBooleanLiteral(boolean value) {
+    protected Literal getBooleanLiteral(boolean value) {
         return value ? getBooleanTrueLiteral() : getBooleanFalseLiteral();
     }
 
-    private Literal getBooleanTrueLiteral() {
+    protected Literal getBooleanTrueLiteral() {
         if (cachedBooleanTrueLiteral == null) {
             cachedBooleanTrueLiteral = new Literal(literalFactory.ofBoolean(true));
         }
         return cachedBooleanTrueLiteral;
     }
 
-    private Literal getBooleanFalseLiteral() {
+    protected Literal getBooleanFalseLiteral() {
         if (cachedBooleanFalseLiteral == null) {
             cachedBooleanFalseLiteral = new Literal(literalFactory.ofBoolean(false));
         }
         return cachedBooleanFalseLiteral;
     }
 
-    private TypeErrorException typeError(DomainType t1, DomainType t2, DomainOperator operator) {
+    protected TypeErrorException typeError(DomainType t1, DomainType t2, DomainOperator operator) {
         return new TypeErrorException(String.format("%s %s %s", t1, operator, t2));
     }
 
-    private DomainModelException missingPredicateTypeResolver(DomainType type, DomainPredicate predicateType) {
+    protected DomainModelException missingPredicateTypeResolver(DomainType type, DomainPredicate predicateType) {
         return new DomainModelException(String.format("Missing predicate type resolver for type %s and predicate %s", type, predicateType));
     }
 
-    private DomainModelException missingOperationTypeResolver(DomainType type, DomainOperator operator) {
+    protected DomainModelException missingOperationTypeResolver(DomainType type, DomainOperator operator) {
         return new DomainModelException(String.format("Missing operation type resolver for type %s and operator %s", type, operator));
     }
 
-    private TypeErrorException typeError(DomainType t1, DomainType t2, DomainPredicate predicateType) {
+    protected TypeErrorException typeError(DomainType t1, DomainType t2, DomainPredicate predicateType) {
         return new TypeErrorException(String.format("%s %s %s", t1, predicateType, t2));
     }
 
-    private DomainModelException unknownType(String typeName) {
+    protected DomainModelException unknownType(String typeName) {
         return new DomainModelException(String.format("Undefined type '%s'", typeName));
     }
 
-    private DomainModelException unknownEntityAttribute(EntityDomainType entityDomainType, String attributeName) {
+    protected DomainModelException unknownEntityAttribute(EntityDomainType entityDomainType, String attributeName) {
         return new DomainModelException(String.format("Attribute %s undefined for entity %s", attributeName, entityDomainType));
     }
 
-    private DomainModelException unknownFunction(String identifier) {
+    protected DomainModelException unknownFunction(String identifier) {
         return new DomainModelException(String.format("Undefined function '%s'", identifier));
     }
 
-    private TypeErrorException unsupportedType(String typeName) {
+    protected TypeErrorException unsupportedType(String typeName) {
         return new TypeErrorException(String.format("Resolved type for identifier %s is not supported", typeName));
     }
 
-    private TypeErrorException cannotResolvePredicateType(DomainPredicate predicateType, List<DomainType> operandTypes) {
+    protected TypeErrorException cannotResolvePredicateType(DomainPredicate predicateType, List<DomainType> operandTypes) {
         return new TypeErrorException(String.format("Cannot resolve predicate type for predicate %s and operand types %s", predicateType, operandTypes));
     }
 
-    private TypeErrorException cannotResolveOperationType(DomainOperator operator, List<DomainType> operandTypes) {
+    protected TypeErrorException cannotResolveOperationType(DomainOperator operator, List<DomainType> operandTypes) {
         return new TypeErrorException(String.format("Cannot resolve operation type for operator %s and operand types %s", operator, operandTypes));
     }
 

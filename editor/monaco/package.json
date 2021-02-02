@@ -15,8 +15,7 @@
   "dependencies": {
     "antlr4": "^4.7.2",
     "monaco-editor": "^0.20.0",
-    "blaze-domain": "^1.0.13",
-    "blaze-expression-predicate": "file:./target/blaze-expression-predicate/"
+    "blaze-domain": "^1.0.13"
   },
   "devDependencies": {
     "webpack": "^4.39.2",
@@ -33,7 +32,8 @@
     "esm": "^3.2.25",
     "style-loader": "^1.2.1",
     "css-loader": "^3.5.3",
-    "file-loader": "^6.0.0"
+    "file-loader": "^6.0.0",
+    "blaze-expression-predicate": "file:./target/blaze-expression-predicate/"
   },
   "scripts": {
     "build": "tsc",

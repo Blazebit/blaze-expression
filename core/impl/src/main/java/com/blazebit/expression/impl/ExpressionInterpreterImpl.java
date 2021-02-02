@@ -61,9 +61,9 @@ import java.util.Map;
  */
 public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Object>, ExpressionInterpreter {
 
-    private final DomainModel domainModel;
-    private Context context;
-    private TypeAdapter typeAdapter;
+    protected final DomainModel domainModel;
+    protected Context context;
+    protected TypeAdapter typeAdapter;
 
     public ExpressionInterpreterImpl(DomainModel domainModel) {
         this.domainModel = domainModel;
@@ -98,7 +98,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     }
 
 
-    private <T> T evaluate(Expression expression, Context interpreterContext, boolean asModelType) {
+    protected <T> T evaluate(Expression expression, Context interpreterContext, boolean asModelType) {
         Context oldContext = context;
         context = interpreterContext;
         try {
@@ -112,6 +112,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             typeAdapter = null;
         }
     }
+
     @Override
     public <T> T evaluate(Expression expression, Context interpreterContext) {
         return evaluate(expression, interpreterContext, false);
@@ -426,7 +427,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         }
     }
 
-    private Boolean compare(DomainType leftType, DomainType rightType, Object left, Object right, ComparisonOperator operator) {
+    protected Boolean compare(DomainType leftType, DomainType rightType, Object left, Object right, ComparisonOperator operator) {
         ComparisonOperatorInterpreter comparisonOperatorInterpreter = leftType.getMetadata(ComparisonOperatorInterpreter.class);
         if (comparisonOperatorInterpreter == null) {
             throw new IllegalArgumentException("No comparison operator interpreter available for type: " + leftType);
@@ -434,7 +435,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         return comparisonOperatorInterpreter.interpret(leftType, rightType, left, right, operator);
     }
 
-    private Object arithmetic(DomainType targetType, DomainType leftType, DomainType rightType, Object left, Object right, DomainOperator operator) {
+    protected Object arithmetic(DomainType targetType, DomainType leftType, DomainType rightType, Object left, Object right, DomainOperator operator) {
         DomainOperatorInterpreter domainOperatorInterpreter = targetType.getMetadata(DomainOperatorInterpreter.class);
         if (domainOperatorInterpreter == null) {
             throw new IllegalArgumentException("No domain operator interpreter available for type: " + targetType);
@@ -446,7 +447,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static final class DefaultDomainFunctionArguments implements DomainFunctionArguments {
+    protected static final class DefaultDomainFunctionArguments implements DomainFunctionArguments {
 
         private final Object[] values;
         private final DomainType[] types;

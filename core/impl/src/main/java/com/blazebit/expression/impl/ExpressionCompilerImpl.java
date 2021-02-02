@@ -44,28 +44,28 @@ import java.util.Map;
  */
 public class ExpressionCompilerImpl implements ExpressionCompiler {
 
-    private static final SimpleErrorListener ERROR_LISTENER = new SimpleErrorListener();
-    private static final RuleInvoker<Predicate> PREDICATE_RULE_INVOKER = new RuleInvoker<Predicate>() {
+    protected static final SimpleErrorListener ERROR_LISTENER = new SimpleErrorListener();
+    protected static final RuleInvoker<Predicate> PREDICATE_RULE_INVOKER = new RuleInvoker<Predicate>() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parsePredicate();
         }
     };
-    private static final RuleInvoker<Expression> EXPRESSION_RULE_INVOKER = new RuleInvoker<Expression>() {
+    protected static final RuleInvoker<Expression> EXPRESSION_RULE_INVOKER = new RuleInvoker<Expression>() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parseExpression();
         }
     };
-    private static final RuleInvoker<Expression> EXPRESSION_OR_PREDICATE_RULE_INVOKER = new RuleInvoker<Expression>() {
+    protected static final RuleInvoker<Expression> EXPRESSION_OR_PREDICATE_RULE_INVOKER = new RuleInvoker<Expression>() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parseExpressionOrPredicate();
         }
     };
 
-    private final DomainModel domainModel;
-    private final LiteralFactory literalFactory;
+    protected final DomainModel domainModel;
+    protected final LiteralFactory literalFactory;
 
     public ExpressionCompilerImpl(DomainModel domainModel, LiteralFactory literalFactory) {
         this.domainModel = domainModel;
@@ -97,7 +97,7 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
     }
 
     @SuppressWarnings("unchecked")
-    <T extends Expression> T parse(String input, RuleInvoker<T> ruleInvoker, Context compileContext) {
+    protected<T extends Expression> T parse(String input, RuleInvoker<T> ruleInvoker, Context compileContext) {
         PredicateLexer lexer = new PredicateLexer(CharStreams.fromString(input));
         lexer.removeErrorListeners();
         lexer.addErrorListener(ERROR_LISTENER);
@@ -123,7 +123,7 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class SimpleErrorListener implements ANTLRErrorListener {
+    protected static class SimpleErrorListener implements ANTLRErrorListener {
 
         @Override
         public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -162,7 +162,7 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class CompileContext implements ExpressionCompiler.Context {
+    protected static class CompileContext implements ExpressionCompiler.Context {
 
         private final Map<String, DomainType> rootDomainTypes;
 

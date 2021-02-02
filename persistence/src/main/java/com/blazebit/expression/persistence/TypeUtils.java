@@ -128,6 +128,32 @@ public class TypeUtils {
     }
 
     /**
+     * Registers the given stringly type to the given domain builder without constructor or destructor.
+     *
+     * @param domainBuilder The domain builder into which to register the type and construct and destructor
+     * @param name The type name of the stringly type to register
+     * @param stringlyTypeHandler The stringly type handler to register
+     * @param typeMetadataDefinitions Metadata definitions to attach to the basic type
+     * @param <T> The java type of the stringly type
+     */
+    public static <T> void registerSimpleStringlyType(DomainBuilder domainBuilder, String name, StringlyTypeHandler<T> stringlyTypeHandler, MetadataDefinition<?>... typeMetadataDefinitions) {
+        registerStringlyType(
+            domainBuilder,
+            name,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            stringlyTypeHandler,
+            typeMetadataDefinitions
+        );
+    }
+
+    /**
      * Registers the given stringly type to the given domain builder along with constructor function and destructor function.
      *
      * @param domainBuilder The domain builder into which to register the type and construct and destructor
@@ -315,34 +341,33 @@ public class TypeUtils {
         if (registerGlobalDestructor) {
             registerGlobalStringlyTypeDestructor(domainBuilder, name, stringlyTypeHandler);
         }
-        MetadataDefinition[] metadataDefinitions = new MetadataDefinition[typeMetadataDefinitions.length + (constructorDocumentationKey == null ? 2 : 3)];
+        MetadataDefinition[] metadataDefinitions = new MetadataDefinition[typeMetadataDefinitions.length + 2];
         System.arraycopy(typeMetadataDefinitions, 0, metadataDefinitions, 0, typeMetadataDefinitions.length);
         metadataDefinitions[typeMetadataDefinitions.length] = new PersistenceDomainContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler));
         metadataDefinitions[typeMetadataDefinitions.length + 1] = new StringlyTypeHandlerMetadataDefinition(stringlyTypeHandler);
-        if (constructorDocumentationKey != null) {
-            metadataDefinitions[typeMetadataDefinitions.length + 2] = DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader);
-        }
         domainBuilder.createBasicType(name, metadataDefinitions);
         domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceDomainContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
         domainBuilder.withOperator(name, DomainOperator.PLUS);
         domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN_TYPE_NAME, name, PersistenceDomainContributor.STRING_TYPE_NAME));
         domainBuilder.withPredicate(name, DomainPredicate.distinguishable());
-        StringlyTypeConstructorFunctionHandler constructorHandler = new StringlyTypeConstructorFunctionHandler(stringlyTypeHandler);
+        if (constructorName != null) {
+            StringlyTypeConstructorFunctionHandler constructorHandler = new StringlyTypeConstructorFunctionHandler(stringlyTypeHandler);
 
-        MetadataDefinition[] constructorArgumentMetadata;
-        if (constructorArgumentDocumentationKey == null) {
-            constructorArgumentMetadata = new MetadataDefinition[0];
-        } else {
-            constructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(constructorArgumentDocumentationKey, resourceBundleClassLoader) };
+            MetadataDefinition[] constructorArgumentMetadata;
+            if (constructorArgumentDocumentationKey == null) {
+                constructorArgumentMetadata = new MetadataDefinition[0];
+            } else {
+                constructorArgumentMetadata = new MetadataDefinition[]{DocumentationMetadataDefinition.localized(constructorArgumentDocumentationKey, resourceBundleClassLoader)};
+            }
+
+            domainBuilder.createFunction(constructorName)
+                .withArgument("value", PersistenceDomainContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
+                .withResultType(name)
+                .withMetadata(new FunctionRendererMetadataDefinition(constructorHandler))
+                .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler))
+                .withMetadata(DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader))
+                .build();
         }
-
-        domainBuilder.createFunction(constructorName)
-            .withArgument("value", PersistenceDomainContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
-            .withResultType(name)
-            .withMetadata(new FunctionRendererMetadataDefinition(constructorHandler))
-            .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler))
-            .withMetadata(DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader))
-            .build();
 
         if (destructorName != null) {
             MetadataDefinition[] destructorArgumentMetadata;
