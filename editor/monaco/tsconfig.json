@@ -4,7 +4,10 @@
     "moduleResolution": "node",
     "declaration": true,
     "target": "es5",
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDirs": [
+      "src/main/typescript", "target/blaze-expression-predicate"
+    ]
   },
   "exclude": [
     "node_modules",

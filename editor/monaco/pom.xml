@@ -76,11 +76,6 @@
                                         <include name="*.g4" />
                                     </fileset>
                                 </copy>
-                                <copy todir="${project.build.directory}/blaze-expression-predicate">
-                                    <fileset dir="${project.basedir}/src/main/antlr4">
-                                        <include name="*.json" />
-                                    </fileset>
-                                </copy>
                             </target>
                         </configuration>
                         <goals>
@@ -171,10 +166,13 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/dist/blaze-expression-predicate</outputDirectory>
+                            <outputDirectory>${basedir}/dist</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${project.build.directory}/blaze-expression-predicate</directory>
+                                    <includes>
+                                        <include>**/*.js</include>
+                                    </includes>
                                 </resource>
                             </resources>
                         </configuration>

@@ -37,9 +37,9 @@ import {
 import {CommonTokenStream, error, InputStream, Parser, ParserRuleContext, Token} from 'antlr4/index.js'
 import {TerminalNode} from 'antlr4/tree/Tree.js'
 import {DefaultErrorStrategy} from 'antlr4/error/ErrorStrategy.js'
-import {BlazeExpressionLexer} from "blaze-expression-predicate/BlazeExpressionLexer.js"
-import {BlazeExpressionParser} from "blaze-expression-predicate/BlazeExpressionParser.js"
-import {BlazeExpressionParserVisitor} from "blaze-expression-predicate/BlazeExpressionParserVisitor.js"
+import {BlazeExpressionLexer} from "./BlazeExpressionLexer.js"
+import {BlazeExpressionParser} from "./BlazeExpressionParser.js"
+import {BlazeExpressionParserVisitor} from "./BlazeExpressionParserVisitor.js"
 
 let symbolTables: StringMap<SymbolTable> = {};
 
@@ -1114,15 +1114,15 @@ class CollectorErrorListener extends error.ErrorListener {
 
 }
 
-export function createLexer(input: String) {
+function createLexer(input: String) {
     const chars = new InputStream(input);
     const lexer = new BlazeExpressionLexer(chars);
     return lexer;
 }
 
-export function getTokens(input: String) : Token[] {
-    return createLexer(input).getAllTokens()
-}
+// function getTokens(input: String) : Token[] {
+//     return createLexer(input).getAllTokens()
+// }
 
 function createParser(input) {
     const lexer = createLexer(input);
@@ -1140,19 +1140,19 @@ function parseTree(input) {
     return parser.parsePredicateOrExpression();
 }
 
-export function parseTreeStr(input) {
-    const lexer = createLexer(input);
-    lexer.removeErrorListeners();
-    lexer.addErrorListener(new ConsoleErrorListener());
-
-    const parser = createParserFromLexer(lexer);
-    parser.removeErrorListeners();
-    parser.addErrorListener(new ConsoleErrorListener());
-
-    const tree = parser.parsePredicateOrExpression();
-
-    return tree.toStringTree(parser.ruleNames);
-}
+// function parseTreeStr(input) {
+//     const lexer = createLexer(input);
+//     lexer.removeErrorListeners();
+//     lexer.addErrorListener(new ConsoleErrorListener());
+//
+//     const parser = createParserFromLexer(lexer);
+//     parser.removeErrorListeners();
+//     parser.addErrorListener(new ConsoleErrorListener());
+//
+//     const tree = parser.parsePredicateOrExpression();
+//
+//     return tree.toStringTree(parser.ruleNames);
+// }
 
 class BlazeExpressionErrorStrategy extends DefaultErrorStrategy {
 
@@ -1187,7 +1187,7 @@ class BlazeExpressionErrorStrategy extends DefaultErrorStrategy {
 
 }
 
-export function resolveType(input: string, symbolTable: SymbolTable) : DomainType {
+function resolveType(input: string, symbolTable: SymbolTable) : DomainType {
     const lexer = createLexer(input);
     lexer.removeErrorListeners();
     lexer.addErrorListener(new ConsoleErrorListener());
@@ -1204,7 +1204,7 @@ export function resolveType(input: string, symbolTable: SymbolTable) : DomainTyp
     }
 }
 
-export function validate(input: string, symbolTable: SymbolTable, expectedResultTypes: string[], errorMessage: string) : ErrorEntry[] {
+function validate(input: string, symbolTable: SymbolTable, expectedResultTypes: string[], errorMessage: string) : ErrorEntry[] {
     let errors : ErrorEntry[] = [];
 
     const lexer = createLexer(input);
