@@ -9,7 +9,7 @@
   "dependencies": {
     "antlr4": "^4.7.2",
     "monaco-editor": "^0.20.0",
-    "blaze-domain": "^1.0.13",
+    "blaze-domain": "^1.0.14",
     "blaze-expression-monaco": "file:./../../editor/monaco/"
   },
   "devDependencies": {

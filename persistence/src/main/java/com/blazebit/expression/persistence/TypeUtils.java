@@ -17,6 +17,7 @@
 package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.boot.model.DomainFunctionBuilder;
 import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
@@ -114,13 +115,15 @@ public class TypeUtils {
                 destructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(destructorArgumentDocumentationKey, resourceBundleClassLoader) };
             }
             handler = new GlobalStringlyTypeDestructorFunctionHandler(destructorName);
-            domainBuilder.createFunction(destructorName)
+            DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", destructorArgumentMetadata)
                 .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(handler))
-                .withMetadata(new FunctionInvokerMetadataDefinition(handler))
-                .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
-                .build();
+                .withMetadata(new FunctionInvokerMetadataDefinition(handler));
+            if (destructorDocumentationKey != null) {
+                functionBuilder.withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader));
+            }
+            functionBuilder.build();
         } else {
             handler = (GlobalStringlyTypeDestructorFunctionHandler) ((FunctionInvokerMetadataDefinition) function.getMetadataDefinitions().get(FunctionInvoker.class)).build(null);
         }
@@ -357,16 +360,18 @@ public class TypeUtils {
             if (constructorArgumentDocumentationKey == null) {
                 constructorArgumentMetadata = new MetadataDefinition[0];
             } else {
-                constructorArgumentMetadata = new MetadataDefinition[]{DocumentationMetadataDefinition.localized(constructorArgumentDocumentationKey, resourceBundleClassLoader)};
+                constructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(constructorArgumentDocumentationKey, resourceBundleClassLoader) };
             }
 
-            domainBuilder.createFunction(constructorName)
+            DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(constructorName)
                 .withArgument("value", PersistenceDomainContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
                 .withResultType(name)
                 .withMetadata(new FunctionRendererMetadataDefinition(constructorHandler))
-                .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler))
-                .withMetadata(DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader))
-                .build();
+                .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler));
+            if (constructorDocumentationKey != null) {
+                functionBuilder.withMetadata(DocumentationMetadataDefinition.localized(constructorDocumentationKey, resourceBundleClassLoader));
+            }
+            functionBuilder.build();
         }
 
         if (destructorName != null) {
@@ -377,13 +382,15 @@ public class TypeUtils {
                 destructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(destructorArgumentDocumentationKey, resourceBundleClassLoader) };
             }
             StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
-            domainBuilder.createFunction(destructorName)
+            DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", name, destructorArgumentMetadata)
                 .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
-                .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler))
-                .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
-                .build();
+                .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler));
+            if (destructorDocumentationKey != null) {
+                functionBuilder.withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader));
+            }
+            functionBuilder.build();
         }
     }
 
@@ -511,13 +518,15 @@ public class TypeUtils {
                 destructorArgumentMetadata = new MetadataDefinition[]{ DocumentationMetadataDefinition.localized(destructorArgumentDocumentationKey, resourceBundleClassLoader) };
             }
             StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
-            domainBuilder.createFunction(destructorName)
+            DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", name, destructorArgumentMetadata)
                 .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
-                .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler))
-                .withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader))
-                .build();
+                .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler));
+            if (destructorDocumentationKey != null) {
+                functionBuilder.withMetadata(DocumentationMetadataDefinition.localized(destructorDocumentationKey, resourceBundleClassLoader));
+            }
+            functionBuilder.build();
         }
     }
 

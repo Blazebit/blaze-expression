@@ -56,6 +56,9 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
      * @param documentation The documentation
      */
     public DocumentationMetadataDefinition(String documentation) {
+        if (documentation == null) {
+            throw new IllegalArgumentException("Null documentation");
+        }
         this.documentation = serialize(documentation);
         this.defaultLocale = null;
         this.baseName = null;
@@ -63,6 +66,9 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
     }
 
     private DocumentationMetadataDefinition(String documentation, Locale defaultLocale, String baseName, ClassLoader classLoader) {
+        if (documentation == null) {
+            throw new IllegalArgumentException("Null documentation");
+        }
         this.documentation = documentation;
         this.defaultLocale = defaultLocale;
         this.baseName = baseName;

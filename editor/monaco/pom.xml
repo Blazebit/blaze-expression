@@ -165,6 +165,21 @@
                 <version>2.6</version>
                 <executions>
                     <execution>
+                        <id>copy-parser-dist</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/dist/blaze-expression-predicate</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}/blaze-expression-predicate</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-dist</id>
                         <phase>prepare-package</phase>
                         <goals>
@@ -175,7 +190,6 @@
                             <resources>
                                 <resource>
                                     <directory>${basedir}/dist</directory>
-                                    <filtering>true</filtering>
                                 </resource>
                             </resources>
                         </configuration>

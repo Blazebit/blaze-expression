@@ -40,8 +40,6 @@ import {DefaultErrorStrategy} from 'antlr4/error/ErrorStrategy.js'
 import {BlazeExpressionLexer} from "blaze-expression-predicate/BlazeExpressionLexer.js"
 import {BlazeExpressionParser} from "blaze-expression-predicate/BlazeExpressionParser.js"
 import {BlazeExpressionParserVisitor} from "blaze-expression-predicate/BlazeExpressionParserVisitor.js"
-import ILineTokens = monaco.languages.ILineTokens;
-import IToken = monaco.languages.IToken;
 
 let symbolTables: StringMap<SymbolTable> = {};
 
@@ -1010,7 +1008,7 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
 
 const EOF = -1;
 
-class PredicateToken implements IToken {
+class PredicateToken implements monaco.languages.IToken {
     scopes: string;
     startIndex: number;
 
@@ -1026,7 +1024,7 @@ class PredicateToken implements IToken {
     }
 }
 
-class PredicateLineTokens implements ILineTokens {
+class PredicateLineTokens implements monaco.languages.ILineTokens {
     endState: monaco.languages.IState;
     tokens: monaco.languages.IToken[];
 
