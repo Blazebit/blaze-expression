@@ -19,6 +19,7 @@ package com.blazebit.expression.declarative.impl;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.AttributeAccessor;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class MethodAttributeAccessor implements MetadataDefinition<AttributeAcce
     }
 
     @Override
-    public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+    public Object getAttribute(ExpressionInterpreter.Context context, Object value, EntityDomainTypeAttribute attribute) {
         try {
             return getter.invoke(value);
         } catch (Exception e) {
@@ -65,7 +66,7 @@ public class MethodAttributeAccessor implements MetadataDefinition<AttributeAcce
     }
 
     @Override
-    public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+    public AttributeAccessor build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

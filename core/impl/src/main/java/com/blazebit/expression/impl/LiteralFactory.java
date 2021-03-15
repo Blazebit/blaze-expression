@@ -15,24 +15,25 @@
  */
 package com.blazebit.expression.impl;
 
-import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
-import com.blazebit.domain.runtime.model.CollectionLiteralResolver;
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
-import com.blazebit.domain.runtime.model.EntityLiteralResolver;
 import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
-import com.blazebit.domain.runtime.model.EnumLiteralResolver;
-import com.blazebit.domain.runtime.model.NumericLiteralResolver;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
-import com.blazebit.domain.runtime.model.StringLiteralResolver;
 import com.blazebit.domain.runtime.model.TemporalInterval;
-import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
+import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.SyntaxErrorException;
+import com.blazebit.expression.spi.BooleanLiteralResolver;
+import com.blazebit.expression.spi.CollectionLiteralResolver;
+import com.blazebit.expression.spi.EntityLiteralResolver;
+import com.blazebit.expression.spi.EnumLiteralResolver;
+import com.blazebit.expression.spi.NumericLiteralResolver;
+import com.blazebit.expression.spi.ResolvedLiteral;
+import com.blazebit.expression.spi.StringLiteralResolver;
+import com.blazebit.expression.spi.TemporalLiteralResolver;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -61,35 +62,22 @@ public class LiteralFactory {
     private static final String TEMPORAL_INTERVAL_MINUTES_FIELD = "minutes";
     private static final String TEMPORAL_INTERVAL_SECONDS_FIELD = "seconds";
 
-    private final DomainModel domainModel;
-    private final NumericLiteralResolver numericLiteralResolver;
-    private final BooleanLiteralResolver booleanLiteralResolver;
-    private final StringLiteralResolver stringLiteralResolver;
-    private final TemporalLiteralResolver temporalLiteralResolver;
-    private final EnumLiteralResolver enumLiteralResolver;
-    private final EntityLiteralResolver entityLiteralResolver;
-    private final CollectionLiteralResolver collectionLiteralResolver;
+    private final ExpressionService expressionService;
 
-    public LiteralFactory(DomainModel domainModel) {
-        this.domainModel = domainModel;
-        this.numericLiteralResolver = domainModel.getNumericLiteralResolver();
-        this.booleanLiteralResolver = domainModel.getBooleanLiteralResolver();
-        this.stringLiteralResolver = domainModel.getStringLiteralResolver();
-        this.temporalLiteralResolver = domainModel.getTemporalLiteralResolver();
-        this.enumLiteralResolver = domainModel.getEnumLiteralResolver();
-        this.entityLiteralResolver = domainModel.getEntityLiteralResolver();
-        this.collectionLiteralResolver = domainModel.getCollectionLiteralResolver();
+    public LiteralFactory(ExpressionService expressionService) {
+        this.expressionService = expressionService;
     }
 
-    public ResolvedLiteral ofEnumValue(EnumDomainType enumDomainType, String value) {
+    public ResolvedLiteral ofEnumValue(ExpressionCompiler.Context context, EnumDomainType enumDomainType, String value) {
         EnumDomainTypeValue domainEnumValue = enumDomainType.getEnumValues().get(value);
         if (domainEnumValue == null) {
             throw new DomainModelException("The value '" + value + "' on the enum domain type '" + enumDomainType.getName() + "' does not exist!");
         }
+        EnumLiteralResolver enumLiteralResolver = expressionService.getEnumLiteralResolver();
         if (enumLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for enum literals defined");
         }
-        ResolvedLiteral literal = enumLiteralResolver.resolveLiteral(domainModel, domainEnumValue);
+        ResolvedLiteral literal = enumLiteralResolver.resolveLiteral(context, domainEnumValue);
         if (literal == null) {
             throw new DomainModelException("Could not resolve enum literal for: " + domainEnumValue);
         }
@@ -100,29 +88,31 @@ public class LiteralFactory {
         sb.append(domainEnumValue.getOwner().getName()).append('.').append(domainEnumValue.getValue());
     }
 
-    public ResolvedLiteral ofEntityAttributeValues(EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, Expression> attributeValues) {
+    public ResolvedLiteral ofEntityAttributeValues(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, Expression> attributeValues) {
+        EntityLiteralResolver entityLiteralResolver = expressionService.getEntityLiteralResolver();
         if (entityLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for entity literals defined");
         }
-        ResolvedLiteral literal = entityLiteralResolver.resolveLiteral(domainModel, entityDomainType, attributeValues);
+        ResolvedLiteral literal = entityLiteralResolver.resolveLiteral(context, entityDomainType, attributeValues);
         if (literal == null) {
             throw new DomainModelException("Could not resolve entity literal for type '" + entityDomainType + "' and attribute values: " + attributeValues);
         }
         return literal;
     }
 
-    public ResolvedLiteral ofCollectionValues(CollectionDomainType collectionDomainType, Collection<Expression> expressions) {
+    public ResolvedLiteral ofCollectionValues(ExpressionCompiler.Context context, CollectionDomainType collectionDomainType, Collection<Expression> expressions) {
+        CollectionLiteralResolver collectionLiteralResolver = expressionService.getCollectionLiteralResolver();
         if (collectionLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for collection literals defined");
         }
-        ResolvedLiteral literal = collectionLiteralResolver.resolveLiteral(domainModel, collectionDomainType, expressions);
+        ResolvedLiteral literal = collectionLiteralResolver.resolveLiteral(context, collectionDomainType, expressions);
         if (literal == null) {
             throw new DomainModelException("Could not resolve collection literal for type '" + collectionDomainType + "' and expressions: " + expressions);
         }
         return literal;
     }
 
-    public ResolvedLiteral ofTemporalIntervalString(String intervalString) {
+    public ResolvedLiteral ofTemporalIntervalString(ExpressionCompiler.Context context, String intervalString) {
         String[] intervalStringParts = intervalString.split("\\s+");
         int years = 0;
         int months = 0;
@@ -177,22 +167,23 @@ public class LiteralFactory {
             }
         }
 
-        return ofTemporalAmounts(years, months, days, hours, minutes, seconds);
+        return ofTemporalAmounts(context, years, months, days, hours, minutes, seconds);
     }
 
-    public ResolvedLiteral ofTemporalAmounts(int years, int months, int days, int hours, int minutes, int seconds) {
-        TemporalInterval interval = new TemporalInterval(years, months, days, hours, minutes, seconds);
+    public ResolvedLiteral ofTemporalAmounts(ExpressionCompiler.Context context, int years, int months, int days, int hours, int minutes, int seconds) {
+        TemporalLiteralResolver temporalLiteralResolver = expressionService.getTemporalLiteralResolver();
         if (temporalLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for temporal interval literals defined");
         }
-        return temporalLiteralResolver.resolveIntervalLiteral(domainModel, interval);
+        TemporalInterval interval = new TemporalInterval(years, months, days, hours, minutes, seconds);
+        return temporalLiteralResolver.resolveIntervalLiteral(context, interval);
     }
 
     public void appendInterval(StringBuilder sb, TemporalInterval value) {
         sb.append("INTERVAL ").append(value);
     }
 
-    public ResolvedLiteral ofQuotedString(String quotedString) {
+    public ResolvedLiteral ofQuotedString(ExpressionCompiler.Context context, String quotedString) {
         final char quoteChar;
         if (quotedString.length() >= 2 && ((quoteChar = quotedString.charAt(0)) == '\'' || quoteChar == '"') && quotedString.charAt(quotedString.length() - 1) == quoteChar) {
             StringBuilder sb = new StringBuilder();
@@ -209,17 +200,18 @@ public class LiteralFactory {
                 sb.append(c);
             }
 
-            return ofString(sb.toString());
+            return ofString(context, sb.toString());
         } else {
             throw new SyntaxErrorException("String not quoted [" + quotedString + "]");
         }
     }
 
-    public ResolvedLiteral ofString(String string) {
+    public ResolvedLiteral ofString(ExpressionCompiler.Context context, String string) {
+        StringLiteralResolver stringLiteralResolver = expressionService.getStringLiteralResolver();
         if (stringLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for string literals defined");
         }
-        return stringLiteralResolver.resolveLiteral(domainModel, string);
+        return stringLiteralResolver.resolveLiteral(context, string);
     }
 
     public void appendString(StringBuilder sb, String value) {
@@ -235,7 +227,7 @@ public class LiteralFactory {
         sb.append('\'');
     }
 
-    public ResolvedLiteral ofDateTimeString(String dateTimeString) {
+    public ResolvedLiteral ofDateTimeString(ExpressionCompiler.Context context, String dateTimeString) {
         boolean hasBlank = dateTimeString.indexOf(' ') != -1;
         boolean hasDot = dateTimeString.indexOf('.') != -1;
 
@@ -248,17 +240,18 @@ public class LiteralFactory {
             } else {
                 dateTime = ZonedDateTime.parse(dateTimeString, DATE_TIME_MILLISECONDS_LITERAL_FORMAT).toInstant();
             }
-            return ofInstant(dateTime);
+            return ofInstant(context, dateTime);
         } catch (DateTimeParseException e) {
             throw new SyntaxErrorException("Invalid datetime literal " + dateTimeString, e);
         }
     }
 
-    public ResolvedLiteral ofInstant(Instant instant) {
+    public ResolvedLiteral ofInstant(ExpressionCompiler.Context context, Instant instant) {
+        TemporalLiteralResolver temporalLiteralResolver = expressionService.getTemporalLiteralResolver();
         if (temporalLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for temporal literals defined");
         }
-        return temporalLiteralResolver.resolveTimestampLiteral(domainModel, instant);
+        return temporalLiteralResolver.resolveTimestampLiteral(context, instant);
     }
 
     public void appendInstant(StringBuilder sb, Instant value) {
@@ -272,30 +265,32 @@ public class LiteralFactory {
         }
     }
 
-    public ResolvedLiteral ofNumericString(String numericString) {
+    public ResolvedLiteral ofNumericString(ExpressionCompiler.Context context, String numericString) {
         try {
-            return ofBigDecimal(new BigDecimal(numericString));
+            return ofBigDecimal(context, new BigDecimal(numericString));
         } catch (NumberFormatException e) {
             throw new SyntaxErrorException(e);
         }
     }
 
-    public ResolvedLiteral ofBigDecimal(BigDecimal bigDecimal) {
+    public ResolvedLiteral ofBigDecimal(ExpressionCompiler.Context context, BigDecimal bigDecimal) {
+        NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
         if (numericLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for numeric literals defined");
         }
-        return numericLiteralResolver.resolveLiteral(domainModel, bigDecimal);
+        return numericLiteralResolver.resolveLiteral(context, bigDecimal);
     }
 
     public void appendNumeric(StringBuilder sb, Number value) {
         sb.append(value);
     }
 
-    public ResolvedLiteral ofBoolean(boolean value) {
+    public ResolvedLiteral ofBoolean(ExpressionCompiler.Context context, boolean value) {
+        BooleanLiteralResolver booleanLiteralResolver = expressionService.getBooleanLiteralResolver();
         if (booleanLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for boolean literals defined");
         }
-        return booleanLiteralResolver.resolveLiteral(domainModel, value);
+        return booleanLiteralResolver.resolveLiteral(context, value);
     }
 
     public void appendBoolean(StringBuilder sb, boolean value) {

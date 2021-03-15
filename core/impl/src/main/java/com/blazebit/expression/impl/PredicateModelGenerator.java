@@ -59,11 +59,19 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * @author Christian Beikov
@@ -74,7 +82,6 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     protected final DomainModel domainModel;
     protected final LiteralFactory literalFactory;
     protected final ExpressionCompiler.Context compileContext;
-    protected DomainType cachedBooleanDomainType;
     protected Literal cachedBooleanTrueLiteral;
     protected Literal cachedBooleanFalseLiteral;
 
@@ -106,9 +113,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitNegatedPredicate(PredicateParser.NegatedPredicateContext ctx) {
-        Predicate predicate = (Predicate) ctx.predicate().accept(this);
-        predicate.setNegated(!predicate.isNegated());
-        return predicate;
+        return ((Predicate) ctx.predicate().accept(this)).negated();
     }
 
     @Override
@@ -118,14 +123,15 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         Predicate right = (Predicate) predicate.get(1).accept(this);
 
         CompoundPredicate disjunctivePredicate;
+        List<Predicate> mutablePredicateList;
         if (left instanceof CompoundPredicate && !((CompoundPredicate) left).isConjunction() && !left.isNegated()) {
             disjunctivePredicate = (CompoundPredicate) left;
-            disjunctivePredicate.getPredicates().add(right);
+            mutablePredicateList = ((UnmodifiableList<Predicate>) disjunctivePredicate.getPredicates()).getDelegate();
         } else {
-            disjunctivePredicate = new CompoundPredicate(getBooleanDomainType(), new ArrayList<>(2), false);
-            disjunctivePredicate.getPredicates().add(left);
-            disjunctivePredicate.getPredicates().add(right);
+            disjunctivePredicate = new CompoundPredicate(domainModel.getPredicateDefaultResultType(), unmodifiable(mutablePredicateList = new ArrayList<>(2)), false);
+            mutablePredicateList.add(left);
         }
+        mutablePredicateList.add(right);
         return disjunctivePredicate;
     }
 
@@ -136,15 +142,20 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         Predicate right = (Predicate) predicate.get(1).accept(this);
 
         CompoundPredicate conjunctivePredicate;
+        List<Predicate> mutablePredicateList;
         if (left instanceof CompoundPredicate && ((CompoundPredicate) left).isConjunction() && !left.isNegated()) {
             conjunctivePredicate = (CompoundPredicate) left;
-            conjunctivePredicate.getPredicates().add(right);
+            mutablePredicateList = ((UnmodifiableList<Predicate>) conjunctivePredicate.getPredicates()).getDelegate();
         } else {
-            conjunctivePredicate = new CompoundPredicate(getBooleanDomainType(), new ArrayList<>(2), true);
-            conjunctivePredicate.getPredicates().add(left);
-            conjunctivePredicate.getPredicates().add(right);
+            conjunctivePredicate = new CompoundPredicate(domainModel.getPredicateDefaultResultType(), unmodifiable(mutablePredicateList = new ArrayList<>(2)), true);
+            mutablePredicateList.add(left);
         }
+        mutablePredicateList.add(right);
         return conjunctivePredicate;
+    }
+
+    private List<Predicate> unmodifiable(List<Predicate> predicates) {
+        return new UnmodifiableList<>(predicates);
     }
 
     @Override
@@ -283,7 +294,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     @Override
     public Predicate visitBetweenPredicate(PredicateParser.BetweenPredicateContext ctx) {
         ArithmeticExpression left = (ArithmeticExpression) ctx.lhs.accept(this);
-        ArithmeticExpression lower = (ArithmeticExpression) ctx.start.accept(this);
+        ArithmeticExpression begin = (ArithmeticExpression) ctx.begin.accept(this);
         ArithmeticExpression upper = (ArithmeticExpression) ctx.end.accept(this);
 
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.RELATIONAL);
@@ -291,12 +302,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         if (predicateTypeResolver == null) {
             throw missingPredicateTypeResolver(left.getType(), DomainPredicate.RELATIONAL);
         } else {
-            List<DomainType> operandTypes = Arrays.asList(left.getType(), lower.getType(), upper.getType());
+            List<DomainType> operandTypes = Arrays.asList(left.getType(), begin.getType(), upper.getType());
             DomainType domainType = predicateTypeResolver.resolveType(domainModel, operandTypes);
             if (domainType == null) {
                 throw cannotResolvePredicateType(DomainPredicate.RELATIONAL, operandTypes);
             } else {
-                return new BetweenPredicate(domainType, left, upper, lower);
+                return new BetweenPredicate(domainType, left, upper, begin);
             }
         }
     }
@@ -304,12 +315,13 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     @Override
     public Expression visitBooleanFunction(PredicateParser.BooleanFunctionContext ctx) {
         Expression expression = super.visitBooleanFunction(ctx);
-        if (expression.getType() == getBooleanDomainType()) {
+        DomainType booleanDomainType = domainModel.getPredicateDefaultResultType();
+        if (expression.getType() == booleanDomainType) {
             if (expression instanceof Predicate) {
                 return expression;
             }
 
-            return new ExpressionPredicate(getBooleanDomainType(), expression, false);
+            return new ExpressionPredicate(booleanDomainType, expression, false);
         }
 
         throw new TypeErrorException("Invalid use of non-boolean returning function: " + ctx.getText());
@@ -441,7 +453,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 sb.append(ctx.fraction.getText());
             }
         }
-        return new Literal(literalFactory.ofDateTimeString(sb.toString()));
+        return new Literal(literalFactory.ofDateTimeString(compileContext, sb.toString()));
     }
 
     @Override
@@ -452,7 +464,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         int hours = parseTemporalAmount(ctx.hours, "hours");
         int minutes = parseTemporalAmount(ctx.minutes, "minutes");
         int seconds = parseTemporalAmount(ctx.seconds, "seconds");
-        return new Literal(literalFactory.ofTemporalAmounts(years, months, days, hours, minutes, seconds));
+        return new Literal(literalFactory.ofTemporalAmounts(compileContext, years, months, days, hours, minutes, seconds));
     }
 
     protected static int parseTemporalAmount(Token token, String field) {
@@ -483,7 +495,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             collectionDomainType = domainModel.getCollectionType(literalList.get(0).getType());
         }
 
-        return new Literal(literalFactory.ofCollectionValues(collectionDomainType, literalList));
+        return new Literal(literalFactory.ofCollectionValues(compileContext, collectionDomainType, literalList));
     }
 
     @Override
@@ -495,7 +507,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     public Expression visitPathPredicate(PathPredicateContext ctx) {
         Expression expression = createPathExpression(ctx.path());
         DomainType type = expression.getType();
-        if (!type.equals(getBooleanDomainType())) {
+        if (!type.equals(domainModel.getPredicateDefaultResultType())) {
             throw unsupportedType(expression.getType().toString());
         }
         return new ExpressionPredicate(type, expression, false);
@@ -507,7 +519,8 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         ArrayList<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>();
         if (identifierContext == null) {
             Expression base = ctx.functionInvocation().accept(this);
-            return new Path((ArithmeticExpression) base, pathAttributes, visitPathAttributes(base.getType(), pathAttributes, pathAttributesContext));
+            DomainType domainType = visitPathAttributes(base.getType(), pathAttributes, pathAttributesContext);
+            return new Path((ArithmeticExpression) base, Collections.unmodifiableList(pathAttributes), domainType);
         } else {
             String alias = identifierContext.getText();
             DomainType type = compileContext.getRootDomainType(alias);
@@ -516,12 +529,13 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).size() == 1) {
                     type = domainModel.getType(alias);
                     if (type instanceof EnumDomainType) {
-                        return new Literal(literalFactory.ofEnumValue((EnumDomainType) type, identifiers.get(0).getText()));
+                        return new Literal(literalFactory.ofEnumValue(compileContext, (EnumDomainType) type, identifiers.get(0).getText()));
                     }
                 }
                 throw unknownType(alias);
             }
-            return new Path(alias, pathAttributes, visitPathAttributes(type, pathAttributes, pathAttributesContext));
+            DomainType domainType = visitPathAttributes(type, pathAttributes, pathAttributesContext);
+            return new Path(alias, Collections.unmodifiableList(pathAttributes), domainType);
         }
     }
 
@@ -593,7 +607,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                     for (; i < literalList.size(); i++) {
                         varArgs.add(literalList.get(i));
                     }
-                    arguments.put(domainFunctionArgument, new Literal(new DefaultResolvedLiteral(domainFunctionArgument.getType(), varArgs)));
+                    arguments.put(domainFunctionArgument, new Literal(new DefaultResolvedLiteral(domainFunctionArgument.getType(), Collections.unmodifiableList(varArgs))));
                 } else if (i < literalList.size()) {
                     argumentTypes.put(domainFunctionArgument, literalList.get(i).getType());
                     arguments.put(domainFunctionArgument, literalList.get(i));
@@ -602,7 +616,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             DomainFunctionTypeResolver functionTypeResolver = domainModel.getFunctionTypeResolver(functionName);
             try {
                 DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
-                return new FunctionInvocation(function, arguments, functionType);
+                return new FunctionInvocation(function, Collections.unmodifiableMap(arguments), functionType);
             } catch (DomainTypeResolverException ex) {
                 throw new DomainModelException(ex.getMessage(), ex);
             }
@@ -632,7 +646,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             }
             arguments.put(attribute, literalList.get(i));
         }
-        return new Literal(literalFactory.ofEntityAttributeValues(entityDomainType, arguments));
+        return new Literal(literalFactory.ofEntityAttributeValues(compileContext, entityDomainType, Collections.unmodifiableMap(arguments)));
     }
 
     @Override
@@ -684,7 +698,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             DomainFunctionTypeResolver functionTypeResolver = domainModel.getFunctionTypeResolver(entityOrFunctionName);
             try {
                 DomainType functionType = functionTypeResolver.resolveType(domainModel, function, argumentTypes);
-                return new FunctionInvocation(function, arguments, functionType);
+                return new FunctionInvocation(function, Collections.unmodifiableMap(arguments), functionType);
             } catch (DomainTypeResolverException ex) {
                 throw new DomainModelException(ex.getMessage(), ex);
             }
@@ -698,13 +712,13 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         }
         switch (node.getSymbol().getType()) {
             case PredicateLexer.STRING_LITERAL:
-                return new Literal(literalFactory.ofString(node.getText()));
+                return new Literal(literalFactory.ofString(compileContext, node.getText()));
             case PredicateLexer.TRUE:
                 return getBooleanTrueLiteral();
             case PredicateLexer.FALSE:
                 return getBooleanFalseLiteral();
             case PredicateLexer.NUMERIC_LITERAL:
-                return new Literal(literalFactory.ofNumericString(node.getText()));
+                return new Literal(literalFactory.ofNumericString(compileContext, node.getText()));
             default:
                 throw new IllegalStateException("Terminal node '" + node.getText() + "' not handled");
         }
@@ -716,18 +730,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         for (int i = 0; i < items.size(); i++) {
             expressions.add((T) items.get(i).accept(this));
         }
-        return expressions;
-    }
-
-    protected DomainType getBooleanDomainType() {
-        if (cachedBooleanDomainType == null) {
-            Literal booleanTrueLiteral = getBooleanTrueLiteral();
-            if (booleanTrueLiteral == null || booleanTrueLiteral.getType() == null) {
-                throw new DomainModelException("No domain type defined for type " + Boolean.class.getName());
-            }
-            cachedBooleanDomainType = booleanTrueLiteral.getType();
-        }
-        return cachedBooleanDomainType;
+        return Collections.unmodifiableList(expressions);
     }
 
     protected Literal getBooleanLiteral(boolean value) {
@@ -736,14 +739,14 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     protected Literal getBooleanTrueLiteral() {
         if (cachedBooleanTrueLiteral == null) {
-            cachedBooleanTrueLiteral = new Literal(literalFactory.ofBoolean(true));
+            cachedBooleanTrueLiteral = new Literal(literalFactory.ofBoolean(compileContext, true));
         }
         return cachedBooleanTrueLiteral;
     }
 
     protected Literal getBooleanFalseLiteral() {
         if (cachedBooleanFalseLiteral == null) {
-            cachedBooleanFalseLiteral = new Literal(literalFactory.ofBoolean(false));
+            cachedBooleanFalseLiteral = new Literal(literalFactory.ofBoolean(compileContext, false));
         }
         return cachedBooleanFalseLiteral;
     }
@@ -786,6 +789,267 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     protected TypeErrorException cannotResolveOperationType(DomainOperator operator, List<DomainType> operandTypes) {
         return new TypeErrorException(String.format("Cannot resolve operation type for operator %s and operand types %s", operator, operandTypes));
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static class UnmodifiableList<E> implements List<E> {
+
+        private final List<E> list;
+
+        UnmodifiableList(List<E> list) {
+            this.list = list;
+        }
+
+        List<E> getDelegate() {
+            return list;
+        }
+
+        @Override
+        public int size() {
+            return list.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return list.isEmpty();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            return list.contains(o);
+        }
+
+        @Override
+        public Object[] toArray() {
+            return list.toArray();
+        }
+
+        @Override
+        public <T> T[] toArray(T[] a) {
+            return list.toArray(a);
+        }
+
+        @Override
+        public String toString() {
+            return list.toString();
+        }
+
+        @Override
+        public Iterator<E> iterator() {
+            return new Iterator<E>() {
+                private final Iterator<? extends E> i = list.iterator();
+
+                @Override
+                public boolean hasNext() {
+                    return i.hasNext();
+                }
+
+                @Override
+                public E next() {
+                    return i.next();
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void forEachRemaining(Consumer<? super E> action) {
+                    i.forEachRemaining(action);
+                }
+            };
+        }
+
+        @Override
+        public boolean add(E e) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> coll) {
+            return list.containsAll(coll);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends E> coll) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> coll) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> coll) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException();
+        }
+
+        // Override default methods in Collection
+        @Override
+        public void forEach(Consumer<? super E> action) {
+            list.forEach(action);
+        }
+
+        @Override
+        public boolean removeIf(java.util.function.Predicate<? super E> filter) {
+            throw new UnsupportedOperationException();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Spliterator<E> spliterator() {
+            return (Spliterator<E>) list.spliterator();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Stream<E> stream() {
+            return (Stream<E>) list.stream();
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Stream<E> parallelStream() {
+            return (Stream<E>) list.parallelStream();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o == this || list.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return list.hashCode();
+        }
+
+        @Override
+        public E get(int index) {
+            return list.get(index);
+        }
+
+        @Override
+        public E set(int index, E element) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void add(int index, E element) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public E remove(int index) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int indexOf(Object o) {
+            return list.indexOf(o);
+        }
+
+        @Override
+        public int lastIndexOf(Object o) {
+            return list.lastIndexOf(o);
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void replaceAll(UnaryOperator<E> operator) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void sort(Comparator<? super E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ListIterator<E> listIterator() {
+            return listIterator(0);
+        }
+
+        @Override
+        public ListIterator<E> listIterator(final int index) {
+            return new ListIterator<E>() {
+                private final ListIterator<? extends E> i = list.listIterator(index);
+
+                @Override
+                public boolean hasNext() {
+                    return i.hasNext();
+                }
+
+                @Override
+                public E next() {
+                    return i.next();
+                }
+
+                @Override
+                public boolean hasPrevious() {
+                    return i.hasPrevious();
+                }
+
+                @Override
+                public E previous() {
+                    return i.previous();
+                }
+
+                @Override
+                public int nextIndex() {
+                    return i.nextIndex();
+                }
+
+                @Override
+                public int previousIndex() {
+                    return i.previousIndex();
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void set(E e) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void add(E e) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void forEachRemaining(Consumer<? super E> action) {
+                    i.forEachRemaining(action);
+                }
+            };
+        }
+
+        @Override
+        public List<E> subList(int fromIndex, int toIndex) {
+            return new UnmodifiableList<>(list.subList(fromIndex, toIndex));
+        }
+
     }
 
 }

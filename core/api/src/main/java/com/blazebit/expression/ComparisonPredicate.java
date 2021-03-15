@@ -47,6 +47,22 @@ public class ComparisonPredicate extends AbstractPredicate {
     }
 
     /**
+     * Creates a new comparison predicate from the given operands and the given operator returning a result of the given domain type.
+     *
+     * @param type The result domain type
+     * @param left The left operand
+     * @param right The right operand
+     * @param operator The operator
+     * @param negated <code>true</code> if the predicate should be negated, <code>false</code> otherwise
+     */
+    public ComparisonPredicate(DomainType type, ArithmeticExpression left, ArithmeticExpression right, ComparisonOperator operator, boolean negated) {
+        super(type, negated);
+        this.left = left;
+        this.right = right;
+        this.operator = operator;
+    }
+
+    /**
      * Returns the left operand.
      *
      * @return the left operand
@@ -71,6 +87,14 @@ public class ComparisonPredicate extends AbstractPredicate {
      */
     public ComparisonOperator getOperator() {
         return operator;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ComparisonPredicate negated() {
+        return new ComparisonPredicate(getType(), left, right, operator, !isNegated());
     }
 
     /**

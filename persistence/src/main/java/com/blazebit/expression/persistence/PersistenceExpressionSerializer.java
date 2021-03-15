@@ -17,7 +17,6 @@
 package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.expression.ArithmeticExpression;
@@ -30,6 +29,7 @@ import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
@@ -37,7 +37,6 @@ import com.blazebit.expression.IsNullPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.MultipleSubqueryInitiator;
 import com.blazebit.persistence.WhereBuilder;
@@ -56,6 +55,7 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     private static final String SUBQUERY_PREFIX = "_expr_subquery_";
     private static final String CORRELATION_ALIAS_PREFIX = "_expr_correlation_";
 
+    private final ExpressionService expressionService;
     private final StringBuilder tempSb;
     private final Map<String, SubqueryProvider> subqueryProviders;
     private final Map<Object, Object> properties;
@@ -68,9 +68,10 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     /**
      * Creates a new serializer for serializing to a Blaze-Persistence Core WhereBuilder.
      *
-     * @param domainModel The expression domain model
+     * @param expressionService The expression service
      */
-    public PersistenceExpressionSerializer(DomainModel domainModel) {
+    public PersistenceExpressionSerializer(ExpressionService expressionService) {
+        this.expressionService = expressionService;
         this.tempSb = new StringBuilder();
         this.subqueryProviders = new HashMap<>();
         this.properties = new HashMap<>();
@@ -80,11 +81,35 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
     @Override
     public Context createContext(Map<String, Object> contextParameters) {
         return new Context() {
+
+            @Override
+            public ExpressionService getExpressionService() {
+                return expressionService;
+            }
+
             @Override
             public Object getContextParameter(String contextParameterName) {
                 return contextParameters.get(contextParameterName);
             }
         };
+    }
+
+    /**
+     * Returns the domain model.
+     *
+     * @return the domain model
+     */
+    public ExpressionService getExpressionService() {
+        return expressionService;
+    }
+
+    /**
+     * Returns the current serialization context.
+     *
+     * @return the current serialization context
+     */
+    public Context getContext() {
+        return context;
     }
 
     /**

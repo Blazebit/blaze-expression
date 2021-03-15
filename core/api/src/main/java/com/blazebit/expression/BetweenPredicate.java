@@ -48,6 +48,22 @@ public class BetweenPredicate extends AbstractPredicate {
     }
 
     /**
+     * Constructs a new between predicate for the given arithmetic expressions returning a result of the given domain type.
+     *
+     * @param type The result domain type
+     * @param left The left or reference expression
+     * @param upper The upper bound(inclusive)
+     * @param lower The lower bound(inclusive)
+     * @param negated <code>true</code> if the predicate should be negated, <code>false</code> otherwise
+     */
+    public BetweenPredicate(DomainType type, ArithmeticExpression left, ArithmeticExpression upper, ArithmeticExpression lower, boolean negated) {
+        super(type, negated);
+        this.left = left;
+        this.upper = upper;
+        this.lower = lower;
+    }
+
+    /**
      * Returns the left or reference expression.
      *
      * @return the left or reference expression
@@ -72,6 +88,14 @@ public class BetweenPredicate extends AbstractPredicate {
      */
     public ArithmeticExpression getLower() {
         return lower;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public BetweenPredicate negated() {
+        return new BetweenPredicate(getType(), left, upper, lower, !isNegated());
     }
 
     /**

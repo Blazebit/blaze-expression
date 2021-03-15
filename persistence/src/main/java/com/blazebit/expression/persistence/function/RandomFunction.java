@@ -23,9 +23,9 @@ import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
-import com.blazebit.expression.persistence.PersistenceDomainContributor;
+import com.blazebit.expression.persistence.PersistenceContributor;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.persistence.DomainFunctionArgumentRenderers;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -56,7 +56,7 @@ public class RandomFunction implements FunctionRenderer, FunctionInvoker, Serial
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("RANDOM", classLoader))
                 .build();
-        domainBuilder.withFunctionTypeResolver("RANDOM", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.NUMERIC_TYPE_NAME));
+        domainBuilder.withFunctionTypeResolver("RANDOM", StaticDomainFunctionTypeResolvers.returning(PersistenceContributor.NUMERIC_TYPE_NAME));
     }
 
     @Override

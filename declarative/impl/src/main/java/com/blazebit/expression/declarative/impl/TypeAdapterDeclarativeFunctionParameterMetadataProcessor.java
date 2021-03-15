@@ -37,7 +37,7 @@ public class TypeAdapterDeclarativeFunctionParameterMetadataProcessor implements
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Annotation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
         return TypeAdapterRegistry.getTypeAdapter(parameter.getType());
     }
 }

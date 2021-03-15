@@ -34,6 +34,17 @@ public class ExpressionPredicate extends AbstractPredicate {
      *
      * @param type The result domain type
      * @param expression The boolean expression
+     */
+    public ExpressionPredicate(DomainType type, Expression expression) {
+        super(type);
+        this.expression = expression;
+    }
+
+    /**
+     * Constructs a new possibly negated predicate wrapper for the given expression returning a result of the given domain type.
+     *
+     * @param type The result domain type
+     * @param expression The boolean expression
      * @param negated <code>true</code> if the predicate should be negated, <code>false</code> otherwise
      */
     public ExpressionPredicate(DomainType type, Expression expression, boolean negated) {
@@ -48,6 +59,14 @@ public class ExpressionPredicate extends AbstractPredicate {
      */
     public Expression getExpression() {
         return expression;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ExpressionPredicate negated() {
+        return new ExpressionPredicate(getType(), expression, !isNegated());
     }
 
     /**

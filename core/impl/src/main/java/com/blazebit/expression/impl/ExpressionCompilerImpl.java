@@ -16,10 +16,10 @@
 
 package com.blazebit.expression.impl;
 
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.SyntaxErrorException;
 import org.antlr.v4.runtime.ANTLRErrorListener;
@@ -45,36 +45,46 @@ import java.util.Map;
 public class ExpressionCompilerImpl implements ExpressionCompiler {
 
     protected static final SimpleErrorListener ERROR_LISTENER = new SimpleErrorListener();
-    protected static final RuleInvoker<Predicate> PREDICATE_RULE_INVOKER = new RuleInvoker<Predicate>() {
+    protected static final RuleInvoker PREDICATE_RULE_INVOKER = new RuleInvoker() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parsePredicate();
         }
     };
-    protected static final RuleInvoker<Expression> EXPRESSION_RULE_INVOKER = new RuleInvoker<Expression>() {
+    protected static final RuleInvoker EXPRESSION_RULE_INVOKER = new RuleInvoker() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parseExpression();
         }
     };
-    protected static final RuleInvoker<Expression> EXPRESSION_OR_PREDICATE_RULE_INVOKER = new RuleInvoker<Expression>() {
+    protected static final RuleInvoker EXPRESSION_OR_PREDICATE_RULE_INVOKER = new RuleInvoker() {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parseExpressionOrPredicate();
         }
     };
 
-    protected final DomainModel domainModel;
+    protected final ExpressionService expressionService;
     protected final LiteralFactory literalFactory;
 
-    public ExpressionCompilerImpl(DomainModel domainModel, LiteralFactory literalFactory) {
-        this.domainModel = domainModel;
+    public ExpressionCompilerImpl(ExpressionService expressionService, LiteralFactory literalFactory) {
+        this.expressionService = expressionService;
         this.literalFactory = literalFactory;
     }
 
     @Override
     public Context createContext(Map<String, DomainType> rootDomainTypes) {
-        return new CompileContext(rootDomainTypes);
+        return new Context() {
+            @Override
+            public ExpressionService getExpressionService() {
+                return expressionService;
+            }
+
+            @Override
+            public DomainType getRootDomainType(String alias) {
+                return rootDomainTypes.get(alias);
+            }
+        };
     }
 
     @Override
@@ -97,7 +107,10 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
     }
 
     @SuppressWarnings("unchecked")
-    protected<T extends Expression> T parse(String input, RuleInvoker<T> ruleInvoker, Context compileContext) {
+    protected <T extends Expression> T parse(String input, RuleInvoker ruleInvoker, Context compileContext) {
+        if (compileContext.getExpressionService() != expressionService) {
+            throw new IllegalArgumentException("Compile context refers to a different expression service!");
+        }
         PredicateLexer lexer = new PredicateLexer(CharStreams.fromString(input));
         lexer.removeErrorListeners();
         lexer.addErrorListener(ERROR_LISTENER);
@@ -111,11 +124,11 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
             throw new SyntaxErrorException("Parsing stopped at index " + ctx.getStop().getStopIndex() + "! Illegal unexpected suffix: '" + input.substring(ctx.getStop().getStopIndex() + 1) + "'");
         }
 
-        PredicateModelGenerator visitor = new PredicateModelGenerator(domainModel, literalFactory, compileContext);
+        PredicateModelGenerator visitor = new PredicateModelGenerator(expressionService.getDomainModel(), literalFactory, compileContext);
         return (T) visitor.visit(ctx);
     }
 
-    public interface RuleInvoker<T extends Expression> {
+    public interface RuleInvoker {
         ParserRuleContext invokeRule(PredicateParser parser);
     }
 
@@ -158,21 +171,4 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
         }
     }
 
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    protected static class CompileContext implements ExpressionCompiler.Context {
-
-        private final Map<String, DomainType> rootDomainTypes;
-
-        public CompileContext(Map<String, DomainType> rootDomainTypes) {
-            this.rootDomainTypes = rootDomainTypes;
-        }
-
-        @Override
-        public DomainType getRootDomainType(String alias) {
-            return rootDomainTypes.get(alias);
-        }
-    }
 }

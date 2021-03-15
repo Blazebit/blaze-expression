@@ -15,14 +15,16 @@
             request.addEventListener('load', function(event) {
                 if (request.status >= 200 && request.status < 300) {
                     var json = request.responseText;
-                    var symbols = JSON.stringify({
+                    var symbols = {
                         post: {type: "Post", doc: "The current post"}
-                    });
+                    };
+                    var model = BlazeExpressionContributor.ExpressionService.parse(json);
                     BlazeExpressionContributor.createEditor(
                         monaco,
                         {
                             domElement: document.getElementById('containerSingleLine'),
-                            jsonContext: json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
+                            expressionModel: model,
+                            jsonContext: symbols,
                             singleLineMode: true
                         }
                     );
@@ -30,7 +32,8 @@
                         monaco,
                         {
                             domElement: document.getElementById('containerMultiLine'),
-                            jsonContext: json.substring(0, json.length - 1) + ',"symbols":' + symbols + '}',
+                            expressionModel: model,
+                            jsonContext: symbols,
                             singleLineMode: false
                         }
                     );

@@ -7,10 +7,9 @@
   "repository": "https://github.com/Blazebit/blaze-expression",
   "homepage": "http://github.com/Blazebit/blaze-expression",
   "dependencies": {
-    "antlr4": "^4.7.2",
-    "monaco-editor": "^0.20.0",
-    "blaze-domain": "^1.0.14",
-    "blaze-expression-monaco": "file:./../../editor/monaco/"
+    "blaze-domain": "^2.0.0",
+    "blaze-expression-monaco": "file:./../../editor/monaco/",
+    "monaco-editor": "^0.20.0"
   },
   "devDependencies": {
     "mocha": "^6.2.0",
@@ -24,6 +23,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "package": "webpack"
+    "package": "webpack",
+    "package-prod": "webpack --mode=production"
   }
 }

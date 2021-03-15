@@ -37,6 +37,19 @@ public class InPredicate extends AbstractPredicate {
      * @param type The result domain type
      * @param left The left or reference expression
      * @param inItems The in item expressions to check against
+     */
+    public InPredicate(DomainType type, ArithmeticExpression left, List<ArithmeticExpression> inItems) {
+        super(type);
+        this.left = left;
+        this.inItems = inItems;
+    }
+
+    /**
+     * Constructs a new possibly negated in predicate for the given expressions returning a result of the given domain type.
+     *
+     * @param type The result domain type
+     * @param left The left or reference expression
+     * @param inItems The in item expressions to check against
      * @param negated <code>true</code> if the predicate should be negated, <code>false</code> otherwise
      */
     public InPredicate(DomainType type, ArithmeticExpression left, List<ArithmeticExpression> inItems, boolean negated) {
@@ -61,6 +74,14 @@ public class InPredicate extends AbstractPredicate {
      */
     public List<ArithmeticExpression> getInItems() {
         return inItems;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InPredicate negated() {
+        return new InPredicate(getType(), left, inItems, !isNegated());
     }
 
     /**

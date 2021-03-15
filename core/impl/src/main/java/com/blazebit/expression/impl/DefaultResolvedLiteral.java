@@ -17,15 +17,16 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DefaultResolvedLiteral implements ResolvedLiteral {
+public class DefaultResolvedLiteral implements ResolvedLiteral, Serializable {
 
     private final DomainType type;
     private final Object value;

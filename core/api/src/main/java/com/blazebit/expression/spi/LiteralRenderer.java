@@ -16,6 +16,8 @@
 
 package com.blazebit.expression.spi;
 
+import com.blazebit.expression.ExpressionSerializer;
+
 /**
  * A StringBuilder serializer for domain literals that is registered as metadata on a domain type.
  *
@@ -27,8 +29,9 @@ public interface LiteralRenderer {
     /**
      * Serializes the given resolved literal value to the given StringBuilder.
      *
+     * @param context The expression serializer context
      * @param value The resolved literal value to serialize
      * @param sb The StringBuilder to serialize the literal to
      */
-    public void render(Object value, StringBuilder sb);
+    public void render(ExpressionSerializer.Context context, Object value, StringBuilder sb);
 }

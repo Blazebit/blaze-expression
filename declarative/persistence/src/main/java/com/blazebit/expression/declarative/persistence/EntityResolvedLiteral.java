@@ -16,10 +16,10 @@
 
 package com.blazebit.expression.declarative.persistence;
 
-import com.blazebit.domain.declarative.spi.ServiceProvider;
+import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -33,21 +33,31 @@ import java.io.Serializable;
  */
 public class EntityResolvedLiteral implements ResolvedLiteral, Serializable {
 
+    private final DomainModel domainModel;
     private final EntityDomainType entityDomainType;
-    private final ServiceProvider<?> userServiceProvider;
     private final Object idValue;
+    private final boolean isIdString;
+    private final String expressionPrefix;
+    private final EntityLiteralRestrictionProvider entityLiteralRestrictionProvider;
+    private transient String expression;
 
     /**
      * Creates a new entity resolved literal.
      *
+     * @param domainModel The domain model
      * @param entityDomainType The entity domain type
-     * @param userServiceProvider The service provider
      * @param idValue The entity id value
+     * @param isIdString Whether the id is a string i.e. should be encoded as such in JPQL
+     * @param expressionPrefix The JPQL expression prefix
+     * @param restrictionProvider The restriction provider
      */
-    public EntityResolvedLiteral(EntityDomainType entityDomainType, ServiceProvider<?> userServiceProvider, Object idValue) {
+    public EntityResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object idValue, boolean isIdString, String expressionPrefix, EntityLiteralRestrictionProvider restrictionProvider) {
+        this.domainModel = domainModel;
         this.entityDomainType = entityDomainType;
-        this.userServiceProvider = userServiceProvider;
         this.idValue = idValue;
+        this.isIdString = isIdString;
+        this.expressionPrefix = expressionPrefix;
+        this.entityLiteralRestrictionProvider = restrictionProvider;
     }
 
     @Override
@@ -57,10 +67,10 @@ public class EntityResolvedLiteral implements ResolvedLiteral, Serializable {
 
     @Override
     public Object getValue() {
-        EntityManager entityManager = userServiceProvider.getService(EntityManager.class);
+        EntityManager entityManager = domainModel.getService(EntityManager.class);
         boolean created = false;
         if (entityManager == null) {
-            entityManager = userServiceProvider.getService(EntityManagerFactory.class).createEntityManager();
+            entityManager = domainModel.getService(EntityManagerFactory.class).createEntityManager();
             created = true;
         }
         try {
@@ -70,6 +80,35 @@ public class EntityResolvedLiteral implements ResolvedLiteral, Serializable {
                 entityManager.close();
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        String expression = this.expression;
+        if (expression == null) {
+            StringBuilder sb = new StringBuilder(expressionPrefix + 20);
+            if (isIdString) {
+                sb.append('\'');
+                String value = (String) idValue;
+                for (int i = 0; i < value.length(); i++) {
+                    final char c = value.charAt(i);
+                    if (c == '\'') {
+                        sb.append('\'');
+                    }
+                    sb.append(c);
+                }
+                sb.append('\'');
+            } else {
+                sb.append(idValue);
+            }
+            String restriction = entityLiteralRestrictionProvider.getRestriction(domainModel, entityDomainType);
+            if (restriction != null && !restriction.isEmpty()) {
+                sb.append(" AND ").append(restriction);
+            }
+            sb.append(']');
+            this.expression = expression = sb.toString();
+        }
+        return expression;
     }
 
     @Override

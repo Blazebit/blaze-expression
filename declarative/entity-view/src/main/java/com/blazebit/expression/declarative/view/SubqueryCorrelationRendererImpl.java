@@ -114,7 +114,7 @@ public class SubqueryCorrelationRendererImpl implements CorrelationRenderer, Met
      * {@inheritDoc}
      */
     @Override
-    public CorrelationRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public CorrelationRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

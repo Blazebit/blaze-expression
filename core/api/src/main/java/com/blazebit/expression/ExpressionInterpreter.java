@@ -107,6 +107,13 @@ public interface ExpressionInterpreter {
     public interface Context {
 
         /**
+         * Returns the expression service.
+         *
+         * @return the expression service
+         */
+        public ExpressionService getExpressionService();
+
+        /**
          * Returns the property value for the given key or <code>null</code>.
          *
          * @param key The property key

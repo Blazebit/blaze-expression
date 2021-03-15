@@ -41,6 +41,7 @@ import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.Expressions;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.Literal;
@@ -80,9 +81,10 @@ public abstract class AbstractExpressionCompilerTest {
     public static final String INTERVAL = "interval";
     public static final String GENDER = "gender";
 
-    private ExpressionCompilerImpl expressionCompiler;
     private static DomainModel defaultDomainModel;
     private DomainModel domainModel;
+    private ExpressionCompilerImpl expressionCompiler;
+    private ExpressionCompiler.Context context;
 
     @BeforeClass
     public static void createDefaultTestDomainModel() {
@@ -90,6 +92,7 @@ public abstract class AbstractExpressionCompilerTest {
                 .createBasicType(BOOLEAN, Boolean.class)
                 .withOperator(BOOLEAN, new DomainOperator[]{ DomainOperator.NOT })
                 .withPredicate(BOOLEAN, DomainPredicate.distinguishable())
+                .withDefaultPredicateResultType(BOOLEAN)
                 .createBasicType(LONG, Long.class)
                 .withOperator(LONG, DomainOperator.arithmetic())
                 .withPredicate(LONG, DomainPredicate.comparable())
@@ -111,11 +114,6 @@ public abstract class AbstractExpressionCompilerTest {
                     .withValue(Gender.MALE.name())
                 .build()
                 .withPredicate(GENDER, DomainPredicate.distinguishable())
-                .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
-                .withStringLiteralResolver(new DefaultStringLiteralResolver())
-                .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())
-                .withEnumLiteralResolver(new DefaultEnumLiteralResolver())
-                .withBooleanLiteralResolver(new DefaultBooleanLiteralResolver())
                 .createEntityType("user")
                     .addAttribute("id", LONG)
                     .addAttribute("email", STRING)
@@ -145,23 +143,27 @@ public abstract class AbstractExpressionCompilerTest {
     @Before
     public void setup() {
         domainModel = createDomainModel();
-        expressionCompiler = new ExpressionCompilerImpl(domainModel, new LiteralFactory(domainModel));
+        expressionCompiler = (ExpressionCompilerImpl) Expressions.getDefaultProvider().createEmptyBuilder(domainModel)
+            .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
+            .withStringLiteralResolver(new DefaultStringLiteralResolver())
+            .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())
+            .withEnumLiteralResolver(new DefaultEnumLiteralResolver())
+            .withBooleanLiteralResolver(new DefaultBooleanLiteralResolver())
+            .build()
+            .createCompiler();
+        context = expressionCompiler.createContext(Collections.singletonMap("user", domainModel.getType("user")));
     }
 
     protected DomainModel createDomainModel() {
         return defaultDomainModel;
     }
 
-    protected ExpressionCompiler.Context getCompileContext() {
-        return expressionCompiler.createContext(Collections.singletonMap("user", domainModel.getType("user")));
-    }
-
     protected Predicate parsePredicate(String input) {
-        return expressionCompiler.createPredicate(input, getCompileContext());
+        return expressionCompiler.createPredicate(input, context);
     }
 
     protected Expression parseArithmeticExpression(String input) {
-        return expressionCompiler.createExpression(input, getCompileContext());
+        return expressionCompiler.createExpression(input, context);
     }
 
     protected CompoundPredicate or(Predicate... disjuncts) {
@@ -173,15 +175,15 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Literal time(Instant value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofInstant(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofInstant(context, value));
     }
 
     protected Literal time(String value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofDateTimeString(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofDateTimeString(context, value));
     }
 
     protected Literal interval(String value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofTemporalIntervalString(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofTemporalIntervalString(context, value));
     }
 
     protected static String wrapTimestamp(String dateTimeStr) {
@@ -189,19 +191,19 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Literal string(String value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofString(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofString(context, value));
     }
 
     protected Literal number(long value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(new BigDecimal(value)));
+        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(context, new BigDecimal(value)));
     }
 
     protected Literal number(BigDecimal value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(context, value));
     }
 
     protected Literal number(String value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofNumericString(value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofNumericString(context, value));
     }
 
     protected Path attr(String entity, String... attributes) {
@@ -227,7 +229,7 @@ public abstract class AbstractExpressionCompilerTest {
                 }
             }
         }
-        return new Path(entity, pathAttributes, type);
+        return new Path(entity, Collections.unmodifiableList(pathAttributes), type);
     }
 
     protected Path attr(ArithmeticExpression base, String... attributes) {
@@ -253,11 +255,11 @@ public abstract class AbstractExpressionCompilerTest {
                 }
             }
         }
-        return new Path(base, pathAttributes, type);
+        return new Path(base, Collections.unmodifiableList(pathAttributes), type);
     }
 
     protected Literal enumValue(String enumName, String enumKey) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofEnumValue((EnumDomainType) domainModel.getType(enumName), enumKey));
+        return new Literal(expressionCompiler.getLiteralFactory().ofEnumValue(context, (EnumDomainType) domainModel.getType(enumName), enumKey));
     }
 
 //	protected static CollectionAtom collectionAttr(String identifier) {

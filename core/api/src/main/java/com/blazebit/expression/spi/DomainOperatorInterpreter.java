@@ -18,6 +18,7 @@ package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
+import com.blazebit.expression.ExpressionInterpreter;
 
 /**
  * An interpreter for domain operators that is registered as metadata on a domain type.
@@ -30,6 +31,8 @@ public interface DomainOperatorInterpreter {
     /**
      * Interprets the domain operator as applied on the given values of the given domain types to the given target type.
      *
+     *
+     * @param context The expression interpreter context
      * @param targetType The target type to evaluate to
      * @param leftType The domain type of the left value
      * @param rightType The domain type of the right value
@@ -38,5 +41,5 @@ public interface DomainOperatorInterpreter {
      * @param operator The domain operator
      * @return the interpretation result
      */
-    public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator);
+    public Object interpret(ExpressionInterpreter.Context context, DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator);
 }

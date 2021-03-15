@@ -28,7 +28,7 @@ import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.persistence.DomainFunctionArgumentRenderers;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -37,7 +37,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceContributor.INTEGER_TYPE_NAME;
 
 /**
  * @author Christian Beikov

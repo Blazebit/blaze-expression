@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.DomainModelException;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
@@ -39,7 +40,7 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
     }
 
     @Override
-    public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
+    public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
         if (leftValue == null || rightValue == null) {
             return null;
         }
@@ -77,7 +78,7 @@ public class NumericOperatorHandler implements ComparisonOperatorInterpreter, Do
     }
 
     @Override
-    public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
+    public Object interpret(ExpressionInterpreter.Context context, DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (rightValue == null) {
             if (leftValue == null) {
                 return null;

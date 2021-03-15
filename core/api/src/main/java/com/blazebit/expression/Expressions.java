@@ -17,43 +17,43 @@
 package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.expression.spi.ExpressionServiceFactoryProvider;
+import com.blazebit.expression.spi.ExpressionServiceBuilderProvider;
 
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
 /**
- * Bootstrap class that is used to obtain a {@linkplain ExpressionServiceFactory}.
+ * Bootstrap class that is used to obtain a {@linkplain ExpressionService}.
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
 public final class Expressions {
 
-    private static volatile ExpressionServiceFactoryProvider defaultProvider;
+    private static volatile ExpressionServiceBuilderProvider defaultProvider;
 
     private Expressions() {
     }
 
     /**
-     * Creates a {@linkplain ExpressionServiceFactory} based on the given model with the {@link #getDefaultProvider()}.
+     * Creates a {@linkplain ExpressionService} based on the given model with the {@link #getDefaultProvider()}.
      *
      * @param model The domain model to use
      * @return the expression service factory
      */
-    public static ExpressionServiceFactory forModel(DomainModel model) {
-        return getDefaultProvider().create(model);
+    public static ExpressionService forModel(DomainModel model) {
+        return getDefaultProvider().createDefaultBuilder(model).build();
     }
 
     /**
-     * Returns the first {@linkplain ExpressionServiceFactoryProvider} that is found.
+     * Returns the first {@linkplain ExpressionServiceBuilderProvider} that is found.
      *
-     * @return The first {@linkplain ExpressionServiceFactoryProvider} that is found
+     * @return The first {@linkplain ExpressionServiceBuilderProvider} that is found
      */
-    public static ExpressionServiceFactoryProvider getDefaultProvider() {
-        ExpressionServiceFactoryProvider provider = defaultProvider;
+    public static ExpressionServiceBuilderProvider getDefaultProvider() {
+        ExpressionServiceBuilderProvider provider = defaultProvider;
         if (provider == null) {
-            Iterator<ExpressionServiceFactoryProvider> iterator = ServiceLoader.load(ExpressionServiceFactoryProvider.class).iterator();
+            Iterator<ExpressionServiceBuilderProvider> iterator = ServiceLoader.load(ExpressionServiceBuilderProvider.class).iterator();
             if (iterator.hasNext()) {
                 return defaultProvider = iterator.next();
             }
@@ -62,4 +62,5 @@ public final class Expressions {
         }
         return provider;
     }
+
 }

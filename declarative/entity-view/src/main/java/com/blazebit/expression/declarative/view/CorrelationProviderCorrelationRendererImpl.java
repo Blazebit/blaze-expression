@@ -84,7 +84,7 @@ public class CorrelationProviderCorrelationRendererImpl implements CorrelationRe
      * {@inheritDoc}
      */
     @Override
-    public CorrelationRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public CorrelationRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

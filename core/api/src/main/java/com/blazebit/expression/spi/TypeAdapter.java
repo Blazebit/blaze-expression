@@ -32,7 +32,6 @@ public interface TypeAdapter<X, Y> {
     /**
      * Converts the given value in model representation of the given domain type to the internal representation.
      *
-     *
      * @param context The interpreter context
      * @param value The value to convert
      * @param domainType The domain type of the value

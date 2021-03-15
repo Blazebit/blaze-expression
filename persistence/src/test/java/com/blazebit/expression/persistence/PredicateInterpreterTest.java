@@ -6,7 +6,7 @@ import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.ExpressionServiceFactory;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.persistence.function.CurrentTimestampFunction;
@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 public class PredicateInterpreterTest {
 
-    private final ExpressionServiceFactory expressionServiceFactory;
+    private final ExpressionService expressionService;
     private Instant instant;
 
     public PredicateInterpreterTest() {
@@ -36,12 +36,12 @@ public class PredicateInterpreterTest {
             .withValue("USD")
             .build();
         DomainModel domainModel = domainBuilder.build();
-        this.expressionServiceFactory = Expressions.forModel(domainModel);
+        this.expressionService = Expressions.forModel(domainModel);
     }
 
     private Boolean testPredicate(String expr) {
-        ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
-        ExpressionInterpreter interpreter = expressionServiceFactory.createInterpreter();
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionInterpreter interpreter = expressionService.createInterpreter();
         Predicate expression = compiler.createPredicate(expr);
         ExpressionInterpreter.Context context = interpreter.createContext(Collections.emptyMap(), Collections.emptyMap());
         if (instant != null) {

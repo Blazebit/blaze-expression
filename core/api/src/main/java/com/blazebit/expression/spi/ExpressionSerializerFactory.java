@@ -16,8 +16,8 @@
 
 package com.blazebit.expression.spi;
 
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.expression.ExpressionSerializer;
+import com.blazebit.expression.ExpressionService;
 
 /**
  * A factory for custom expression serializers.
@@ -39,10 +39,10 @@ public interface ExpressionSerializerFactory<T> {
     public Class<T> getSerializationTargetType();
 
     /**
-     * Returns a new serializer for the given domain model.
+     * Returns a new serializer for the given expression service.
      *
-     * @param domainModel The domain model the serializer should be based on
+     * @param expressionService The expression service the serializer should be based on
      * @return a new serializer for the given domain model
      */
-    public ExpressionSerializer<T> createSerializer(DomainModel domainModel);
+    public ExpressionSerializer<T> createSerializer(ExpressionService expressionService);
 }

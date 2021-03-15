@@ -10,5 +10,8 @@
 
     <artifactId>blaze-expression-checkstyle-rules</artifactId>
 
+    <properties>
+        <module.name>com.blazebit.expression.checkstyle</module.name>
+    </properties>
 
 </project>

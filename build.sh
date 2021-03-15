@@ -22,7 +22,7 @@ if [ "$JDK" = "9" ]; then
   export JAVA_HOME="/usr/lib/jvm/java-9-oracle/"
 fi
 
-mvn -version
+$DIR/mvnw -version
 
 PROPERTIES="$PROPERTIES -Duser.country=US -Duser.language=en"
 
@@ -34,4 +34,4 @@ if [ "$JDK" != "" ]; then
   PROPERTIES="$PROPERTIES -Djdk8.home=/usr/lib/jvm/java-8-oracle"
 fi
 
-exec mvn -B clean install -V $PROPERTIES
+exec $DIR/mvnw -B clean install -V $PROPERTIES

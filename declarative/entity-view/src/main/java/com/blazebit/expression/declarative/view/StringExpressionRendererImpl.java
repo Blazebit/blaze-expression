@@ -89,7 +89,7 @@ public class StringExpressionRendererImpl implements ExpressionRenderer, Metadat
      * {@inheritDoc}
      */
     @Override
-    public ExpressionRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public ExpressionRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

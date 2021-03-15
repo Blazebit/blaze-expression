@@ -15,11 +15,11 @@
  */
 package com.blazebit.expression.impl.domain;
 
-import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
 import com.blazebit.domain.runtime.model.TemporalInterval;
-import com.blazebit.domain.runtime.model.TemporalLiteralResolver;
+import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
+import com.blazebit.expression.spi.ResolvedLiteral;
+import com.blazebit.expression.spi.TemporalLiteralResolver;
 
 import java.time.Instant;
 
@@ -29,12 +29,12 @@ import java.time.Instant;
  */
 public class DefaultTemporalLiteralResolver implements TemporalLiteralResolver {
     @Override
-    public ResolvedLiteral resolveTimestampLiteral(DomainModel domainModel, Instant value) {
-        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.TIMESTAMP), value);
+    public ResolvedLiteral resolveTimestampLiteral(ExpressionCompiler.Context context, Instant value) {
+        return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.TIMESTAMP), value);
     }
 
     @Override
-    public ResolvedLiteral resolveIntervalLiteral(DomainModel domainModel, TemporalInterval value) {
-        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.INTERVAL), value);
+    public ResolvedLiteral resolveIntervalLiteral(ExpressionCompiler.Context context, TemporalInterval value) {
+        return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.INTERVAL), value);
     }
 }

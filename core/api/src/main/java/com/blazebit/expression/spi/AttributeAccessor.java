@@ -17,6 +17,7 @@
 package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
+import com.blazebit.expression.ExpressionInterpreter;
 
 /**
  * An interpreter for dereferencing entity attributes on a value that is registered as metadata on a domain type.
@@ -29,9 +30,10 @@ public interface AttributeAccessor {
     /**
      * Interprets the entity attribute dereference operation as applied on the given value.
      *
+     * @param context The expression interpreter context
      * @param value The value on which to dereference the attribute
      * @param attribute The entity attribute to dereference
      * @return the interpretation result
      */
-    public Object getAttribute(Object value, EntityDomainTypeAttribute attribute);
+    public Object getAttribute(ExpressionInterpreter.Context context, Object value, EntityDomainTypeAttribute attribute);
 }

@@ -137,8 +137,8 @@ DomainModel domain = domainBuilder.build();
 With that `DomainModel` a `ExpressionServiceFactory` can be created and an expression compiled.
 
 ```java
-ExpressionServiceFactory expressionServiceFactory = Expressions.forModel(domain);
-ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
+ExpressionServiceFactory expressionService = Expressions.forModel(domain);
+ExpressionCompiler compiler = expressionService.createCompiler();
 ExpressionCompiler.Context context = compiler.createContext(Collections.singletonMap("c", domain.getType("Cat")));
 Expression expression = compiler.createExpression("c.age", context);
 ```
@@ -167,8 +167,8 @@ interface CatModel {
 Assuming the domain model was already built, we could formulate a predicate:
 
 ```java
-ExpressionServiceFactory expressionServiceFactory = Expressions.forModel(domain);
-ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
+ExpressionServiceFactory expressionService = Expressions.forModel(domain);
+ExpressionCompiler compiler = expressionService.createCompiler();
 ExpressionCompiler.Context context = compiler.createContext(
     Collections.singletonMap("c", domain.getType("CatModel"))
 );
@@ -178,7 +178,7 @@ Predicate predicate = compiler.createPredicate("c.age > 18", context);
 The predicate could be evaluated against an object i.e. interpreted
 
 ```java
-ExpressionInterpreter interpreter = expressionServiceFactory.createInterpreter();
+ExpressionInterpreter interpreter = expressionService.createInterpreter();
 ExpressionInterpreter.Context context = interpreter.createContext(
     Collections.singletonMap("c", new CatModelImpl("Cat 1", 19))
 );
@@ -189,7 +189,7 @@ This would yield `true` as the age of the cat in the example is 19. This could a
 
 ```java
 CriteriaBuilder<Cat> criteriaBuilder = criteriaBuilderFactory.create(entityManager, Cat.class, "cat");
-ExpressionSerializer<WhereBuilder> serializer = expressionServiceFactory.createSerializer(WhereBuilder.class);
+ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
 ExpressionSerializer.Context context = serializer.createContext(
     Collections.singletonMap("c", "cat")
 );

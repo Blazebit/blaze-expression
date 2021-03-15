@@ -16,7 +16,7 @@
 package com.blazebit.expression.impl.domain;
 
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 import java.util.Objects;
 

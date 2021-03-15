@@ -67,7 +67,7 @@ public class MappingExpressionRendererImpl implements ExpressionRenderer, Metada
      * {@inheritDoc}
      */
     @Override
-    public ExpressionRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public ExpressionRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 }

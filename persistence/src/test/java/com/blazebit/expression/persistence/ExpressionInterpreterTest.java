@@ -12,7 +12,7 @@ import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.ExpressionServiceFactory;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.persistence.function.CurrentTimestampFunction;
@@ -39,7 +39,7 @@ public class ExpressionInterpreterTest {
 
     private static final int SECONDS_PER_DAY = 86400;
     private final DomainModel domainModel;
-    private final ExpressionServiceFactory expressionServiceFactory;
+    private final ExpressionService expressionService;
     private Instant instant;
     private final ExpressionCompiler compiler;
     private final ExpressionInterpreter interpreter;
@@ -69,7 +69,7 @@ public class ExpressionInterpreterTest {
         public UserStatusAttributeAccessor() {
         }
         @Override
-        public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+        public Object getAttribute(ExpressionInterpreter.Context context, Object value, EntityDomainTypeAttribute attribute) {
             return ((User) value).getStatus();
         }
         @Override
@@ -77,7 +77,7 @@ public class ExpressionInterpreterTest {
             return AttributeAccessor.class;
         }
         @Override
-        public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+        public AttributeAccessor build(MetadataDefinitionHolder definitionHolder) {
             return this;
         }
     }
@@ -85,7 +85,7 @@ public class ExpressionInterpreterTest {
         public UserLanguageAttributeAccessor() {
         }
         @Override
-        public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+        public Object getAttribute(ExpressionInterpreter.Context context, Object value, EntityDomainTypeAttribute attribute) {
             return ((User) value).getLanguage();
         }
         @Override
@@ -93,7 +93,7 @@ public class ExpressionInterpreterTest {
             return AttributeAccessor.class;
         }
         @Override
-        public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+        public AttributeAccessor build(MetadataDefinitionHolder definitionHolder) {
             return this;
         }
     }
@@ -101,7 +101,7 @@ public class ExpressionInterpreterTest {
         public UserCurrencyAttributeAccessor() {
         }
         @Override
-        public Object getAttribute(Object value, EntityDomainTypeAttribute attribute) {
+        public Object getAttribute(ExpressionInterpreter.Context context, Object value, EntityDomainTypeAttribute attribute) {
             return ((User) value).getCurrency();
         }
         @Override
@@ -109,7 +109,7 @@ public class ExpressionInterpreterTest {
             return AttributeAccessor.class;
         }
         @Override
-        public AttributeAccessor build(MetadataDefinitionHolder<?> definitionHolder) {
+        public AttributeAccessor build(MetadataDefinitionHolder definitionHolder) {
             return this;
         }
     }
@@ -139,7 +139,7 @@ public class ExpressionInterpreterTest {
         }
 
         @Override
-        public TypeAdapter<?, ?> build(MetadataDefinitionHolder<?> definitionHolder) {
+        public TypeAdapter<?, ?> build(MetadataDefinitionHolder definitionHolder) {
             return typeAdapter;
         }
     }
@@ -162,14 +162,14 @@ public class ExpressionInterpreterTest {
             .withValue("USD")
             .build();
         domainBuilder.createEntityType("user")
-                .addAttribute("status", PersistenceDomainContributor.BOOLEAN_TYPE_NAME, statusAttributeMetadata)
+                .addAttribute("status", PersistenceContributor.BOOLEAN_TYPE_NAME, statusAttributeMetadata)
                 .addAttribute("language", "Language", languageAttributeMetadata)
                 .addAttribute("currency", "Currency", currencyAttributeMetadata)
                 .build();
         this.domainModel = domainBuilder.build();
-        this.expressionServiceFactory = Expressions.forModel(domainModel);
-        this.compiler = expressionServiceFactory.createCompiler();
-        this.interpreter = expressionServiceFactory.createInterpreter();
+        this.expressionService = Expressions.forModel(domainModel);
+        this.compiler = expressionService.createCompiler();
+        this.interpreter = expressionService.createInterpreter();
         this.testTypes.put("user", domainModel.getType("user"));
         this.testData.put("user", new User(true, new Locale("de"), Currency.getInstance("EUR")));
     }

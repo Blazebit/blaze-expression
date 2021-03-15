@@ -80,7 +80,7 @@ public class MappingExpressionCorrelationRendererImpl implements CorrelationRend
      * {@inheritDoc}
      */
     @Override
-    public CorrelationRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public CorrelationRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

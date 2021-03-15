@@ -18,6 +18,8 @@ package com.blazebit.expression.examples.web.editor;
 
 import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
 import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.Expressions;
 import com.blazebit.persistence.view.EntityViewManager;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -40,5 +42,11 @@ public class DomainModelProducer {
         return configuration.withService(EntityViewManager.class, evm)
             .addDomainFunctions(ExampleDomainFunctions.class)
             .createDomainModel();
+    }
+
+    @Produces
+    @ApplicationScoped
+    ExpressionService produceDomainModel(DomainModel staticDomainModel) {
+        return Expressions.forModel(staticDomainModel);
     }
 }

@@ -22,7 +22,7 @@ import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.persistence.DomainFunctionArgumentRenderers;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ public class ExpressionFunctionRenderer implements MetadataDefinition<FunctionRe
     }
 
     @Override
-    public FunctionRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public FunctionRenderer build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 }

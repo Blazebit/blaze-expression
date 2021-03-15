@@ -59,6 +59,14 @@ public interface ExpressionSerializer<T> {
      * @since 1.0.0
      */
     interface Context {
+
+        /**
+         * Returns the expression service.
+         *
+         * @return the expression service
+         */
+        public ExpressionService getExpressionService();
+
         /**
          * Returns the context parameter value for the given context parameter name or <code>null</code>.
          *

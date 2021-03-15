@@ -24,9 +24,9 @@ import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
-import com.blazebit.expression.persistence.PersistenceDomainContributor;
+import com.blazebit.expression.persistence.PersistenceContributor;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.persistence.DomainFunctionArgumentRenderers;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -58,7 +58,7 @@ public class CeilFunction implements FunctionRenderer, FunctionInvoker, Serializ
                 .withExactArgumentCount(1)
                 .withArgument("number", DocumentationMetadataDefinition.localized("CEIL_ARG", classLoader))
                 .build();
-        domainBuilder.withFunctionTypeResolver("CEIL", StaticDomainFunctionTypeResolvers.returning(PersistenceDomainContributor.INTEGER_TYPE_NAME));
+        domainBuilder.withFunctionTypeResolver("CEIL", StaticDomainFunctionTypeResolvers.returning(PersistenceContributor.INTEGER_TYPE_NAME));
     }
 
     @Override

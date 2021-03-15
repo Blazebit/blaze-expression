@@ -17,7 +17,6 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 import com.blazebit.domain.runtime.model.TemporalInterval;
@@ -30,6 +29,7 @@ import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
@@ -50,17 +50,17 @@ import java.util.Map;
  */
 public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionSerializer<StringBuilder> {
 
-    protected final DomainModel domainModel;
+    protected final ExpressionService expressionService;
     protected final LiteralFactory literalFactory;
     protected StringBuilder sb;
     protected Context context;
 
-    public ExpressionSerializerImpl(DomainModel domainModel, LiteralFactory literalFactory) {
-        this(domainModel, literalFactory, new StringBuilder());
+    public ExpressionSerializerImpl(ExpressionService expressionService, LiteralFactory literalFactory) {
+        this(expressionService, literalFactory, new StringBuilder());
     }
 
-    public ExpressionSerializerImpl(DomainModel domainModel, LiteralFactory literalFactory, StringBuilder sb) {
-        this.domainModel = domainModel;
+    public ExpressionSerializerImpl(ExpressionService expressionService, LiteralFactory literalFactory, StringBuilder sb) {
+        this.expressionService = expressionService;
         this.literalFactory = literalFactory;
         this.sb = sb;
     }
@@ -68,6 +68,12 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
     @Override
     public Context createContext(Map<String, Object> contextParameters) {
         return new Context() {
+
+            @Override
+            public ExpressionService getExpressionService() {
+                return expressionService;
+            }
+
             @Override
             public Object getContextParameter(String contextParameterName) {
                 return contextParameters.get(contextParameterName);
@@ -169,7 +175,7 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
                 }
 
                 // TODO: maybe the resolved literal should allow structural access so we can render this here?
-                literalRenderer.render(value, sb);
+                literalRenderer.render(context, value, sb);
                 break;
             //CHECKSTYLE:ON: FallThrough
             default:

@@ -19,7 +19,6 @@ package com.blazebit.expression.impl;
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
@@ -34,6 +33,7 @@ import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionPredicate;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
@@ -61,12 +61,12 @@ import java.util.Map;
  */
 public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Object>, ExpressionInterpreter {
 
-    protected final DomainModel domainModel;
+    protected final ExpressionService expressionService;
     protected Context context;
     protected TypeAdapter typeAdapter;
 
-    public ExpressionInterpreterImpl(DomainModel domainModel) {
-        this.domainModel = domainModel;
+    public ExpressionInterpreterImpl(ExpressionService expressionService) {
+        this.expressionService = expressionService;
     }
 
     @Override
@@ -74,6 +74,11 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         return new Context() {
 
             private final Map<String, Object> properties = new HashMap<>();
+
+            @Override
+            public ExpressionService getExpressionService() {
+                return expressionService;
+            }
 
             @Override
             public Object getProperty(String key) {
@@ -96,7 +101,6 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
             }
         };
     }
-
 
     protected <T> T evaluate(Expression expression, Context interpreterContext, boolean asModelType) {
         Context oldContext = context;
@@ -124,11 +128,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
 
     @Override
     public Boolean evaluate(Predicate expression, Context interpreterContext) {
-        try {
-            return Boolean.TRUE.equals(evaluate((Expression) expression, interpreterContext));
-        } finally {
-            typeAdapter = null;
-        }
+        return Boolean.TRUE.equals(evaluate((Expression) expression, interpreterContext));
     }
 
     @Override
@@ -354,7 +354,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                 if (attributeAccessor == null) {
                     throw new IllegalArgumentException("No attribute accessor available for attribute: " + attribute);
                 }
-                value = attributeAccessor.getAttribute(value, attribute);
+                value = attributeAccessor.getAttribute(context, value, attribute);
                 TypeAdapter<Object, Object> adapter = attribute.getMetadata(TypeAdapter.class);
                 if (adapter != null) {
                     value = adapter.toInternalType(context, value, attribute.getType());
@@ -432,7 +432,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         if (comparisonOperatorInterpreter == null) {
             throw new IllegalArgumentException("No comparison operator interpreter available for type: " + leftType);
         }
-        return comparisonOperatorInterpreter.interpret(leftType, rightType, left, right, operator);
+        return comparisonOperatorInterpreter.interpret(context, leftType, rightType, left, right, operator);
     }
 
     protected Object arithmetic(DomainType targetType, DomainType leftType, DomainType rightType, Object left, Object right, DomainOperator operator) {
@@ -440,7 +440,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         if (domainOperatorInterpreter == null) {
             throw new IllegalArgumentException("No domain operator interpreter available for type: " + targetType);
         }
-        return domainOperatorInterpreter.interpret(targetType, leftType, rightType, left, right, operator);
+        return domainOperatorInterpreter.interpret(context, targetType, leftType, rightType, left, right, operator);
     }
 
     /**

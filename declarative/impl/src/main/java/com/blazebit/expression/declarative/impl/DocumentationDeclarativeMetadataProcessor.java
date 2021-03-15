@@ -35,7 +35,7 @@ public class DocumentationDeclarativeMetadataProcessor implements DeclarativeMet
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Documentation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Documentation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
         String baseName = DocumentationMetadataDefinition.DEFAULT_BASE_NAME;
         if (!annotation.baseName().isEmpty()) {
             baseName = annotation.baseName();

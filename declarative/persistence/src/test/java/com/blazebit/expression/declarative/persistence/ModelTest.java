@@ -17,7 +17,6 @@
 package com.blazebit.expression.declarative.persistence;
 
 import com.blazebit.domain.declarative.DeclarativeDomain;
-import com.blazebit.domain.declarative.DomainAttribute;
 import com.blazebit.domain.declarative.DomainFunction;
 import com.blazebit.domain.declarative.DomainFunctionParam;
 import com.blazebit.domain.declarative.DomainFunctions;
@@ -27,9 +26,8 @@ import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionSerializer;
-import com.blazebit.expression.ExpressionServiceFactory;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
-import com.blazebit.expression.declarative.persistence.FunctionExpression;
 import com.blazebit.persistence.BaseWhereBuilder;
 import com.blazebit.persistence.BetweenBuilder;
 import com.blazebit.persistence.CaseWhenStarterBuilder;
@@ -55,7 +53,7 @@ import java.util.Collections;
 public class ModelTest {
 
     private final DomainType domainType;
-    private final ExpressionServiceFactory expressionServiceFactory;
+    private final ExpressionService expressionService;
 
     public ModelTest() {
         DomainModel domainModel = DeclarativeDomain.getDefaultProvider()
@@ -64,12 +62,12 @@ public class ModelTest {
                 .addDomainFunctions(Functions.class)
                 .createDomainModel();
         domainType = domainModel.getType(User.class.getSimpleName());
-        this.expressionServiceFactory = Expressions.forModel(domainModel);
+        this.expressionService = Expressions.forModel(domainModel);
     }
 
     public Object testExpression(String expr, User user) {
-        ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
-        ExpressionInterpreter interpreter = expressionServiceFactory.createInterpreter();
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionInterpreter interpreter = expressionService.createInterpreter();
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Expression expression = compiler.createExpression(expr, compilerContext);
         ExpressionInterpreter.Context context = interpreter.createContext(Collections.singletonMap("user", domainType), Collections.singletonMap("user", user));
@@ -91,10 +89,10 @@ public class ModelTest {
 
     @Test
     public void test3() {
-        ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
+        ExpressionCompiler compiler = expressionService.createCompiler();
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Expression expression = compiler.createExpression("IS_OLD(user)", compilerContext);
-        ExpressionSerializer<WhereBuilder> serializer = expressionServiceFactory.createSerializer(WhereBuilder.class);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
         ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "u"));
         WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
         serializer.serializeTo(serializerContext, expression, whereBuilderMock);

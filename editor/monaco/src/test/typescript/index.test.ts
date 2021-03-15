@@ -192,7 +192,7 @@ describe('Test parse ', function() {
             symbols: {
                 p: "Post"
             }
-        }), {});
+        }));
         expect(symbolTable.variables['p'].name).to.equal("Post");
     });
 
@@ -691,7 +691,7 @@ describe('Test parse ', function() {
             symbols: {
                 u: "UserView"
             }
-        }), {});
+        }));
         expect(symbolTable.variables['u'].name).to.equal("UserView");
         // expect(domainModel.operationTypeResolvers['Integer'][domain.DomainOperator[domain.DomainOperator.PLUS]].resolveType(domainModel, [domainModel.types['Integer'], domainModel.types['Integer']]).name).to.equal("Integer");
     });

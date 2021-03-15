@@ -54,7 +54,7 @@ predicate
     | lhs=expression LESS rhs=expression                                                        # LessThanPredicate
     | lhs=expression LESS_EQUAL rhs=expression                                                  # LessThanOrEqualPredicate
     | expression NOT? IN inList                                                                 # InPredicate
-    | lhs=expression NOT? BETWEEN start=expression AND end=expression                           # BetweenPredicate
+    | lhs=expression NOT? BETWEEN begin=expression AND end=expression                           # BetweenPredicate
     | functionInvocation                                                                        # BooleanFunction
     | path                                                                                      # PathPredicate
     ;

@@ -103,6 +103,13 @@ public interface ExpressionCompiler {
     public interface Context {
 
         /**
+         * Returns the expression service.
+         *
+         * @return the expression service
+         */
+        public ExpressionService getExpressionService();
+
+        /**
          * Returns the domain type of the root variable with the given name or <code>null</code>.
          *
          * @param alias The root variable name

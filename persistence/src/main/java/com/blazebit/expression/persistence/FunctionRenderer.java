@@ -18,7 +18,6 @@ package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 
 import java.io.Serializable;
 
@@ -56,8 +55,8 @@ public interface FunctionRenderer {
     static FunctionRenderer builtin(String persistenceFunctionName) {
         return (FunctionRenderer & Serializable) (function, returnType, argumentRenderers, sb, serializer) -> {
             sb.append(persistenceFunctionName);
+            sb.append('(');
             if (argumentRenderers.assignedArguments() != 0) {
-                sb.append(", ");
                 argumentRenderers.renderArguments(sb);
             }
             sb.append(')');

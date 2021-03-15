@@ -40,7 +40,7 @@ public final class TransientMetadataDefinition implements MetadataDefinition<Tra
     }
 
     @Override
-    public Transient build(MetadataDefinitionHolder<?> definitionHolder) {
+    public Transient build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 

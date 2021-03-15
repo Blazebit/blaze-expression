@@ -45,7 +45,7 @@ public class FunctionRendererMetadataDefinition implements MetadataDefinition<Fu
     }
 
     @Override
-    public FunctionRenderer build(MetadataDefinitionHolder<?> definitionHolder) {
+    public FunctionRenderer build(MetadataDefinitionHolder definitionHolder) {
         return functionRenderer;
     }
 }

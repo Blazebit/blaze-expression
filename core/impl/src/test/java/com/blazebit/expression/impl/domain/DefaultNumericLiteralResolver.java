@@ -15,10 +15,10 @@
  */
 package com.blazebit.expression.impl.domain;
 
-import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.domain.runtime.model.NumericLiteralResolver;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
+import com.blazebit.expression.spi.NumericLiteralResolver;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 import java.math.BigDecimal;
 
@@ -28,10 +28,10 @@ import java.math.BigDecimal;
  */
 public class DefaultNumericLiteralResolver implements NumericLiteralResolver {
     @Override
-    public ResolvedLiteral resolveLiteral(DomainModel domainModel, Number value) {
+    public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, Number value) {
         if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
-            return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.BIGDECIMAL), value);
+            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.BIGDECIMAL), value);
         }
-        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.INTEGER), value.intValue());
+        return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.INTEGER), value.intValue());
     }
 }

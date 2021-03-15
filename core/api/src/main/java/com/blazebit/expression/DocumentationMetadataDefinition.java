@@ -222,7 +222,7 @@ public class DocumentationMetadataDefinition implements MetadataDefinition<Docum
     }
 
     @Override
-    public DocumentationMetadataDefinition build(MetadataDefinitionHolder<?> definitionHolder) {
+    public DocumentationMetadataDefinition build(MetadataDefinitionHolder definitionHolder) {
         return this;
     }
 }

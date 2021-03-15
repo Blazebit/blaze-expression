@@ -23,6 +23,7 @@ import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.Expression;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
@@ -42,7 +43,7 @@ public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, 
     }
 
     @Override
-    public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
+    public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
         if (leftValue instanceof Instant && rightValue instanceof Instant) {
             Instant l = (Instant) leftValue;
             Instant r = (Instant) rightValue;
@@ -70,7 +71,7 @@ public class TimestampOperatorHandler implements ComparisonOperatorInterpreter, 
     }
 
     @Override
-    public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
+    public Object interpret(ExpressionInterpreter.Context context, DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (leftValue instanceof TemporalInterval && rightValue instanceof TemporalInterval) {
             TemporalInterval interval1 = (TemporalInterval) leftValue;
             TemporalInterval interval2 = (TemporalInterval) rightValue;

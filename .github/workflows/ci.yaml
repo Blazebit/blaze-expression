@@ -1,0 +1,80 @@
+name: "Blaze-Expression CI"
+on: [push, pull_request]
+env:
+  MAVEN_SKIP_RC: true
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-latest
+    # We want to know the test results of all matrix entries
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+# When GitHub Actions supports it: https://github.com/actions/toolkit/issues/399
+# We will use the experimental flag as indicator whether a failure should cause a workflow failure
+        include:
+          - jdk: 8
+          - jdk: 11
+          - jdk: 14
+          - jdk: 15
+          - jdk: 16
+          - jdk: 11
+            build-jdk: 11
+          - jdk: 15
+            build-jdk: 15
+          - jdk: 16
+            build-jdk: 16
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java 8
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: 8
+          targets: JDK8_HOME;JAVA_HOME
+      - name: Download Requested JDK
+        uses: sormuras/download-jdk@1.1
+        id: jdk
+        if: ${{ matrix.jdk != 8 }}
+        with:
+          feature: ${{ matrix.jdk }}
+      - name: Set up Requested JDK
+        uses: actions/setup-java@v1.4.3
+        if: ${{ matrix.jdk != 8 }}
+        with:
+          java-version: ${{ matrix.jdk }}
+          jdkFile: ${{ env.JDK_FILE }}
+
+      - name: Get year/month for cache key
+        id: get-date
+        run: |
+          echo "::set-output name=yearmonth::$(/bin/date -u "+%Y-%m")"
+        shell: bash
+      - name: Cache Maven local repository
+        uses: actions/cache@v2
+        id: cache-maven
+        with:
+          path: |
+            ~/.m2/repository
+          # refresh cache every month to avoid unlimited growth
+          key: maven-localrepo-${{ steps.get-date.outputs.yearmonth }}
+      - name: Set up Maven
+        run: ./mvnw -v
+
+      - name: Run build script
+        env:
+          JDK8_HOME: ${{ env.JDK8_HOME }}
+          JDK: ${{ matrix.jdk }}
+          BUILD_JDK: ${{ matrix.build-jdk }}
+        run: ./ci/build-github.sh
+        shell: bash
+
+      - name: Upload test reports (if Maven failed)
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: test-reports-jdk${{ matrix.jdk }}-build-jdk${{ matrix.build-jdk }}
+          path: './**/*-reports/'
+
+      - name: Omit produced artifacts from build cache
+        run: ./ci/before-cache.sh

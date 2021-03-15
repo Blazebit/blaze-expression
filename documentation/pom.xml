@@ -26,6 +26,7 @@
     </parent>
 
     <artifactId>blaze-expression-documentation</artifactId>
+    <packaging>pom</packaging>
     
     <name>Blazebit Expression Documentation</name>
     

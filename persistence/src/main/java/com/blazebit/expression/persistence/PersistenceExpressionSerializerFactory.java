@@ -17,8 +17,8 @@
 package com.blazebit.expression.persistence;
 
 import com.blazebit.apt.service.ServiceProvider;
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.expression.ExpressionSerializer;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.spi.ExpressionSerializerFactory;
 import com.blazebit.persistence.WhereBuilder;
 
@@ -35,7 +35,7 @@ public class PersistenceExpressionSerializerFactory implements ExpressionSeriali
     }
 
     @Override
-    public ExpressionSerializer<WhereBuilder<?>> createSerializer(DomainModel domainModel) {
-        return new PersistenceExpressionSerializer(domainModel);
+    public ExpressionSerializer<WhereBuilder<?>> createSerializer(ExpressionService expressionService) {
+        return new PersistenceExpressionSerializer(expressionService);
     }
 }

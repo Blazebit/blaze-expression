@@ -32,9 +32,9 @@ public interface Predicate extends Expression {
     boolean isNegated();
 
     /**
-     * Sets the negation of the predicate as defined by the given boolean.
+     * Returns a copy of this predicate, negated.
      *
-     * @param negated Whether the predicate should be negated
+     * @return this predicate, negated
      */
-    void setNegated(boolean negated);
+    Predicate negated();
 }

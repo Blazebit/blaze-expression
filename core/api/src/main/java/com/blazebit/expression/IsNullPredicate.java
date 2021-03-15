@@ -34,6 +34,17 @@ public class IsNullPredicate extends AbstractPredicate {
      *
      * @param type The result domain type
      * @param left The left or reference expression
+     */
+    public IsNullPredicate(DomainType type, Expression left) {
+        super(type);
+        this.left = left;
+    }
+
+    /**
+     * Constructs a new possibly negated nullness predicate for the given expressions returning a result of the given domain type.
+     *
+     * @param type The result domain type
+     * @param left The left or reference expression
      * @param negated <code>true</code> if the predicate should be negated, <code>false</code> otherwise
      */
     public IsNullPredicate(DomainType type, Expression left, boolean negated) {
@@ -48,6 +59,14 @@ public class IsNullPredicate extends AbstractPredicate {
      */
     public Expression getLeft() {
         return left;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public IsNullPredicate negated() {
+        return new IsNullPredicate(getType(), left, !isNegated());
     }
 
     /**

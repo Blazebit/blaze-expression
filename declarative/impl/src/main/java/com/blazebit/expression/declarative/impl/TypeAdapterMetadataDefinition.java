@@ -60,7 +60,7 @@ public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<T
     }
 
     @Override
-    public TypeAdapter build(MetadataDefinitionHolder<?> definitionHolder) {
+    public TypeAdapter build(MetadataDefinitionHolder definitionHolder) {
         return typeAdapter;
     }
 

@@ -34,7 +34,6 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.function.FunctionInvokerMetadataDefinition;
 import com.blazebit.expression.persistence.function.FunctionRendererMetadataDefinition;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -117,7 +116,7 @@ public class TypeUtils {
             handler = new GlobalStringlyTypeDestructorFunctionHandler(destructorName);
             DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", destructorArgumentMetadata)
-                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
+                .withResultType(PersistenceContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(handler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(handler));
             if (destructorDocumentationKey != null) {
@@ -346,12 +345,12 @@ public class TypeUtils {
         }
         MetadataDefinition[] metadataDefinitions = new MetadataDefinition[typeMetadataDefinitions.length + 2];
         System.arraycopy(typeMetadataDefinitions, 0, metadataDefinitions, 0, typeMetadataDefinitions.length);
-        metadataDefinitions[typeMetadataDefinitions.length] = new PersistenceDomainContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler));
+        metadataDefinitions[typeMetadataDefinitions.length] = new PersistenceContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler));
         metadataDefinitions[typeMetadataDefinitions.length + 1] = new StringlyTypeHandlerMetadataDefinition(stringlyTypeHandler);
         domainBuilder.createBasicType(name, metadataDefinitions);
-        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceDomainContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
+        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
         domainBuilder.withOperator(name, DomainOperator.PLUS);
-        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN_TYPE_NAME, name, PersistenceDomainContributor.STRING_TYPE_NAME));
+        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceContributor.BOOLEAN_TYPE_NAME, name, PersistenceContributor.STRING_TYPE_NAME));
         domainBuilder.withPredicate(name, DomainPredicate.distinguishable());
         if (constructorName != null) {
             StringlyTypeConstructorFunctionHandler constructorHandler = new StringlyTypeConstructorFunctionHandler(stringlyTypeHandler);
@@ -364,7 +363,7 @@ public class TypeUtils {
             }
 
             DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(constructorName)
-                .withArgument("value", PersistenceDomainContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
+                .withArgument("value", PersistenceContributor.STRING_TYPE_NAME, constructorArgumentMetadata)
                 .withResultType(name)
                 .withMetadata(new FunctionRendererMetadataDefinition(constructorHandler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(constructorHandler));
@@ -384,7 +383,7 @@ public class TypeUtils {
             StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
             DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", name, destructorArgumentMetadata)
-                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
+                .withResultType(PersistenceContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler));
             if (destructorDocumentationKey != null) {
@@ -503,11 +502,11 @@ public class TypeUtils {
         if (registerGlobalDestructor) {
             registerGlobalStringlyTypeDestructor(domainBuilder, name, stringlyTypeHandler);
         }
-        enumDomainTypeBuilder.withMetadata(new PersistenceDomainContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler)));
+        enumDomainTypeBuilder.withMetadata(new PersistenceContributor.ComparisonOperatorInterpreterMetadataDefinition(new StringlyOperatorHandler(stringlyTypeHandler)));
         enumDomainTypeBuilder.withMetadata(new StringlyTypeHandlerMetadataDefinition(stringlyTypeHandler));
-        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceDomainContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
+        domainBuilder.withOperationTypeResolver(name, DomainOperator.PLUS, domainBuilder.getOperationTypeResolver(PersistenceContributor.STRING_TYPE_NAME, DomainOperator.PLUS));
         domainBuilder.withOperator(name, DomainOperator.PLUS);
-        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceDomainContributor.BOOLEAN_TYPE_NAME, name, PersistenceDomainContributor.STRING_TYPE_NAME));
+        domainBuilder.withPredicateTypeResolver(name, DomainPredicate.EQUALITY, StaticDomainPredicateTypeResolvers.returning(PersistenceContributor.BOOLEAN_TYPE_NAME, name, PersistenceContributor.STRING_TYPE_NAME));
         domainBuilder.withPredicate(name, DomainPredicate.distinguishable());
 
         if (destructorName != null) {
@@ -520,7 +519,7 @@ public class TypeUtils {
             StringlyTypeDestructorFunctionHandler destructorHandler = new StringlyTypeDestructorFunctionHandler(stringlyTypeHandler);
             DomainFunctionBuilder functionBuilder = domainBuilder.createFunction(destructorName)
                 .withArgument("value", name, destructorArgumentMetadata)
-                .withResultType(PersistenceDomainContributor.STRING_TYPE_NAME)
+                .withResultType(PersistenceContributor.STRING_TYPE_NAME)
                 .withMetadata(new FunctionRendererMetadataDefinition(destructorHandler))
                 .withMetadata(new FunctionInvokerMetadataDefinition(destructorHandler));
             if (destructorDocumentationKey != null) {
@@ -548,7 +547,7 @@ public class TypeUtils {
         }
 
         @Override
-        public StringlyTypeHandler<?> build(MetadataDefinitionHolder<?> definitionHolder) {
+        public StringlyTypeHandler<?> build(MetadataDefinitionHolder definitionHolder) {
             return stringlyTypeHandler;
         }
     }
@@ -657,7 +656,7 @@ public class TypeUtils {
         }
 
         @Override
-        public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
+        public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
             Object referenceValue;
             if (leftType == rightType) {
                 referenceValue = leftValue;

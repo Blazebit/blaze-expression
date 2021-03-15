@@ -16,8 +16,8 @@
 
 package com.blazebit.expression.examples.web.editor;
 
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.expression.DocumentationMetadataDefinition;
+import com.blazebit.expression.ExpressionService;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -41,13 +41,13 @@ public class ModelResource {
     HttpHeaders headers;
 
     @Inject
-    DomainModel staticDomainModel;
+    ExpressionService expressionService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getModel() {
         Locale locale = headers.getLanguage();
-        return Response.ok(staticDomainModel.serialize(String.class, "json", Collections.singletonMap(DocumentationMetadataDefinition.LOCALE_PROPERTY, locale))).build();
+        return Response.ok(expressionService.serialize(String.class, "json", Collections.singletonMap(DocumentationMetadataDefinition.LOCALE_PROPERTY, locale))).build();
     }
 
 }

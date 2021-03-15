@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.spi;
+package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;

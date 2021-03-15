@@ -14,27 +14,43 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.spi;
-
-import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.expression.ExpressionServiceFactory;
-
 /**
- * Interface implemented by the expression implementation provider.
- *
- * Implementations are instantiated via {@link java.util.ServiceLoader}.
+ * The literal kind.
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
-public interface ExpressionServiceFactoryProvider {
-
+export enum LiteralKind {
     /**
-     * Creates an expression service factory based on the given domain model.
-     *
-     * @param model The domain model to use for expression services
-     * @return the expression service factory
+     * Boolean literal.
      */
-    public ExpressionServiceFactory create(DomainModel model);
-
+    BOOLEAN,
+    /**
+     * Numeric literal.
+     */
+    NUMERIC,
+    /**
+     * String literal.
+     */
+    STRING,
+    /**
+     * Timestamp literal.
+     */
+    TIMESTAMP,
+    /**
+     * Interval literal.
+     */
+    INTERVAL,
+    /**
+     * Entity literal.
+     */
+    ENTITY,
+    /**
+     * Enum literal.
+     */
+    ENUM,
+    /**
+     * Collection literal.
+     */
+    COLLECTION
 }

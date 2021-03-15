@@ -21,6 +21,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.DomainModelException;
+import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
@@ -38,7 +39,7 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
     }
 
     @Override
-    public Boolean interpret(DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
+    public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
         String l;
         String r;
         if (leftValue instanceof String && rightValue instanceof String) {
@@ -74,7 +75,7 @@ public class StringOperatorHandler implements ComparisonOperatorInterpreter, Dom
     }
 
     @Override
-    public Object interpret(DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
+    public Object interpret(ExpressionInterpreter.Context context, DomainType targetType, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (operator == DomainOperator.PLUS) {
             StringlyTypeHandler<Object> stringlyTypeHandler = rightType.getMetadata(StringlyTypeHandler.class);
             if (stringlyTypeHandler == null) {

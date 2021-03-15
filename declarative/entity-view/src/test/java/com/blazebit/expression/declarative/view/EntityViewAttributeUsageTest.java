@@ -22,7 +22,7 @@ import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionSerializer;
-import com.blazebit.expression.ExpressionServiceFactory;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.declarative.persistence.FunctionExpression;
@@ -34,7 +34,6 @@ import com.blazebit.persistence.view.EntityView;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.EntityViewRoot;
 import com.blazebit.persistence.view.EntityViews;
-import com.blazebit.persistence.view.FetchStrategy;
 import com.blazebit.persistence.view.IdMapping;
 import com.blazebit.persistence.view.Limit;
 import com.blazebit.persistence.view.Mapping;
@@ -52,7 +51,7 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
 
     private EntityViewManager evm;
     private DomainType domainType;
-    private ExpressionServiceFactory expressionServiceFactory;
+    private ExpressionService expressionService;
 
     @Override
     protected Class<?>[] getEntityClasses() {
@@ -76,15 +75,15 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
                 .withService(EntityViewManager.class, evm)
                 .createDomainModel();
         domainType = domainModel.getType(UserView.class.getSimpleName());
-        expressionServiceFactory = Expressions.forModel(domainModel);
+        expressionService = Expressions.forModel(domainModel);
     }
 
     @Test
     public void test() {
-        ExpressionCompiler compiler = expressionServiceFactory.createCompiler();
+        ExpressionCompiler compiler = expressionService.createCompiler();
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Predicate predicate = compiler.createPredicate("contains(user.sameAgeIds, 1) AND user.oldestNamedAge > 10 AND user.parent IS NOT NULL AND user.second IS NOT NULL", compilerContext);
-        ExpressionSerializer<WhereBuilder> serializer = expressionServiceFactory.createSerializer(WhereBuilder.class);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
         ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "userEntity"));
         CriteriaBuilder<UserEntity> cb = cbf.create(em, UserEntity.class);
         serializer.serializeTo(serializerContext, predicate, cb);

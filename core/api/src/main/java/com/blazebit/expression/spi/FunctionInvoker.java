@@ -30,7 +30,7 @@ public interface FunctionInvoker {
     /**
      * Interprets the domain function as applied on the given arguments for the given interpreter context.
      *
-     * @param context The interpreter context
+     * @param context The expression interpreter context
      * @param function The domain function to invoke
      * @param arguments The domain function argument assignments
      * @return the function invocation result

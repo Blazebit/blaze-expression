@@ -27,8 +27,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,16 +48,16 @@ public class DomainBuilderTest {
         if (domainModel == null) {
             DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
             domainModel = domainBuilder.build();
-            stringType = domainModel.getType(PersistenceDomainContributor.STRING_TYPE_NAME);
-            integerType = domainModel.getType(PersistenceDomainContributor.INTEGER_TYPE_NAME);
-            decimalType = domainModel.getType(PersistenceDomainContributor.NUMERIC_TYPE_NAME);
+            stringType = domainModel.getType(PersistenceContributor.STRING_TYPE_NAME);
+            integerType = domainModel.getType(PersistenceContributor.INTEGER_TYPE_NAME);
+            decimalType = domainModel.getType(PersistenceContributor.NUMERIC_TYPE_NAME);
         }
     }
 
     private DomainType resolveFunctionType(String functionName, DomainType... argumentTypes) {
         Map<DomainFunctionArgument, DomainType> argumentDomainTypeMap = new HashMap<>(argumentTypes.length);
         DomainFunction function = domainModel.getFunction(functionName);
-        List<DomainFunctionArgument> arguments = function.getArguments();
+        List<? extends DomainFunctionArgument> arguments = function.getArguments();
         for (int i = 0; i < argumentTypes.length; i++) {
             argumentDomainTypeMap.put(arguments.get(i), argumentTypes[i]);
         }

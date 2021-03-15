@@ -18,7 +18,7 @@ package com.blazebit.expression.declarative.view;
 
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
-import com.blazebit.domain.declarative.spi.ServiceProvider;
+import com.blazebit.domain.spi.ServiceProvider;
 import com.blazebit.persistence.view.EntityViewManager;
 import com.blazebit.persistence.view.metamodel.CorrelatedAttribute;
 import com.blazebit.persistence.view.metamodel.ManagedViewType;
@@ -43,7 +43,7 @@ public class EntityViewAttributeDeclarativeMetadataProcessor implements Declarat
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, ServiceProvider<?> serviceProvider) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, ServiceProvider serviceProvider) {
         EntityViewManager entityViewManager = serviceProvider.getService(EntityViewManager.class);
         if (entityViewManager == null) {
             throw new IllegalStateException("Missing EntityViewManager! Please provide the EntityViewManager as service via DeclarativeDomainConfiguration.withService(EntityViewManager.class, evm)");

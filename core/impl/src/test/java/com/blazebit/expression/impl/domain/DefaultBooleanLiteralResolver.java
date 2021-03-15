@@ -15,10 +15,10 @@
  */
 package com.blazebit.expression.impl.domain;
 
-import com.blazebit.domain.runtime.model.BooleanLiteralResolver;
-import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
+import com.blazebit.expression.spi.BooleanLiteralResolver;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 /**
  * @author Christian Beikov
@@ -26,7 +26,7 @@ import com.blazebit.expression.impl.AbstractExpressionCompilerTest;
  */
 public class DefaultBooleanLiteralResolver implements BooleanLiteralResolver {
     @Override
-    public ResolvedLiteral resolveLiteral(DomainModel domainModel, boolean value) {
-        return new DefaultResolvedLiteral(domainModel.getType(AbstractExpressionCompilerTest.BOOLEAN), value);
+    public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, boolean value) {
+        return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.BOOLEAN), value);
     }
 }

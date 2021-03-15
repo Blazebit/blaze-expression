@@ -78,6 +78,14 @@ public class CompoundPredicate extends AbstractPredicate {
      * {@inheritDoc}
      */
     @Override
+    public CompoundPredicate negated() {
+        return new CompoundPredicate(getType(), predicates, conjunction, !isNegated());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }

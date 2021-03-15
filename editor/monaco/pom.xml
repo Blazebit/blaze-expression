@@ -85,32 +85,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>4.7.2</version>
-                <executions>
-                    <execution>
-                        <id>SimplePredicate</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.build.directory}/antlr4</sourceDirectory>
-                            <includes>
-                                <include>BlazeExpressionLexer.g4</include>
-                                <include>BlazeExpressionParser.g4</include>
-                            </includes>
-                            <outputDirectory>${project.build.directory}/blaze-expression-predicate</outputDirectory>
-                            <visitor>true</visitor>
-                            <arguments>
-                                <argument>-Dlanguage=JavaScript</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
                 <executions>
@@ -132,6 +106,15 @@
                         <configuration>
                             <skip>${skipInstall}</skip>
                             <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm antlr4ts</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run antlr4ts</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -159,24 +142,6 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>2.6</version>
                 <executions>
-                    <execution>
-                        <id>copy-parser-dist</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/dist</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}/blaze-expression-predicate</directory>
-                                    <includes>
-                                        <include>**/*.js</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>copy-dist</id>
                         <phase>prepare-package</phase>
@@ -213,6 +178,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipNpmDeploy}</skip>
                                     <arguments>version ${project.version}</arguments>
                                 </configuration>
                             </execution>
@@ -223,6 +189,7 @@
                                     <goal>npm</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipNpmDeploy}</skip>
                                     <arguments>publish</arguments>
                                 </configuration>
                             </execution>

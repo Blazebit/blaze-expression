@@ -15,10 +15,10 @@
  */
 package com.blazebit.expression.impl.domain;
 
-import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
-import com.blazebit.domain.runtime.model.EnumLiteralResolver;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.spi.EnumLiteralResolver;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 /**
  * @author Christian Beikov
@@ -26,7 +26,7 @@ import com.blazebit.domain.runtime.model.ResolvedLiteral;
  */
 public class DefaultEnumLiteralResolver implements EnumLiteralResolver {
     @Override
-    public ResolvedLiteral resolveLiteral(DomainModel domainModel, EnumDomainTypeValue value) {
+    public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EnumDomainTypeValue value) {
         Class<?> javaEnumType = value.getOwner().getJavaType();
         @SuppressWarnings({ "unchecked", "rawtypes" })
         Enum<?> javaEnumValue = Enum.valueOf((Class<Enum>) javaEnumType, value.getValue());

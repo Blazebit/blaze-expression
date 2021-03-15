@@ -24,7 +24,7 @@ import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.persistence.FunctionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.expression.spi.DomainFunctionArgumentRenderers;
+import com.blazebit.expression.persistence.DomainFunctionArgumentRenderers;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -33,8 +33,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.INTEGER_TYPE_NAME;
-import static com.blazebit.expression.persistence.PersistenceDomainContributor.NUMERIC_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceContributor.INTEGER_TYPE_NAME;
+import static com.blazebit.expression.persistence.PersistenceContributor.NUMERIC_TYPE_NAME;
 
 /**
  * @author Christian Beikov

@@ -27,7 +27,7 @@ import java.util.Objects;
  * @since 1.0.0
  */
 public abstract class AbstractPredicate extends AbstractExpression implements Predicate {
-    private boolean negated;
+    private final boolean negated;
 
     /**
      * Constructs an abstract predicate producing the given domain type as result type.
@@ -36,6 +36,7 @@ public abstract class AbstractPredicate extends AbstractExpression implements Pr
      */
     public AbstractPredicate(DomainType type) {
         super(type);
+        this.negated = false;
     }
 
     /**
@@ -55,14 +56,6 @@ public abstract class AbstractPredicate extends AbstractExpression implements Pr
     @Override
     public boolean isNegated() {
         return this.negated;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setNegated(boolean negated) {
-        this.negated = negated;
     }
 
     /**

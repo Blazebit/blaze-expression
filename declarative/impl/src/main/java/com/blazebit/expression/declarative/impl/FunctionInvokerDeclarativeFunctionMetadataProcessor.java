@@ -37,7 +37,7 @@ public class FunctionInvokerDeclarativeFunctionMetadataProcessor implements Decl
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
         if (isFunctionInvokerMethod(method)) {
             return new MethodFunctionInvoker(method, method.getParameterCount());
         }

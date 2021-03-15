@@ -16,9 +16,11 @@
 
 package com.blazebit.expression.declarative.view;
 
+import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
-import com.blazebit.domain.runtime.model.ResolvedLiteral;
+import com.blazebit.expression.declarative.persistence.EntityLiteralRestrictionProvider;
+import com.blazebit.expression.spi.ResolvedLiteral;
 
 import java.io.Serializable;
 
@@ -30,18 +32,34 @@ import java.io.Serializable;
  */
 public class EntityViewResolvedLiteral implements ResolvedLiteral, Serializable {
 
+    private final DomainModel domainModel;
     private final EntityDomainType entityDomainType;
     private final Object value;
+    private final Object viewId;
+    private final boolean isViewIdString;
+    private final String expressionPrefix;
+    private final EntityLiteralRestrictionProvider entityLiteralRestrictionProvider;
+    private transient String expression;
 
     /**
      * Creates a new entity view resolved literal.
      *
+     * @param domainModel The domain model
      * @param entityDomainType The entity view domain type
      * @param value The entity view reference
+     * @param viewId The entity view id
+     * @param isViewIdString Whether the view id is a string i.e. should be encoded as such in JPQL
+     * @param expressionPrefix The JPQL expression prefix
+     * @param restrictionProvider The restriction provider
      */
-    public EntityViewResolvedLiteral(EntityDomainType entityDomainType, Object value) {
+    public EntityViewResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object value, Object viewId, boolean isViewIdString, String expressionPrefix, EntityLiteralRestrictionProvider restrictionProvider) {
+        this.domainModel = domainModel;
         this.entityDomainType = entityDomainType;
         this.value = value;
+        this.viewId = viewId;
+        this.isViewIdString = isViewIdString;
+        this.expressionPrefix = expressionPrefix;
+        this.entityLiteralRestrictionProvider = restrictionProvider;
     }
 
     @Override
@@ -52,6 +70,35 @@ public class EntityViewResolvedLiteral implements ResolvedLiteral, Serializable 
     @Override
     public Object getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        String expression = this.expression;
+        if (expression == null) {
+            StringBuilder sb = new StringBuilder(expressionPrefix + 20);
+            if (isViewIdString) {
+                sb.append('\'');
+                String value = (String) viewId;
+                for (int i = 0; i < value.length(); i++) {
+                    final char c = value.charAt(i);
+                    if (c == '\'') {
+                        sb.append('\'');
+                    }
+                    sb.append(c);
+                }
+                sb.append('\'');
+            } else {
+                sb.append(viewId);
+            }
+            String restriction = entityLiteralRestrictionProvider.getRestriction(domainModel, entityDomainType);
+            if (restriction != null && !restriction.isEmpty()) {
+                sb.append(" AND ").append(restriction);
+            }
+            sb.append(']');
+            this.expression = expression = sb.toString();
+        }
+        return expression;
     }
 
     @Override

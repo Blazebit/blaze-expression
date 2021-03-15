@@ -39,7 +39,7 @@ public class FunctionInvokerDeclarativeFunctionParameterMetadataProcessor implem
     }
 
     @Override
-    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Annotation annotation, com.blazebit.domain.declarative.spi.ServiceProvider<?> serviceProvider) {
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Parameter parameter, Annotation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
         if (FunctionInvokerDeclarativeFunctionMetadataProcessor.isFunctionInvokerMethod(method) && parameter.getType() == ExpressionInterpreter.Context.class && Arrays.asList(method.getParameters()).indexOf(parameter) == 0) {
             return TransientMetadataDefinition.INSTANCE;
         }

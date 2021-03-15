@@ -45,7 +45,7 @@ public class FunctionInvokerMetadataDefinition implements MetadataDefinition<Fun
     }
 
     @Override
-    public FunctionInvoker build(MetadataDefinitionHolder<?> definitionHolder) {
+    public FunctionInvoker build(MetadataDefinitionHolder definitionHolder) {
         return functionInvoker;
     }
 }
