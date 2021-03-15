@@ -36,7 +36,7 @@
     "webpack-cli": "^3.3.7"
   },
   "scripts": {
-    "antlr4ts": "antlr4ts -visitor target/antlr4/BlazeExpressionLexer.g4 target/antlr4/BlazeExpressionParser.g4 -o src/main/typescript/blaze-expression-predicate",
+    "antlr4ts": "antlr4ts -o src/main/typescript/blaze-expression-predicate -visitor target/antlr4/BlazeExpressionLexer.g4 target/antlr4/BlazeExpressionParser.g4",
     "build": "tsc",
     "test": "mocha -r ts-loader -r esm \"./src/test/typescript/*.test.ts\""
   }
