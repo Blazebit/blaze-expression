@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class FunctionInvocation implements ArithmeticExpression {
+public final class FunctionInvocation implements ArithmeticExpression {
     private final DomainFunction function;
     private final Map<DomainFunctionArgument, Expression> arguments;
     private final DomainType type;

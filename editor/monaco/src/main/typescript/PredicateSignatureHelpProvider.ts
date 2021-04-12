@@ -29,8 +29,8 @@ export class PredicateSignatureHelpProvider extends PathResolvingProvider implem
     readonly signatureHelpRetriggerCharacters: ReadonlyArray<string>;
     readonly signatureHelpTriggerCharacters: ReadonlyArray<string>;
 
-    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
-        super(identifierStart, identifier, pathOperators);
+    constructor(templateMode: boolean, identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(templateMode, identifierStart, identifier, pathOperators);
         this.signatureHelpTriggerCharacters = [',', '('];
     }
 

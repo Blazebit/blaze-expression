@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Blazebit.
+ * Copyright 2019 - 2021 Blazebit.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 parser grammar PredicateParser;
 
 options { tokenVocab=PredicateLexer; }
@@ -25,6 +26,13 @@ parseExpression
 
 parseExpressionOrPredicate
     : predicateOrExpression EOF;
+
+parseTemplate
+    : template? EOF;
+
+template
+    : (TEXT | (EXPRESSION_START expression EXPRESSION_END))+
+    ;
 
 expression
     : LP expression RP                                                                          # GroupedExpression
@@ -80,13 +88,18 @@ pathAttributes
 
 literal
     : NUMERIC_LITERAL
-    | STRING_LITERAL
+    | stringLiteral
     | TRUE
     | FALSE
     | timestampLiteral
     | temporalIntervalLiteral
     | collectionLiteral
     | entityLiteral
+    ;
+
+stringLiteral
+    : START_QUOTE TEXT_IN_QUOTE* END_QUOTE
+    | START_DOUBLE_QUOTE TEXT_IN_DOUBLE_QUOTE* END_DOUBLE_QUOTE
     ;
 
 collectionLiteral
@@ -127,6 +140,7 @@ temporalIntervalLiteral
 
 identifier
     : IDENTIFIER
+    | QUOTED_IDENTIFIER
     | AND
     | BETWEEN
     | DAYS

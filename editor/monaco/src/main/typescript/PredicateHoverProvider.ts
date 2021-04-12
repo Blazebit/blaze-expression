@@ -27,8 +27,8 @@ import {symbolTables} from "./EditorFactory";
  */
 export class PredicateHoverProvider extends PathResolvingProvider implements monaco.languages.HoverProvider {
 
-    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
-        super(identifierStart, identifier, pathOperators);
+    constructor(templateMode: boolean, identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(templateMode, identifierStart, identifier, pathOperators);
     }
 
     provideHover(model: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.Hover> {
@@ -47,11 +47,11 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                 } else {
                     let variable = symbolTable.variables[path];
                     if (variable != null) {
-                        completionItem = this.varSuggestion(path, variable);
+                        completionItem = this.varSuggestion(variable);
                     } else {
                         let type = symbolTable.model.domainModel.types[path];
                         if (type != null) {
-                            completionItem = this.typeSuggestion(path, type);
+                            completionItem = this.typeSuggestion(type);
                         }
                     }
                 }
@@ -63,7 +63,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                     if (type instanceof EnumDomainType) {
                         let enumValue = type.enumValues[parts[lastIdx]];
                         if (enumValue != null) {
-                            completionItem = this.enumSuggestion(path, type, enumValue);
+                            completionItem = this.enumSuggestion(type, enumValue);
                         }
                     }
                 }
@@ -75,7 +75,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                     if (domainType instanceof EntityDomainType) {
                         let attribute = domainType.attributes[parts[lastIdx]];
                         if (attribute != null) {
-                            completionItem = this.attrSuggestion(path, attribute);
+                            completionItem = this.attrSuggestion(attribute);
                         }
                     }
                 }

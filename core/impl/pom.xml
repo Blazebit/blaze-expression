@@ -56,6 +56,7 @@
                         </goals>
                         <configuration>
                             <sourceDirectory>src/main/antlr4</sourceDirectory>
+                            <libDirectory>src/main/antlr4/com/blazebit/expression/impl</libDirectory>
                             <includes>
                                 <include>com/blazebit/expression/impl/PredicateLexer.g4</include>
                                 <include>com/blazebit/expression/impl/PredicateParser.g4</include>

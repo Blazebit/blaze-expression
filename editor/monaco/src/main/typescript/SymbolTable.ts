@@ -35,7 +35,7 @@ export class SymbolTable {
             json = input;
         }
         let model = ExpressionService.parse(json, baseModel, extension);
-        return { variables: this.parseSymbols(model.domainModel, json['symbols']), model: model };
+        return { variables: this.parseSymbols(model, json['symbols']), model: model };
     }
 
     static from(model: ExpressionService, input: string | object): SymbolTable {
@@ -45,14 +45,15 @@ export class SymbolTable {
         } else {
             json = input;
         }
-        return { variables: this.parseSymbols(model.domainModel, json['symbols']), model: model };
+        return { variables: this.parseSymbols(model, json['symbols']), model: model };
     }
 
-    static parseSymbols(model: DomainModel, symbols: object): StringMap<Symbol> {
+    static parseSymbols(expressionService: ExpressionService, symbols: object): StringMap<Symbol> {
+        const model = expressionService.domainModel;
         let vars: StringMap<Symbol> = {};
         for (let name in symbols) {
             let s = symbols[name];
-            vars[name] = new Symbol(name, model.types[s['type']], s['doc']);
+            vars[name] = new Symbol(name, expressionService.identifierRenderer(name), model.types[s['type']], s['doc']);
         }
         return vars;
     }

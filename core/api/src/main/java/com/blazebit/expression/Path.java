@@ -27,7 +27,7 @@ import java.util.List;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class Path implements ArithmeticExpression {
+public final class Path implements ArithmeticExpression {
     private final String alias;
     private final ArithmeticExpression base;
     private final List<EntityDomainTypeAttribute> attributes;

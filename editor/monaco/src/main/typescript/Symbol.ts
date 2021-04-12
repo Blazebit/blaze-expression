@@ -27,6 +27,10 @@ export class Symbol {
      */
     name: string;
     /**
+     * The symbol name rendered as identifier.
+     */
+    identifier: string;
+    /**
      * The type of the symbol.
      */
     type: DomainType;
@@ -35,8 +39,9 @@ export class Symbol {
      */
     documentation: string;
 
-    constructor(name: string, type: DomainType, documentation: string) {
+    constructor(name: string, identifier: string, type: DomainType, documentation: string) {
         this.name = name;
+        this.identifier = identifier;
         this.type = type;
         this.documentation = documentation;
     }

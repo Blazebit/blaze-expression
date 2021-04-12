@@ -119,6 +119,27 @@ public interface Expression {
          * @param e The expression to visit
          */
         void visit(Literal e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
+        void visit(EnumLiteral e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
+        void visit(EntityLiteral e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
+        void visit(CollectionLiteral e);
     }
 
     /**
@@ -224,6 +245,30 @@ public interface Expression {
          * @return the result
          */
         T visit(Literal e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(EnumLiteral e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(EntityLiteral e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(CollectionLiteral e);
     }
 
     /**

@@ -31,8 +31,18 @@ export class CollectorErrorListener implements ANTLRErrorListener<any> {
     }
 
     syntaxError(recognizer, offendingSymbol, line, column, msg, e) {
-        let endColumn = offendingSymbol.stop + 1;
-        this.errors.push(new ErrorEntry(line, line, column + 1, endColumn, msg));
+        if (typeof offendingSymbol === 'undefined') {
+            // TODO: read token text manually and internationalize error
+            //  maybe even provide special errors for certain scenarios
+            //  if the first char is \ this might be a wrong escape sequence
+            this.errors.push(new ErrorEntry(line, line, column + 1, column + 1, msg));
+        } else {
+            // TODO: if the offending symbol is EOF, maybe a closing quote is missing
+            //  Maybe check recognizer.getExpectedTokens()
+            //  Or move this into BlazeExpressionErrorStrategy#reportNoViableAlternative
+            let endColumn = offendingSymbol.stop + 1;
+            this.errors.push(new ErrorEntry(line, line, column + 1, endColumn, msg));
+        }
     }
 
 }

@@ -17,15 +17,20 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
+import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
+import com.blazebit.expression.ArithmeticOperatorType;
 import com.blazebit.expression.BetweenPredicate;
 import com.blazebit.expression.ChainingArithmeticExpression;
+import com.blazebit.expression.CollectionLiteral;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
+import com.blazebit.expression.EntityLiteral;
+import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
@@ -50,19 +55,20 @@ import java.util.Map;
  */
 public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionSerializer<StringBuilder> {
 
+    public static final String CONTEXT_PARAMETER_FUNCTION_ARGS_NAMED = "serializer.function_args_named";
+
     protected final ExpressionService expressionService;
     protected final LiteralFactory literalFactory;
+    protected final boolean templateMode;
+    protected boolean inExpression;
+    protected boolean functionArgsNamed;
     protected StringBuilder sb;
     protected Context context;
 
-    public ExpressionSerializerImpl(ExpressionService expressionService, LiteralFactory literalFactory) {
-        this(expressionService, literalFactory, new StringBuilder());
-    }
-
-    public ExpressionSerializerImpl(ExpressionService expressionService, LiteralFactory literalFactory, StringBuilder sb) {
+    public ExpressionSerializerImpl(ExpressionService expressionService, LiteralFactory literalFactory, boolean templateMode) {
         this.expressionService = expressionService;
         this.literalFactory = literalFactory;
-        this.sb = sb;
+        this.templateMode = templateMode;
     }
 
     @Override
@@ -88,21 +94,26 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
 
     @Override
     public void serializeTo(Context newContext, Expression expression, StringBuilder target) {
-        StringBuilder old = sb;
-        Context oldContext = context;
         sb = target;
         context = newContext;
+        functionArgsNamed = context != null && Boolean.TRUE.equals(context.getContextParameter(CONTEXT_PARAMETER_FUNCTION_ARGS_NAMED));
         try {
-            expression.accept(this);
+            if (templateMode && expression instanceof Literal) {
+                renderTemplateLiteral((Literal) expression);
+            } else {
+                expression.accept(this);
+            }
         } finally {
-            sb = old;
-            context = oldContext;
+            sb = null;
+            context = null;
+            functionArgsNamed = false;
         }
     }
 
     @Override
     public void visit(FunctionInvocation e) {
-        sb.append(e.getFunction().getName()).append('(');
+        appendIdentifier(e.getFunction().getName());
+        sb.append('(');
         if (!e.getArguments().isEmpty()) {
             int lastIdx = e.getFunction().getArguments().size() - 1;
             DomainFunctionArgument lastArgument = e.getFunction().getArguments().get(lastIdx);
@@ -125,13 +136,19 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
                         sb.append(", ");
                     }
                 }
-            } else {
+            } else if (functionArgsNamed) {
                 for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
                     String name = entry.getKey().getName();
                     if (name != null) {
-                        sb.append(name).append(" = ");
+                        appendIdentifier(name);
+                        sb.append(" = ");
                     }
 
+                    entry.getValue().accept(this);
+                    sb.append(", ");
+                }
+            } else {
+                for (Map.Entry<DomainFunctionArgument, Expression> entry : e.getArguments().entrySet()) {
                     entry.getValue().accept(this);
                     sb.append(", ");
                 }
@@ -146,9 +163,6 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
     public void visit(Literal e) {
         Object value = e.getValue();
         switch (e.getType().getKind()) {
-            case ENUM:
-                literalFactory.appendEnumValue(sb, (EnumDomainTypeValue) value);
-                break;
             case BASIC:
                 if (value instanceof Boolean) {
                     literalFactory.appendBoolean(sb, (Boolean) value);
@@ -166,7 +180,8 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
                     literalFactory.appendInterval(sb, (TemporalInterval) value);
                     break;
                 }
-            //CHECKSTYLE:OFF: FallThrough
+                //CHECKSTYLE:OFF: FallThrough
+            case ENUM:
             case ENTITY:
             case COLLECTION:
                 LiteralRenderer literalRenderer = e.getType().getMetadata(LiteralRenderer.class);
@@ -174,7 +189,6 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
                     throw new IllegalArgumentException("No literal renderer registered for the literal type: " + e.getType());
                 }
 
-                // TODO: maybe the resolved literal should allow structural access so we can render this here?
                 literalRenderer.render(context, value, sb);
                 break;
             //CHECKSTYLE:ON: FallThrough
@@ -184,46 +198,135 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
     }
 
     @Override
+    public void visit(EnumLiteral e) {
+        EnumDomainTypeValue enumValue = e.getEnumValue();
+        appendIdentifier(enumValue.getOwner().getName());
+        sb.append('.');
+        appendIdentifier(enumValue.getValue());
+    }
+
+    @Override
+    public void visit(EntityLiteral e) {
+        Map<EntityDomainTypeAttribute, ? extends Literal> attributeValues = e.getAttributeValues();
+        appendIdentifier(e.getType().getName());
+        sb.append('(');
+        for (Map.Entry<EntityDomainTypeAttribute, ? extends Literal> entry : attributeValues.entrySet()) {
+            appendIdentifier(entry.getKey().getName());
+            sb.append(" = ");
+            entry.getValue().accept(this);
+            sb.append(", ");
+        }
+        sb.setLength(sb.length() - 2);
+
+        sb.append(')');
+    }
+
+    @Override
+    public void visit(CollectionLiteral e) {
+        sb.append('[');
+        Collection<? extends Literal> values = e.getValues();
+        if (!values.isEmpty()) {
+            for (Literal value : values) {
+                value.accept(this);
+                sb.append(", ");
+            }
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append(']');
+    }
+
+    @Override
     public void visit(Path e) {
         if (e.getBase() == null) {
-            sb.append(e.getAlias());
+            appendIdentifier(e.getAlias());
         } else {
             e.getBase().accept(this);
         }
         List<EntityDomainTypeAttribute> attributes = e.getAttributes();
         for (int i = 0; i < attributes.size(); i++) {
             sb.append('.');
-            sb.append(attributes.get(i).getName());
+            appendIdentifier(attributes.get(i).getName());
         }
     }
 
     @Override
     public void visit(ArithmeticFactor e) {
+        ArithmeticExpression expression = e.getExpression();
+        boolean parenthesis = false;
         if (e.isInvertSignum()) {
             sb.append('-');
+            if (parenthesis = expression instanceof ChainingArithmeticExpression || expression instanceof ArithmeticFactor) {
+                sb.append('(');
+            }
         }
-        e.getExpression().accept(this);
+        expression.accept(this);
+        if (parenthesis) {
+            sb.append(')');
+        }
     }
 
     @Override
     public void visit(ExpressionPredicate e) {
-        boolean negated = e.isNegated();
-        if (negated) {
-            sb.append("NOT(");
+        Expression expression = e.getExpression();
+        boolean parenthesis = false;
+        if (e.isNegated()) {
+            sb.append('!');
+            if (parenthesis = expression instanceof ChainingArithmeticExpression || expression instanceof ArithmeticFactor) {
+                sb.append('(');
+            }
         }
-        e.getExpression().accept(this);
-        if (negated) {
+        expression.accept(this);
+        if (parenthesis) {
             sb.append(')');
         }
     }
 
     @Override
     public void visit(ChainingArithmeticExpression e) {
-        e.getLeft().accept(this);
-        sb.append(' ');
-        sb.append(e.getOperator().getOperator());
-        sb.append(' ');
-        e.getRight().accept(this);
+        if (templateMode && !inExpression) {
+            if (e.getOperator() != ArithmeticOperatorType.PLUS) {
+                throw new IllegalStateException("Illegal template expression: " + e);
+            }
+            renderTemplateConcat(e);
+        } else {
+            e.getLeft().accept(this);
+            sb.append(' ');
+            sb.append(e.getOperator().getOperator());
+            sb.append(' ');
+            e.getRight().accept(this);
+        }
+    }
+
+    protected void renderTemplateConcat(ChainingArithmeticExpression e) {
+        renderTemplateConcatArgument(e.getLeft());
+        renderTemplateConcatArgument(e.getRight());
+    }
+
+    protected void renderTemplateConcatArgument(ArithmeticExpression argument) {
+        if (argument instanceof Literal) {
+            renderTemplateLiteral((Literal) argument);
+        } else if (argument instanceof ChainingArithmeticExpression && ((ChainingArithmeticExpression) argument).getOperator() == ArithmeticOperatorType.PLUS) {
+            renderTemplateConcat((ChainingArithmeticExpression) argument);
+        } else {
+            sb.append('#').append('{');
+            inExpression = true;
+            argument.accept(this);
+            inExpression = false;
+            sb.append('}');
+        }
+    }
+
+    protected void renderTemplateLiteral(Literal e) {
+        Object value = e.getValue();
+        if (e.getType().getKind() == DomainType.DomainTypeKind.BASIC && value instanceof String) {
+            literalFactory.appendTemplateString(sb, (String) value);
+        } else {
+            sb.append('#').append('{');
+            inExpression = true;
+            e.accept(this);
+            inExpression = false;
+            sb.append('}');
+        }
     }
 
     @Override
@@ -329,5 +432,30 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             sb.append("NOT ");
         }
         sb.append("EMPTY");
+    }
+
+    private void appendIdentifier(String identifier) {
+        int startIndex = sb.length();
+        int end = identifier.length();
+        sb.ensureCapacity(startIndex + end);
+        char c = identifier.charAt(0);
+        if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c == '$' || c >= '\u0080' && c < '\uffff') {
+            sb.append(c);
+            for (int i = 1; i < end; i++) {
+                c = identifier.charAt(i);
+                if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_' || c == '$' || c >= '\u0080' && c < '\uffff') {
+                    sb.append(c);
+                } else {
+                    sb.insert(startIndex, '`');
+                    sb.append(identifier, i, end);
+                    sb.append('`');
+                    break;
+                }
+            }
+        } else {
+            sb.append('`');
+            sb.append(identifier);
+            sb.append('`');
+        }
     }
 }

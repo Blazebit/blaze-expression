@@ -26,10 +26,13 @@ import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.BetweenPredicate;
 import com.blazebit.expression.ChainingArithmeticExpression;
+import com.blazebit.expression.CollectionLiteral;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.DomainModelException;
+import com.blazebit.expression.EntityLiteral;
+import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionPredicate;
@@ -425,6 +428,21 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         } else {
             return e.getValue();
         }
+    }
+
+    @Override
+    public Object visit(EnumLiteral e) {
+        return visit((Literal) e);
+    }
+
+    @Override
+    public Object visit(EntityLiteral e) {
+        return visit((Literal) e);
+    }
+
+    @Override
+    public Object visit(CollectionLiteral e) {
+        return visit((Literal) e);
     }
 
     protected Boolean compare(DomainType leftType, DomainType rightType, Object left, Object right, ComparisonOperator operator) {

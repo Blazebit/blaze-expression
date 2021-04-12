@@ -31,7 +31,7 @@ export class ExpressionException extends Error {
         if (ctx == null) {
             this.error = new ErrorEntry(startLine, endLine, startCol, endCol, message);
         } else {
-            this.error = new ErrorEntry(ctx.start.line, ctx.stop.line, ctx.start.startIndex + 1, ctx.stop.stopIndex + 1, message);
+            this.error = new ErrorEntry(ctx.start.line, ctx.stop.line, ctx.start.startIndex + 1, ctx.stop.stopIndex + 2, message);
         }
     }
 

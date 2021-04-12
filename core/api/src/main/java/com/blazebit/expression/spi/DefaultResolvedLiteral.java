@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.impl;
+package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.expression.spi.ResolvedLiteral;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class DefaultResolvedLiteral implements ResolvedLiteral, Serializable {
+public final class DefaultResolvedLiteral implements ResolvedLiteral {
 
     private final DomainType type;
     private final Object value;
@@ -35,7 +33,7 @@ public class DefaultResolvedLiteral implements ResolvedLiteral, Serializable {
      * Creates a new resolved literal.
      *
      * @param type The domain type
-     * @param value The actual value of the literal
+     * @param value The resolved value
      */
     public DefaultResolvedLiteral(DomainType type, Object value) {
         this.type = type;

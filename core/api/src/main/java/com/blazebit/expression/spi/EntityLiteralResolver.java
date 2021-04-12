@@ -18,6 +18,7 @@ package com.blazebit.expression.spi;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.Literal;
 
 import java.util.Map;
 
@@ -37,5 +38,5 @@ public interface EntityLiteralResolver {
      * @param attributeValues The attribute values
      * @return the resolved literal
      */
-    ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Object> attributeValues);
+    ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Literal> attributeValues);
 }

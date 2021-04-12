@@ -64,6 +64,7 @@ import com.blazebit.expression.persistence.function.TrimFunction;
 import com.blazebit.expression.persistence.function.UpperFunction;
 import com.blazebit.expression.spi.BooleanLiteralResolver;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DefaultResolvedLiteral;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.EnumLiteralResolver;
 import com.blazebit.expression.spi.ExpressionServiceContributor;
@@ -83,7 +84,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -425,49 +425,6 @@ public class PersistenceContributor implements DomainContributor, ExpressionServ
         @Override
         public DomainOperatorRenderer build(MetadataDefinitionHolder definitionHolder) {
             return domainOperatorRenderer;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class DefaultResolvedLiteral implements ResolvedLiteral {
-
-        private final DomainType type;
-        private final Object value;
-
-        public DefaultResolvedLiteral(DomainType type, Object value) {
-            this.type = type;
-            this.value = value;
-        }
-
-        @Override
-        public DomainType getType() {
-            return type;
-        }
-
-        @Override
-        public Object getValue() {
-            return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            DefaultResolvedLiteral that = (DefaultResolvedLiteral) o;
-            return Objects.equals(type, that.type) &&
-                    Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(type, value);
         }
     }
 

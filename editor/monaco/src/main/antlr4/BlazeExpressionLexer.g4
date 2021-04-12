@@ -16,7 +16,15 @@
 lexer grammar BlazeExpressionLexer;
 import PredicateLexer;
 
-STRING_LITERAL
-    : '"' ( ESCAPE_SEQUENCE | ~('\\'|'"') )* '"' {this.text = this.text.substring(1, this.text.length - 1);}
-    | ('\'' ( ESCAPE_SEQUENCE | ~('\\'|'\'') )* '\'')+ {this.text = this.text.substring(1, this.text.length - 1).replace(/''/g, "'");}
-    ;
+@header {
+import {LiteralFactory} from "./../LiteralFactory";
+}
+
+@members {
+private getText(): string {
+    return this.text;
+}
+private setText(text: string) {
+    this.text = text;
+}
+}

@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ArithmeticFactor extends AbstractExpression implements ArithmeticExpression {
+public final class ArithmeticFactor extends AbstractExpression implements ArithmeticExpression {
     private final ArithmeticExpression expression;
     private final boolean invertSignum;
 

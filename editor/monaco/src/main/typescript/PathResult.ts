@@ -21,5 +21,8 @@
  */
 export interface PathResult {
     text: string;
+    pathParts: string[];
+    lastPathPartDotIndex: number;
     offendingChar: string;
+    offendingCharIndex: number;
 }

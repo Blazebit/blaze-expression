@@ -49,6 +49,15 @@ public class Literal implements ArithmeticExpression {
     }
 
     /**
+     * Returns the resolved literal.
+     *
+     * @return the resolved literal
+     */
+    public ResolvedLiteral getResolvedLiteral() {
+        return resolvedLiteral;
+    }
+
+    /**
      * Returns the resolved literal value.
      *
      * @return the resolved literal value

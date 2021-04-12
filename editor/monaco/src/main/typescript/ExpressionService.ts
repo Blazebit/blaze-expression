@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {DomainModel, DomainType} from "blaze-domain";
+import {DomainModel, DomainType, EntityDomainType, EnumDomainType} from "blaze-domain";
 import {LiteralResolver} from "./LiteralResolver";
 import {LiteralKind} from "./LiteralKind";
 import {EntityLiteral} from "./EntityLiteral";
@@ -28,7 +28,8 @@ import {CharStreams, CommonTokenStream, ConsoleErrorListener} from "antlr4ts";
 import {BlazeExpressionParser} from "./blaze-expression-predicate/BlazeExpressionParser";
 import {SymbolTable} from "./SymbolTable";
 import {BlazeExpressionErrorStrategy} from "./BlazeExpressionErrorStrategy";
-import {MyBlazeExpressionParserVisitor} from "./MyBlazeExpressionParserVisitor";
+import {TypeResolvingBlazeExpressionParserVisitor} from "./TypeResolvingBlazeExpressionParserVisitor";
+import {Token} from "antlr4ts/Token";
 
 /**
  *
@@ -71,13 +72,21 @@ export class ExpressionService {
 
     lexerFactory: (string) => Lexer;
 
+    templateLexerFactory: (string) => Lexer;
+
     parserFactory: (Lexer) => Parser;
 
     parseRuleInvoker: (Parser) => ParserRuleContext;
 
+    parseTemplateRuleInvoker: (Parser) => ParserRuleContext;
+
+    inTemplateExpressionContextChecker: (string) => boolean;
+
+    identifierRenderer: (string) => string;
+
     typeResolver: (tree: ParserRuleContext, symbolTable: SymbolTable) => DomainType;
 
-    constructor(domainModel: DomainModel, booleanLiteralResolver: LiteralResolver, numericLiteralResolver: LiteralResolver, stringLiteralResolver: LiteralResolver, temporalLiteralResolver: LiteralResolver, entityLiteralResolver: LiteralResolver, enumLiteralResolver: LiteralResolver, collectionLiteralResolver: LiteralResolver, lexerFactory: (string) => Lexer, parserFactory: (Lexer) => Parser, parseRuleInvoker: (Parser) => ParserRuleContext, typeResolver: (tree: ParserRuleContext, symbolTable: SymbolTable) => DomainType) {
+    constructor(domainModel: DomainModel, booleanLiteralResolver: LiteralResolver, numericLiteralResolver: LiteralResolver, stringLiteralResolver: LiteralResolver, temporalLiteralResolver: LiteralResolver, entityLiteralResolver: LiteralResolver, enumLiteralResolver: LiteralResolver, collectionLiteralResolver: LiteralResolver, lexerFactory: (string) => Lexer, templateLexerFactory: (string) => Lexer, parserFactory: (Lexer) => Parser, parseRuleInvoker: (Parser) => ParserRuleContext, parseTemplateRuleInvoker: (Parser) => ParserRuleContext, inTemplateExpressionContextChecker: (string) => boolean, identifierRenderer: (string) => string, typeResolver: (tree: ParserRuleContext, symbolTable: SymbolTable) => DomainType) {
         this.domainModel = domainModel;
         this.booleanLiteralResolver = booleanLiteralResolver;
         this.numericLiteralResolver = numericLiteralResolver;
@@ -87,13 +96,50 @@ export class ExpressionService {
         this.enumLiteralResolver = enumLiteralResolver;
         this.collectionLiteralResolver = collectionLiteralResolver;
         this.lexerFactory = lexerFactory;
+        this.templateLexerFactory = templateLexerFactory;
         this.parserFactory = parserFactory;
         this.parseRuleInvoker = parseRuleInvoker;
+        this.parseTemplateRuleInvoker = parseTemplateRuleInvoker;
+        this.inTemplateExpressionContextChecker = inTemplateExpressionContextChecker;
+        this.identifierRenderer = identifierRenderer;
         this.typeResolver = typeResolver;
+        for (let name in domainModel.types) {
+            let type = domainModel.types[name];
+            (type as any).identifier = identifierRenderer(type.name);
+            if (type instanceof EnumDomainType) {
+                for (let valueName in type.enumValues) {
+                    let value = type.enumValues[valueName];
+                    (value as any).identifier = identifierRenderer(value.value);
+                }
+            } else if (type instanceof EntityDomainType) {
+                for (let attributeName in type.attributes) {
+                    let attribute = type.attributes[attributeName];
+                    (attribute as any).identifier = identifierRenderer(attribute.name);
+                }
+            }
+        }
+        for (let name in domainModel.functions) {
+            let f = domainModel.functions[name];
+            (f as any).identifier = identifierRenderer(f.name);
+            if (f.arguments.length != 0) {
+                for (var i = 0; i < f.arguments.length; i++) {
+                    let argument = f.arguments[i];
+                    (argument as any).identifier = identifierRenderer(argument.name);
+                }
+            }
+        }
     }
 
     createLexer(input: string): Lexer {
         return this.lexerFactory(input);
+    }
+
+    createTemplateLexer(input: string): Lexer {
+        return this.templateLexerFactory(input);
+    }
+
+    inTemplateExpressionContext(input: string): boolean {
+        return this.inTemplateExpressionContextChecker(input);
     }
 
     parseTree(input: string): ParserRuleContext {
@@ -252,9 +298,31 @@ export class ExpressionService {
             resolver(json['enumLiteralResolver']),
             resolver(json['collectionLiteralResolver']),
             input => new BlazeExpressionLexer(CharStreams.fromString(input)),
+            input => {
+                let lexer = new BlazeExpressionLexer(CharStreams.fromString(input));
+                lexer.pushMode(BlazeExpressionLexer.TEMPLATE);
+                return lexer;
+            },
             lexer => new BlazeExpressionParser(new CommonTokenStream(lexer)),
             parser => parser.parseExpressionOrPredicate(),
-            (tree, symbolTable) => tree.accept(new MyBlazeExpressionParserVisitor(symbolTable))
+            parser => parser.parseTemplate(),
+            input => {
+                let lexer = new BlazeExpressionLexer(CharStreams.fromString(input));
+                lexer.pushMode(BlazeExpressionLexer.TEMPLATE);
+                let text = true;
+                let token;
+                while ((token = lexer.nextToken()).type != Token.EOF) {
+                    text = token.type == BlazeExpressionLexer.TEXT || token.type == BlazeExpressionLexer.EXPRESSION_END;
+                }
+                return !text;
+            },
+            identifier => {
+                if (identifier == null || identifier.length == 0 || /[a-zA-Z_$\u0080-\ufffe]/.test(identifier.charAt(0)) && (identifier.length == 1 || /^[a-zA-Z_$0-9\u0080-\ufffe]+$/.test(identifier.substring(1)))) {
+                    return identifier;
+                }
+                return '`' + identifier + '`';
+            },
+            (tree, symbolTable) => tree.accept(new TypeResolvingBlazeExpressionParserVisitor(symbolTable))
         );
     }
 }

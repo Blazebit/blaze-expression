@@ -5,3 +5,27 @@ h2 {
 body {
     background-color: #eee;
 }
+
+/* mtk8 is the class for plain text */
+div[data-mode-id=template] span.mtk0,
+div[data-mode-id=template] span.mtk1,
+div[data-mode-id=template] span.mtk2,
+div[data-mode-id=template] span.mtk3,
+div[data-mode-id=template] span.mtk4,
+div[data-mode-id=template] span.mtk5,
+div[data-mode-id=template] span.mtk6,
+div[data-mode-id=template] span.mtk7,
+div[data-mode-id=template] span.mtk9,
+div[data-mode-id=template] span.mtk10,
+div[data-mode-id=template] span.mtk11,
+div[data-mode-id=template] span.mtk12,
+div[data-mode-id=template] span.mtk13,
+div[data-mode-id=template] span.mtk14,
+div[data-mode-id=template] span.mtk15,
+div[data-mode-id=template] span.mtk16,
+div[data-mode-id=template] span.mtk17,
+div[data-mode-id=template] span.mtk18,
+div[data-mode-id=template] span.mtk19,
+div[data-mode-id=template] span.mtk20 {
+    background-color: #c6bf5540;
+}

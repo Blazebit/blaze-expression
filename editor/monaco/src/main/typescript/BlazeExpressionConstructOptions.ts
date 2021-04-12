@@ -29,4 +29,6 @@ export interface BlazeExpressionConstructOptions {
     extensions?: any;
     expectedResultTypes: string[];
     wrongResultTypeErrorMessage: string;
+    required?: boolean;
+    requiredMessage?: string;
 }

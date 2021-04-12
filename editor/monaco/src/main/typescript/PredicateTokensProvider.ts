@@ -20,6 +20,7 @@ import {PredicateLineTokens} from "./PredicateLineTokens";
 import {PredicateToken} from "./PredicateToken";
 import {ANTLRErrorListener, CharStreams} from "antlr4ts";
 import {BlazeExpressionLexer} from "./blaze-expression-predicate/BlazeExpressionLexer";
+import {Lexer} from "antlr4ts/Lexer";
 
 const EOF = -1;
 
@@ -29,8 +30,15 @@ const EOF = -1;
  * @since 1.0.0
  */
 export class PredicateTokensProvider implements monaco.languages.TokensProvider {
+
+    private readonly templateMode: boolean;
+
+    constructor(templateMode: boolean) {
+        this.templateMode = templateMode;
+    }
+
     getInitialState(): monaco.languages.IState {
-        return new PredicateState();
+        return new PredicateState(this.templateMode ? BlazeExpressionLexer.TEMPLATE : Lexer.DEFAULT_MODE);
     }
 
     tokenize(input: string, state: monaco.languages.IState): monaco.languages.ILineTokens {
@@ -44,6 +52,10 @@ export class PredicateTokensProvider implements monaco.languages.TokensProvider 
         }
 
         const lexer = new BlazeExpressionLexer(CharStreams.fromString(input));
+        let mode = (state as PredicateState).mode;
+        if (mode != Lexer.DEFAULT_MODE) {
+            lexer.pushMode(mode);
+        }
         lexer.removeErrorListeners();
         let errorListener = new ErrorCollectorListener();
         lexer.addErrorListener(errorListener);
@@ -71,7 +83,7 @@ export class PredicateTokensProvider implements monaco.languages.TokensProvider 
         }
         myTokens.sort((a, b) => (a.startIndex > b.startIndex) ? 1 : -1)
 
-        return new PredicateLineTokens(myTokens);
+        return new PredicateLineTokens(lexer._mode, myTokens);
     }
 
 }

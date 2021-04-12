@@ -131,7 +131,7 @@ public class EntityExpressionServiceContributor implements ExpressionServiceCont
         }
 
         @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ?> attributeValues) {
+        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Literal> attributeValues) {
             Resolver resolver = entityResolvers.get(entityDomainType.getName());
             if (resolver != null) {
                 return new EntityResolvedLiteral(context.getExpressionService().getDomainModel(), entityDomainType, resolver.getEntityId(attributeValues), resolver.isIdString, resolver.expressionPrefix, resolver.restrictionProvider);

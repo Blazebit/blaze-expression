@@ -14,8 +14,8 @@
   "homepage": "http://github.com/Blazebit/blaze-expression",
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
-    "blaze-domain": "^2.0.1",
-    "monaco-editor": "^0.20.0"
+    "blaze-domain": "^2.0.2",
+    "monaco-editor": "^0.23.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
@@ -25,9 +25,12 @@
     "css-loader": "^3.5.3",
     "esm": "^3.2.25",
     "file-loader": "^6.0.0",
+    "jsdom": "^16.5.2",
+    "jsdom-global": "^3.0.2",
+    "global-jsdom": "^8.0.0",
     "mocha": "^7.2.0",
     "mochapack": "^2.0.0",
-    "monaco-editor-webpack-plugin": "^1.9.0",
+    "monaco-editor-webpack-plugin": "^3.0.1",
     "style-loader": "^1.2.1",
     "ts-loader": "^7.0.5",
     "ts-node": "^8.10.2",
@@ -38,6 +41,6 @@
   "scripts": {
     "antlr4ts": "antlr4ts -o src/main/typescript/blaze-expression-predicate -visitor -Xexact-output-dir target/antlr4/BlazeExpressionLexer.g4 target/antlr4/BlazeExpressionParser.g4",
     "build": "tsc",
-    "test": "mocha -r ts-loader -r esm \"./src/test/typescript/*.test.ts\""
+    "test": "mochapack --webpack-config ./webpack.config-test.js --require src/test/typescript/setup.ts \"./src/test/typescript/*.test.ts\""
   }
 }

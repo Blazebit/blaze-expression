@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-import * as monaco from "monaco-editor";
+import { expect } from 'chai';
+import 'mocha';
+import {SymbolTable} from "../../main/typescript";
+import {PostModel} from "./PostModel";
+import {UserModel} from "./UserModel";
 
-/**
- *
- * @author Christian Beikov
- * @since 1.0.0
- */
-export class PredicateToken implements monaco.languages.IToken {
-    scopes: string;
-    startIndex: number;
+describe('Test parse ', function() {
+    it('Should parse!', function() {
+        var symbolTable = PostModel.getSymbolTable();
+        expect(symbolTable.variables['p'].type.name).to.equal("Post");
+    });
 
-    constructor(ruleName: String, startIndex: number) {
-        this.scopes = ruleName.toLowerCase() + ".blaze";
-        this.startIndex = startIndex;
-    }
-}
+    it('Real-model parse!', function() {
+        var symbolTable = UserModel.getSymbolTable();
+        expect(symbolTable.variables['u'].type.name).to.equal("UserView");
+    });
+
+});

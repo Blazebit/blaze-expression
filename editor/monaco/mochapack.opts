@@ -1,3 +1,5 @@
---webpack-config webpack.config-test.js
---glob *.test.ts
+--colors
+--webpack-config ./webpack.config-test.js
+--require src/test/typescript/setup.ts
+--glob "./src/test/typescript/*.test.ts"
 --recursive

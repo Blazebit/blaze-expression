@@ -26,8 +26,8 @@ export class PredicateLineTokens implements monaco.languages.ILineTokens {
     endState: monaco.languages.IState;
     tokens: monaco.languages.IToken[];
 
-    constructor(tokens: monaco.languages.IToken[]) {
-        this.endState = new PredicateState();
+    constructor(mode: number, tokens: monaco.languages.IToken[]) {
+        this.endState = new PredicateState(mode);
         this.tokens = tokens;
     }
 }

@@ -18,6 +18,7 @@ package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.Literal;
 
 import java.util.Collection;
 
@@ -37,5 +38,5 @@ public interface CollectionLiteralResolver {
      * @param values The collection value
      * @return the resolved literal
      */
-    ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, CollectionDomainType collectionDomainType, Collection<? extends Object> values);
+    ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, CollectionDomainType collectionDomainType, Collection<? extends Literal> values);
 }

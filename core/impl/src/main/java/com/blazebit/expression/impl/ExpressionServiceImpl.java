@@ -157,12 +157,22 @@ public class ExpressionServiceImpl implements ExpressionService {
     }
 
     @Override
+    public ExpressionSerializer<StringBuilder> createSerializer() {
+        return new ExpressionSerializerImpl(this, literalFactory, false);
+    }
+
+    @Override
+    public ExpressionSerializer<StringBuilder> createTemplateSerializer() {
+        return new ExpressionSerializerImpl(this, literalFactory, true);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> ExpressionSerializer<T> createSerializer(Class<T> serializationTarget) {
         ExpressionSerializerFactory<?> serializerFactory = expressionSerializers.get(serializationTarget);
         if (serializerFactory == null) {
             if (serializationTarget == StringBuilder.class) {
-                return (ExpressionSerializer<T>) new ExpressionSerializerImpl(this, literalFactory);
+                return (ExpressionSerializer<T>) new ExpressionSerializerImpl(this, literalFactory, false);
             }
             return null;
         }

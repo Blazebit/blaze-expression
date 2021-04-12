@@ -36,4 +36,9 @@ public class ExampleDomainFunctions {
         return o;
     }
 
+    @DomainFunction(value = "THE SELF", typeResolver = StaticDomainFunctionTypeResolvers.FirstArgumentDomainFunctionTypeResolver.class)
+    public static Object theSelf(@DomainFunctionParam("object") Object o) {
+        return o;
+    }
+
 }

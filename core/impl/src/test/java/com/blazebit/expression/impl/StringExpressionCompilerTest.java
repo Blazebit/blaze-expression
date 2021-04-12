@@ -16,15 +16,7 @@
 
 package com.blazebit.expression.impl;
 
-import com.blazebit.expression.Expression;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,54 +24,24 @@ import static org.junit.Assert.assertEquals;
  * @author Christian Beikov
  * @since 1.0.0
  */
-@RunWith(Parameterized.class)
 public class StringExpressionCompilerTest extends AbstractExpressionCompilerTest {
 
-    private final String expr;
-    private final ExpectedExpressionProducer<StringExpressionCompilerTest> expectedExpressionProducer;
-
-    public StringExpressionCompilerTest(String expr, ExpectedExpressionProducer<StringExpressionCompilerTest> expectedExpressionProducer) {
-        this.expr = expr;
-        this.expectedExpressionProducer = expectedExpressionProducer;
-    }
-
-    @Parameters(name = "{1} {2}")
-    public static Collection<Object[]> getTestData() {
-        Object[][] testCases = {
-                {
-                        "''",
-                        new ExpectedExpressionProducer<StringExpressionCompilerTest>() {
-                            @Override
-                            public Expression getExpectedExpression(StringExpressionCompilerTest testInstance) {
-                                return pos(testInstance.string(""));
-                            }
-                        }
-
-                },
-                {
-                        "'abc'",
-                        new ExpectedExpressionProducer<StringExpressionCompilerTest>() {
-                            @Override
-                            public Expression getExpectedExpression(StringExpressionCompilerTest testInstance) {
-                                return pos(testInstance.string("abc"));
-                            }
-                        }
-                }
-        };
-
-        List<Object[]> parameters = new ArrayList<>(testCases.length);
-        for (Object[] literal : testCases) {
-            parameters.add(new Object[]{
-                    literal[0],
-                    literal[1]
-            });
-        }
-
-        return parameters;
+    @Test
+    public void test() {
+        assertEquals(string("abc"), parseArithmeticExpression("'abc'"));
+        assertEquals(string(""), parseArithmeticExpression("''"));
     }
 
     @Test
-    public void comparisonWithLiteralTest() {
-        assertEquals(expectedExpressionProducer.getExpectedExpression(this), parseArithmeticExpression(expr));
+    public void testMultiLine() {
+        assertEquals(string("abc\ndef"), parseArithmeticExpressionOnly("'abc\ndef'"));
+        assertEquals(string("\r\n"), parseArithmeticExpressionOnly("'\r\n'"));
+    }
+
+    @Test
+    public void testEscaping() {
+        assertEquals(string("a\nb"), parseArithmeticExpression("'a\\nb'"));
+        assertEquals(string("a\u1234"), parseArithmeticExpressionOnly("'a\\u1234'"));
+        assertEquals(string("a'b"), parseArithmeticExpression("'a\\'b'"));
     }
 }

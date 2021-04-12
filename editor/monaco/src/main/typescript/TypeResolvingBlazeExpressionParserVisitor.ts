@@ -62,13 +62,16 @@ import {
     ParseExpressionContext,
     ParseExpressionOrPredicateContext,
     ParsePredicateContext,
+    ParseTemplateContext,
     PathAttributesContext,
     PathContext,
     PathExpressionContext,
     PathPredicateContext,
     PredicateContext,
     PredicateOrExpressionContext,
+    StringLiteralContext,
     SubtractionExpressionContext,
+    TemplateContext,
     TemporalIntervalLiteralContext,
     TimePartContext,
     TimestampLiteralContext,
@@ -84,19 +87,24 @@ import {BlazeExpressionLexer} from "./blaze-expression-predicate/BlazeExpression
 import {SymbolTable} from "./SymbolTable";
 import {LiteralKind} from "./LiteralKind";
 import {CollectionLiteral} from "./CollectionLiteral";
+import {LiteralFactory} from "./LiteralFactory";
 
 /**
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
-export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisitor<DomainType> {
+export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressionParserVisitor<DomainType> {
     symbolTable: SymbolTable;
     private readonly booleanDomainType: BasicDomainType;
 
     constructor(symbolTable: SymbolTable) {
         this.symbolTable = symbolTable;
-        this.booleanDomainType = this.symbolTable.model.booleanLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.BOOLEAN, 'true');
+        if (symbolTable.model.booleanLiteralResolver == null) {
+            this.booleanDomainType = null;
+        } else {
+            this.booleanDomainType = symbolTable.model.booleanLiteralResolver.resolveLiteral(symbolTable.model.domainModel, LiteralKind.BOOLEAN, 'true');
+        }
     }
 
     visitParsePredicate(ctx: ParsePredicateContext): DomainType {
@@ -109,6 +117,48 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
 
     visitParseExpressionOrPredicate(ctx: ParseExpressionOrPredicateContext): DomainType {
         return ctx.predicateOrExpression().accept(this);
+    }
+
+    visitParseTemplate(ctx: ParseTemplateContext): DomainType {
+        let templateContext = ctx.template();
+        if (templateContext == null) {
+            return this.resolveStringLiteral('');
+        }
+        return templateContext.accept(this);
+    }
+
+    visitTemplate(ctx: TemplateContext) {
+        let expressionType: DomainType;
+        let i = 0;
+        let child: TerminalNode = ctx.getChild(i) as TerminalNode;
+        if (child.symbol.type == BlazeExpressionLexer.TEXT) {
+            expressionType = this.resolveStringLiteral(child.text);
+            i += 1;
+        } else {
+            expressionType = this.resolveStringLiteral('');
+        }
+        let childCount = ctx.childCount;
+        for (; i < childCount; i++) {
+            child = ctx.getChild(i) as TerminalNode;
+            let subExpressionType: DomainType;
+            let subExpressionCtx;
+            if (child.symbol.type == BlazeExpressionLexer.TEXT) {
+                subExpressionCtx = child;
+                subExpressionType = this.resolveStringLiteral(child.text);
+            } else {
+                subExpressionCtx = ctx.getChild(i + 1);
+                subExpressionType = subExpressionCtx.accept(this);
+                i += 2;
+            }
+            expressionType = this.createArithmeticExpression(
+                ctx,
+                subExpressionCtx,
+                expressionType,
+                subExpressionType,
+                DomainOperator.PLUS
+            );
+        }
+        return expressionType;
     }
 
     visitGroupedPredicate(ctx: GroupedPredicateContext): DomainType {
@@ -348,6 +398,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     visitAdditionExpression(ctx: AdditionExpressionContext): DomainType {
         return this.createArithmeticExpression(
             ctx,
+            ctx._rhs,
             ctx._lhs.accept(this),
             ctx._rhs.accept(this),
             DomainOperator.PLUS
@@ -357,6 +408,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     visitSubtractionExpression(ctx: SubtractionExpressionContext): DomainType {
         return this.createArithmeticExpression(
             ctx,
+            ctx._rhs,
             ctx._lhs.accept(this),
             ctx._rhs.accept(this),
             DomainOperator.MINUS
@@ -366,6 +418,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     visitDivisionExpression(ctx: DivisionExpressionContext): DomainType {
         return this.createArithmeticExpression(
             ctx,
+            ctx._rhs,
             ctx._lhs.accept(this),
             ctx._rhs.accept(this),
             DomainOperator.DIVISION
@@ -375,6 +428,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     visitMultiplicationExpression(ctx: MultiplicationExpressionContext): DomainType {
         return this.createArithmeticExpression(
             ctx,
+            ctx._rhs,
             ctx._lhs.accept(this),
             ctx._rhs.accept(this),
             DomainOperator.MULTIPLICATION
@@ -384,15 +438,16 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     visitModuloExpression(ctx: ModuloExpressionContext): DomainType {
         return this.createArithmeticExpression(
             ctx,
+            ctx._rhs,
             ctx._lhs.accept(this),
             ctx._rhs.accept(this),
             DomainOperator.MODULO
         );
     }
 
-    createArithmeticExpression(ctx: ParserRuleContext, left: DomainType, right: DomainType, operator: DomainOperator): DomainType {
+    createArithmeticExpression(ctx: ParserRuleContext, rhsCtx: ParserRuleContext, left: DomainType, right: DomainType, operator: DomainOperator): DomainType {
         if (right == null) {
-            throw this.incompleteExpression(ctx);
+            throw this.incompleteExpression(rhsCtx);
         }
 
         let operandTypes = [left, right];
@@ -420,6 +475,9 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
 
     visitUnaryMinusExpression(ctx: UnaryMinusExpressionContext): DomainType {
         let left = ctx.expression().accept(this);
+        if (left == null) {
+            throw this.incompleteExpression(ctx);
+        }
         let operandTypes = [left];
         let operationTypeResolvers = this.symbolTable.model.domainModel.operationTypeResolvers[left.name];
         let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[DomainOperator.UNARY_MINUS]];
@@ -445,6 +503,9 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
 
     visitUnaryPlusExpression(ctx: UnaryPlusExpressionContext): DomainType {
         let left = ctx.expression().accept(this);
+        if (left == null) {
+            throw this.incompleteExpression(ctx);
+        }
         let operandTypes = [left];
         let operationTypeResolvers = this.symbolTable.model.domainModel.operationTypeResolvers[left.name];
         let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[DomainOperator.UNARY_PLUS]];
@@ -518,7 +579,8 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
         let identifierContext = ctx.identifier();
         let pathAttributesContext = ctx.pathAttributes();
         if (identifierContext == null) {
-            return this.resolvePathAttributes(ctx.functionInvocation().accept(this), pathAttributesContext);
+            let functionInvocation = ctx.functionInvocation();
+            return this.resolvePathAttributes(functionInvocation.accept(this), "function " + functionInvocation.children[0].text, pathAttributesContext);
         } else {
             let alias = identifierContext.text;
             let symbol = this.symbolTable.variables[alias];
@@ -544,11 +606,11 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
                 }
                 throw this.unknownType(ctx, alias);
             }
-            return this.resolvePathAttributes(symbol.type, pathAttributesContext);
+            return this.resolvePathAttributes(symbol.type, "variable " + alias, pathAttributesContext);
         }
     }
 
-    private resolvePathAttributes(type: DomainType, pathAttributesContext: PathAttributesContext): DomainType {
+    private resolvePathAttributes(type: DomainType, source: string, pathAttributesContext: PathAttributesContext): DomainType {
         if (pathAttributesContext != null) {
             let identifiers = pathAttributesContext.identifier();
             for (let i = 0; i < identifiers.length; i++) {
@@ -564,8 +626,9 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
                         type = attribute.type;
                     }
                 } else {
-                    throw this.unsupportedType(identifiers[i], type.name);
+                    throw this.cannotDeReference(identifiers[i], pathElement, source, type.name);
                 }
+                source = "attribute " + pathElement;
             }
         }
         return type;
@@ -605,7 +668,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
                             if (elementType != literalList[i]) {
                                 // invalid heterogeneous use for var-args
                                 let offending = predicateOrExpressions[i];
-                                throw new DomainModelException("Function '" + func.name + "' expects the " + (i + 1) + "th argument to be of type " + elementType.name + " but was " + literalList[i].name, null, offending.start.line, offending.stop.line, offending.start.startIndex + 1, ctx.stop.stopIndex + 1);
+                                throw new DomainModelException("Function '" + func.name + "' expects the " + (i + 1) + "th argument to be of type " + elementType.name + " but was " + literalList[i].name, null, offending.start.line, offending.stop.line, offending.start.startIndex + 1, ctx.stop.stopIndex + 2);
                             }
                         }
                     }
@@ -632,7 +695,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
         if (type instanceof EntityDomainType) {
             let argNames: IdentifierContext[] = ctx.identifier();
             argNames.shift()
-            return this.createEntityLiteral(type, argNames, this.getExpressionList(ctx.predicateOrExpression()));
+            return this.createEntityLiteral(type, argNames, this.getLiteralList(ctx.predicateOrExpression()));
         } else {
             throw this.unknownType(ctx, entityOrFunctionName);
         }
@@ -670,22 +733,22 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
             if (type instanceof EntityDomainType) {
                 let argNames: IdentifierContext[] = ctx.identifier();
                 argNames.shift()
-                return this.createEntityLiteral(type, argNames, this.getExpressionList(ctx.predicateOrExpression()));
+                return this.createEntityLiteral(type, argNames, this.getLiteralList(ctx.predicateOrExpression()));
             } else {
                 throw this.unknownFunction(ctx, entityOrFunctionName);
             }
         } else {
             let argNames: IdentifierContext[] = ctx.identifier();
-            let literalList = this.getExpressionList(ctx.predicateOrExpression());
-            if (func.argumentCount != -1 && literalList.length > func.argumentCount) {
-                throw new DomainModelException("Function '" + func.name + "' expects at most " + func.argumentCount + " arguments but found " + literalList.length, ctx, -1, -1, -1, -1);
+            let argumentExpressionTypes = this.getExpressionList(ctx.predicateOrExpression());
+            if (func.argumentCount != -1 && argumentExpressionTypes.length > func.argumentCount) {
+                throw new DomainModelException("Function '" + func.name + "' expects at most " + func.argumentCount + " arguments but found " + argumentExpressionTypes.length, ctx, -1, -1, -1, -1);
             }
-            if (literalList.length < func.minArgumentCount) {
-                throw new DomainModelException("Function '" + func.name + "' expects at least " + func.minArgumentCount + " arguments but found " + literalList.length, ctx, -1, -1, -1, -1);
+            if (argumentExpressionTypes.length < func.minArgumentCount) {
+                throw new DomainModelException("Function '" + func.name + "' expects at least " + func.minArgumentCount + " arguments but found " + argumentExpressionTypes.length, ctx, -1, -1, -1, -1);
             }
             argNames.shift();
             let argumentTypes: DomainType[] = new Array(func.arguments.length);
-            for (let i = 0; i < literalList.length; i++) {
+            for (let i = 0; i < argumentExpressionTypes.length; i++) {
                 let domainFunctionArgument = null;
                 let arg = argNames[i].text;
                 for (let j = 0; j < func.arguments.length; j++) {
@@ -705,7 +768,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
                     argumentNames += "]";
                     throw new DomainModelException("Invalid argument name '" + arg + "'! Function '" + func.name + "' expects the following argument names: " + argumentNames, argNames[i], -1, -1, -1, -1);
                 }
-                argumentTypes[domainFunctionArgument.position] = literalList[i];
+                argumentTypes[domainFunctionArgument.position] = argumentExpressionTypes[i];
             }
             try {
                 return func.resultTypeResolver.resolveType(this.symbolTable.model.domainModel, func, argumentTypes);
@@ -719,14 +782,19 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
         }
     }
 
+    visitStringLiteral(ctx: StringLiteralContext): DomainType {
+        return this.resolveStringLiteral(LiteralFactory.unescapeString(ctx.text));
+    }
+
     visitTerminal(node: TerminalNode): DomainType {
         if (node.symbol.type == BlazeExpressionLexer.EOF) {
             return null;
         }
         switch (node.symbol.type) {
-            case BlazeExpressionLexer.STRING_LITERAL:
-                return this.symbolTable.model.stringLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.STRING, node.text);
+            case BlazeExpressionLexer.TEXT: // We also handle text to avoid unnecessary interpretation errors
+                return this.resolveStringLiteral(node.text);
             case BlazeExpressionLexer.TRUE:
+            case BlazeExpressionLexer.FALSE:
                 return this.symbolTable.model.booleanLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.BOOLEAN, node.text);
             case BlazeExpressionLexer.NUMERIC_LITERAL:
                 return this.symbolTable.model.numericLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.NUMERIC, node.text);
@@ -735,10 +803,30 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
         }
     }
 
-    getExpressionList(items: ParserRuleContext[]): DomainType[] {
+    private resolveStringLiteral(text: string): DomainType {
+        return this.symbolTable.model.stringLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.STRING, text);
+    }
+
+    private getExpressionList(items: ParserRuleContext[]): DomainType[] {
         let expressions = [];
         for (let item of items) {
             expressions.push(item.accept(this));
+        }
+        return expressions;
+    }
+
+    private getLiteralList(items: PredicateOrExpressionContext[]): DomainType[] {
+        let expressions = [];
+        for (let item of items) {
+            let child1 = item.getChild(0);
+            if (child1 instanceof ExpressionContext) {
+                let child2 = child1.getChild(0);
+                if (child2 instanceof LiteralContext) {
+                    expressions.push(item.accept(this));
+                    continue;
+                }
+            }
+            throw new TypeErrorException('Only literals are allowed', child1 as ParserRuleContext, -1, -1, -1, -1);
         }
         return expressions;
     }
@@ -766,7 +854,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
             }
         }
 
-        return new DomainModelException(this.format("Missing predicate type resolver for type {0} and predicate {1}", type.name, symbols), null, startLine, endLine, startCol + 1, endCol + 1);
+        return new DomainModelException(this.format("Missing predicate type resolver for type {0} and predicate {1}", type.name, symbols), null, startLine, endLine, startCol + 1, endCol + 2);
     }
 
     private incompleteExpression(ctx: ParserRuleContext) {
@@ -775,7 +863,7 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
 
     private missingOperationTypeResolver(ctx: ParserRuleContext, type: DomainType, tokenIndex: number) {
         let sym = (ctx.children[tokenIndex] as TerminalNode).symbol;
-        return new DomainModelException(this.format("Missing operation type resolver for type {0} and operator {1}", type.name, sym.text), null, sym.line, sym.line, sym.startIndex + 1, sym.stopIndex + 1);
+        return new DomainModelException(this.format("Missing operation type resolver for type {0} and operator {1}", type.name, sym.text), null, sym.line, sym.line, sym.startIndex + 1, sym.stopIndex + 2);
     }
 
     private unknownType(ctx: ParserRuleContext, typeName: string) {
@@ -795,11 +883,15 @@ export class MyBlazeExpressionParserVisitor implements BlazeExpressionParserVisi
     }
 
     private cannotResolvePredicateType(ctx: ParserRuleContext, predicateType: DomainPredicate, operandTypes: DomainType[]) {
-        return new TypeErrorException(this.format("Cannot resolve predicate type for predicate {0} and operand types {1}", DomainPredicate[predicateType], MyBlazeExpressionParserVisitor.typeNames(operandTypes)), ctx, -1, -1, -1, -1);
+        return new TypeErrorException(this.format("Cannot resolve predicate type for predicate {0} and operand types {1}", DomainPredicate[predicateType], TypeResolvingBlazeExpressionParserVisitor.typeNames(operandTypes)), ctx, -1, -1, -1, -1);
     }
 
     private cannotResolveOperationType(ctx: ParserRuleContext, operator: DomainOperator, operandTypes: DomainType[]) {
-        return new TypeErrorException(this.format("Cannot resolve operation type for operator {0} and operand types {1}", DomainOperator[operator], MyBlazeExpressionParserVisitor.typeNames(operandTypes)), ctx, -1, -1, -1, -1);
+        return new TypeErrorException(this.format("Cannot resolve operation type for operator {0} and operand types {1}", DomainOperator[operator], TypeResolvingBlazeExpressionParserVisitor.typeNames(operandTypes)), ctx, -1, -1, -1, -1);
+    }
+
+    private cannotDeReference(ctx: ParserRuleContext, attribute: string, source: string, typeName: string) {
+        return new TypeErrorException(this.format("Cannot de-reference attribute {0} on {1} because the type {2} is not an entity type", attribute, source, typeName), ctx, -1, -1, -1, -1);
     }
 
     private static typeNames(operandTypes: DomainType[]): string {

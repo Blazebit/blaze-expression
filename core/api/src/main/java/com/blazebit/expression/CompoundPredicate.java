@@ -26,7 +26,7 @@ import java.util.List;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class CompoundPredicate extends AbstractPredicate {
+public final class CompoundPredicate extends AbstractPredicate {
 
     private final boolean conjunction;
     private final List<Predicate> predicates;

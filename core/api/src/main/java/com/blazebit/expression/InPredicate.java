@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class InPredicate extends AbstractPredicate {
+public final class InPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final List<ArithmeticExpression> inItems;
 

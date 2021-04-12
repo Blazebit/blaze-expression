@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class IsNullPredicate extends AbstractPredicate {
+public final class IsNullPredicate extends AbstractPredicate {
     private final Expression left;
 
     /**

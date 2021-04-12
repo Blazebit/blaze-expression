@@ -63,6 +63,12 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
             return parser.parseExpressionOrPredicate();
         }
     };
+    protected static final RuleInvoker TEMPLATE_RULE_INVOKER = new RuleInvoker() {
+        @Override
+        public ParserRuleContext invokeRule(PredicateParser parser) {
+            return parser.parseTemplate();
+        }
+    };
 
     protected final ExpressionService expressionService;
     protected final LiteralFactory literalFactory;
@@ -70,6 +76,10 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
     public ExpressionCompilerImpl(ExpressionService expressionService, LiteralFactory literalFactory) {
         this.expressionService = expressionService;
         this.literalFactory = literalFactory;
+    }
+
+    public LiteralFactory getLiteralFactory() {
+        return literalFactory;
     }
 
     @Override
@@ -89,29 +99,33 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
 
     @Override
     public Expression createExpression(String expressionString, Context compileContext) {
-        return parse(expressionString, EXPRESSION_RULE_INVOKER, compileContext);
+        return parse(expressionString, false, EXPRESSION_RULE_INVOKER, compileContext);
     }
 
     @Override
     public Predicate createPredicate(String expressionString, Context compileContext) {
-        return parse(expressionString, PREDICATE_RULE_INVOKER, compileContext);
+        return parse(expressionString, false, PREDICATE_RULE_INVOKER, compileContext);
     }
 
     @Override
     public Expression createExpressionOrPredicate(String expressionString, Context compileContext) {
-        return parse(expressionString, EXPRESSION_OR_PREDICATE_RULE_INVOKER, compileContext);
+        return parse(expressionString, false, EXPRESSION_OR_PREDICATE_RULE_INVOKER, compileContext);
     }
 
-    public LiteralFactory getLiteralFactory() {
-        return literalFactory;
+    @Override
+    public Expression createTemplateExpression(String templateString, Context compileContext) {
+        return parse(templateString, true, TEMPLATE_RULE_INVOKER, compileContext);
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends Expression> T parse(String input, RuleInvoker ruleInvoker, Context compileContext) {
+    protected <T extends Expression> T parse(String input, boolean templateMode, RuleInvoker ruleInvoker, Context compileContext) {
         if (compileContext.getExpressionService() != expressionService) {
             throw new IllegalArgumentException("Compile context refers to a different expression service!");
         }
         PredicateLexer lexer = new PredicateLexer(CharStreams.fromString(input));
+        if (templateMode) {
+            lexer.pushMode(PredicateLexer.TEMPLATE);
+        }
         lexer.removeErrorListeners();
         lexer.addErrorListener(ERROR_LISTENER);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

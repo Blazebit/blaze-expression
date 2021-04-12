@@ -130,7 +130,7 @@ public class EntityViewExpressionServiceContributor implements ExpressionService
         }
 
         @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ?> attributeValues) {
+        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Literal> attributeValues) {
             Resolver resolver = entityViewResolvers.get(entityDomainType.getName());
             if (resolver != null) {
                 Object viewId = resolver.getViewId(attributeValues);

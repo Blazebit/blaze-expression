@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ComparisonPredicate extends AbstractPredicate {
+public final class ComparisonPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final ArithmeticExpression right;
     private final ComparisonOperator operator;

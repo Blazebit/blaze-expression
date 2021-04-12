@@ -18,6 +18,7 @@ import {PathResolvingProvider} from "./PathResolvingProvider";
 import * as monaco from "monaco-editor";
 import {CollectionDomainType, EntityDomainType, EnumDomainType} from "blaze-domain";
 import {symbolTables} from "./EditorFactory";
+import {SymbolTable} from "./SymbolTable";
 
 /**
  *
@@ -26,11 +27,14 @@ import {symbolTables} from "./EditorFactory";
  */
 export class PredicateCompletionProvider extends PathResolvingProvider implements monaco.languages.CompletionItemProvider {
 
-    disallowedOffendingChars: RegExp = /[")]/
+    literalCssClass: string;
+    // If these chars are offending for the text before the cursor, we do not provide suggestions
+    disallowedOffendingChars: RegExp = /['")]/
     triggerCharacters: string[] = [];
 
-    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
-        super(identifierStart, identifier, pathOperators);
+    constructor(templateMode: boolean, literalCssClass: string = null, identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        super(templateMode, identifierStart, identifier, pathOperators);
+        this.literalCssClass = literalCssClass;
         for (var i = 0; i < pathOperators.length; i++) {
             let pathOperator = pathOperators[i];
             if (pathOperator.length == 1) {
@@ -40,88 +44,138 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
     }
 
     provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken): monaco.languages.CompletionList {
-        let suggestions: monaco.languages.CompletionItem[] = [];
         let textBeforeCursor = model.getValueInRange({
             startLineNumber: 1,
             startColumn: 1,
             endLineNumber: position.lineNumber,
             endColumn: position.column
         });
+        let symbolTable = symbolTables[model.id];
+        // This is a "hack" to be able to avoid suggestions in string literals
+        // The line token API is not public and the matching against the class name is also not nice
+        // But this is the only way without tokenizing again
+        let lineTokens = (model as any).getLineTokens(position.lineNumber);
+        let tokenIndex = lineTokens.findTokenIndexAtOffset(position.column);
+        if (this.literalCssClass == lineTokens.getClassName(tokenIndex)) {
+            return {
+                suggestions: [],
+                incomplete: false
+            };
+        }
+        let wordPosition = model.getWordUntilPosition(position);
+        let range: monaco.IRange = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: wordPosition.startColumn,
+            endColumn: position.column
+        };
+        return this.computeCompletionItems(textBeforeCursor, symbolTable, range);
+    }
+
+    computeCompletionItems(textBeforeCursor: string, symbolTable: SymbolTable, range?: monaco.IRange): monaco.languages.CompletionList {
+        let suggestions: monaco.languages.CompletionItem[] = [];
+        let incomplete = false;
         let pathResult = this.analyzePathBeforeCursor(textBeforeCursor);
+        if (typeof range === 'undefined') {
+            range = { startLineNumber: 1, endLineNumber: 1, startColumn: pathResult.offendingCharIndex + 1, endColumn: textBeforeCursor.length };
+        }
+        // If the offending character is a quote char, we try to replace it as well
+        if (pathResult.offendingChar == '`') {
+            range = {
+                startLineNumber: range.startLineNumber,
+                endLineNumber: range.endLineNumber,
+                startColumn: range.startColumn - 1,
+                endColumn: range.endColumn + 1
+            };
+        }
+        let originalText = textBeforeCursor;
         textBeforeCursor = pathResult.text;
         let offendingChar = pathResult.offendingChar;
 
-        let symbolTable = symbolTables[model.id];
-        if (textBeforeCursor.length != 0 && textBeforeCursor.charAt(0).match(this.identifierStart)) {
-            let parts = textBeforeCursor.split(this.pathOperators);
+        SUGGEST: if (pathResult.pathParts.length != 0 && pathResult.pathParts[0].length != 0 && pathResult.pathParts[0].charAt(0).match(this.identifierStart)) {
+            if (this.templateMode) {
+                // In the template mode we only provide suggestions if we encounter the expression start token
+                if (!symbolTable.model.inTemplateExpressionContext(originalText.substring(0, pathResult.offendingCharIndex + 1))) {
+                    break SUGGEST;
+                }
+            }
+            let parts = pathResult.pathParts;
             if (parts.length == 1) {
                 for (let v in symbolTable.variables) {
-                    suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
+                    suggestions.push(this.varSuggestion(symbolTable.variables[v], range));
                 }
                 let types = symbolTable.model.domainModel.types;
                 for (let t in types) {
-                    let item = this.typeSuggestion(t, types[t])
+                    let item = this.typeSuggestion(types[t], range);
                     if (item != null) {
                         suggestions.push(item);
                     }
                 }
                 let funcs = symbolTable.model.domainModel.functions;
                 for (let f in funcs) {
-                    suggestions.push(this.functionSuggestion(funcs[f]));
+                    suggestions.push(this.functionSuggestion(funcs[f], range));
                 }
             } else {
-                let basePath = textBeforeCursor.substring(0, textBeforeCursor.length - parts[parts.length - 1].length - 1);
                 if (parts.length == 2) {
-                    let type = symbolTable.model.domainModel.types[basePath.trim()];
+                    let type = symbolTable.model.domainModel.types[parts[0].trim()];
                     if (type instanceof EnumDomainType) {
                         for (let enumValue in type.enumValues) {
-                            suggestions.push(this.enumSuggestion(enumValue, type, type.enumValues[enumValue]));
+                            suggestions.push(this.enumSuggestion(type, type.enumValues[enumValue], range));
                         }
                     }
                 }
                 if (suggestions.length == 0) {
+                    let basePath = textBeforeCursor.substring(0, pathResult.lastPathPartDotIndex);
                     let domainType = symbolTable.model.resolveType(basePath, symbolTable);
                     if (domainType instanceof CollectionDomainType) {
                         domainType = domainType.elementType;
                     }
                     if (domainType instanceof EntityDomainType) {
                         for (let a in domainType.attributes) {
-                            suggestions.push(this.attrSuggestion(a, domainType.attributes[a]));
+                            suggestions.push(this.attrSuggestion(domainType.attributes[a], range));
                         }
                     }
                 }
             }
+            incomplete = suggestions.length == 0;
         }
 
-        if (textBeforeCursor.length == 0) {
+        SUGGEST: if (textBeforeCursor.length == 0) {
             if (this.disallowedOffendingChars.test(offendingChar)) {
                 return {
                     suggestions: suggestions,
                     incomplete: false
                 };
             }
+            if (this.templateMode) {
+                // In the template mode we only provide suggestions if we encounter the expression start token
+                if (!symbolTable.model.inTemplateExpressionContext(originalText.substring(0, pathResult.offendingCharIndex + 1))) {
+                    break SUGGEST;
+                }
+            }
             for (let v in symbolTable.variables) {
-                suggestions.push(this.varSuggestion(v, symbolTable.variables[v]));
+                suggestions.push(this.varSuggestion(symbolTable.variables[v], range));
             }
             let types = symbolTable.model.domainModel.types;
             for (let t in types) {
-                let item = this.typeSuggestion(t, types[t])
+                let item = this.typeSuggestion(types[t], range);
                 if (item != null) {
                     suggestions.push(item);
                 }
             }
             let funcs = symbolTable.model.domainModel.functions;
             for (let f in funcs) {
-                suggestions.push(this.functionSuggestion(funcs[f]));
+                suggestions.push(this.functionSuggestion(funcs[f], range));
             }
+            incomplete = suggestions.length == 0;
         }
         return {
             suggestions: suggestions,
-            incomplete: suggestions.length == 0
+            incomplete: incomplete
         };
     }
 
-    resolveCompletionItem(model: monaco.editor.ITextModel, position: monaco.Position, item: monaco.languages.CompletionItem, token: monaco.CancellationToken): PromiseLike<monaco.languages.CompletionItem | undefined | null> | monaco.languages.CompletionItem | undefined | null {
+    resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.CompletionItem> {
         return item;
     }
 

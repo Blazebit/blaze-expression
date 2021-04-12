@@ -1,9 +1,9 @@
 /*
- * Copyright 2014 Blazebit.
+ * Copyright 2019 - 2021 Blazebit.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may [nN]ot use this file except in compliance with the License.
- * You may obtain [aA] copy of the License at
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 lexer grammar PredicateLexer;
 
 WS : ( ' ' | '\t' | '\f' | EOL ) -> channel(HIDDEN);
-fragment EOL                : [\r\n]+;
+fragment EOL                : '\r\n' | '\r' | '\n';
 
 fragment DIGIT              : '0'..'9';
 fragment DIGITS             : DIGIT+;
@@ -28,10 +29,8 @@ fragment ESCAPE_SEQUENCE    : ('\\' ('b'|'t'|'n'|'f'|'r'|'\\"'|'\''|'\\')) | UNI
 fragment HEX_DIGIT          : ('0'..'9'|'a'..'f'|'A'..'F') ;
 fragment UNICODE_ESCAPE     : '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
 
-STRING_LITERAL
-    : '"' ( ESCAPE_SEQUENCE | ~('\\'|'"') )* '"' {this.setText(this.getText().substring(1, this.getText().length() - 1));}
-    | ('\'' ( ESCAPE_SEQUENCE | ~('\\'|'\'') )* '\'')+ {this.setText(this.getText().substring(1, this.getText().length() - 1).replace("''", "'"));}
-    ;
+START_QUOTE: '\'' -> pushMode(QUOTE_STRING);
+START_DOUBLE_QUOTE: '"' -> pushMode(DOUBLE_QUOTE_STRING);
 
 NUMERIC_LITERAL
     : INTEGER ('.' DIGITS)? EXPONENT_PART?
@@ -86,5 +85,37 @@ IDENTIFIER
     ;
 
 QUOTED_IDENTIFIER
-    : '`' ( ESCAPE_SEQUENCE | ~('\\'|'`') )* '`'
+    : '`' ( ESCAPE_SEQUENCE | ~('\\'|'`'|'\r'|'\n') )* '`' { this.setText(LiteralFactory.unescapeString(this.getText())); }
     ;
+
+// The following is to support template expressions
+EXPRESSION_END: '}' -> pushMode(TEMPLATE);
+
+mode TEMPLATE;
+
+EXPRESSION_START: '#{' -> popMode;
+
+TEXT: (
+    '\\#{'
+    | ~('#')
+    | '#' { this._input.LA(1) != LiteralFactory.OPEN_BRACKET }?
+    )+ { this.setText(LiteralFactory.unescapeTemplateText(this.getText())); }
+    ;
+
+mode QUOTE_STRING;
+
+TEXT_IN_QUOTE
+    : EOL
+    | ( ESCAPE_SEQUENCE | ~('\\'|'\''|'\r'|'\n') )+ EOL?
+    ;
+
+END_QUOTE: '\'' -> popMode;
+
+mode DOUBLE_QUOTE_STRING;
+
+TEXT_IN_DOUBLE_QUOTE
+    : EOL
+    | ( ESCAPE_SEQUENCE | ~('\\'|'"'|'\r'|'\n') )+ EOL?
+    ;
+
+END_DOUBLE_QUOTE: '"' -> popMode;

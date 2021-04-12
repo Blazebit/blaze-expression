@@ -95,6 +95,25 @@ public interface ExpressionCompiler {
     public Expression createExpressionOrPredicate(String expressionString, Context compileContext);
 
     /**
+     * Creates and compiles the given template expression string with an empty compile context.
+     *
+     * @param templateString The template expression string to compile
+     * @return The compiled expression
+     */
+    public default Expression createTemplateExpression(String templateString) {
+        return createTemplateExpression(templateString, createContext(Collections.emptyMap()));
+    }
+
+    /**
+     * Creates and compiles the given template expression string with the given compile context.
+     *
+     * @param templateString The template expression string to compile
+     * @param compileContext The compile context to use
+     * @return The compiled expression
+     */
+    public Expression createTemplateExpression(String templateString, Context compileContext);
+
+    /**
      * A compiler context that returns the domain type for available root variables.
      *
      * @author Christian Beikov

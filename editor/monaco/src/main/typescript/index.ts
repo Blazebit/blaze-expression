@@ -32,7 +32,7 @@ export * from "./ConsoleErrorListener";
 export * from "./PredicateState";
 export * from "./LiteralResolver";
 export * from "./PathResult";
-export * from "./MyBlazeExpressionParserVisitor";
+export * from "./TypeResolvingBlazeExpressionParserVisitor";
 export * from "./SyntaxErrorException";
 export * from "./ExpressionService";
 export * from "./EditorFactory";

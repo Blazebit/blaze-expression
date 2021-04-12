@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class BetweenPredicate extends AbstractPredicate {
+public final class BetweenPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final ArithmeticExpression upper;
     private final ArithmeticExpression lower;

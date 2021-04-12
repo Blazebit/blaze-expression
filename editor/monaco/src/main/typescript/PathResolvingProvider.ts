@@ -17,7 +17,6 @@
 import {PathResult} from "./PathResult";
 import * as monaco from "monaco-editor";
 import {Symbol} from "./Symbol";
-import {IMarkdownString} from "monaco-editor";
 import {
     DomainFunction,
     DomainType,
@@ -34,11 +33,13 @@ import {QuoteMode} from "./QuoteMode";
  */
 export class PathResolvingProvider {
 
+    templateMode: boolean;
     identifierStart: RegExp;
     identifier: RegExp;
     pathOperators: RegExp;
 
-    constructor(identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+    constructor(templateMode: boolean, identifierStart: RegExp = /[a-zA-Z_$\u0080-\ufffe]/, identifier: RegExp = /[a-zA-Z_$0-9\u0080-\ufffe]/, pathOperators: string[] = ['.']) {
+        this.templateMode = templateMode;
         this.identifierStart = identifierStart;
         this.identifier = identifier;
         var pathOperatorsRegex = "";
@@ -54,12 +55,50 @@ export class PathResolvingProvider {
     }
 
     analyzePathBeforeCursor(textBeforeCursor: string): PathResult {
+        let text = textBeforeCursor;
         let i = textBeforeCursor.length;
-        var offendingChar = " ";
+        let pathParts: string[] = [];
+        let lastPathOperatorEnd = i;
+        let lastPathPartDotIndex = -1;
+        let offendingChar = ' ';
         OUTER: while (i--) {
             let c = textBeforeCursor.charAt(i);
-            if (!this.pathOperators.test(c) && !this.identifier.test(c)) {
-                let text = textBeforeCursor;
+            // Consume the whole quote if we encounter one
+            QUOTE: if (c == '`') {
+                let quoteCharIndex = i;
+                if (i == 0) {
+                    offendingChar = c;
+                    break;
+                }
+                while (i--) {
+                    c = textBeforeCursor.charAt(i);
+                    if (c == '`') {
+                        if (i == 0) {
+                            offendingChar = ' ';
+                            break OUTER;
+                        }
+                        c = textBeforeCursor.charAt(--i);
+                        break QUOTE;
+                    }
+                }
+                // If we get here, the quote is not closed on the lhs, so we treat the quote chars as offending and stop
+                offendingChar = '`';
+                i = quoteCharIndex;
+                textBeforeCursor = textBeforeCursor.substring(i + 1);
+                break;
+            }
+            if (this.pathOperators.test(c)) {
+                if (lastPathPartDotIndex == -1) {
+                    lastPathPartDotIndex = i;
+                }
+                if (textBeforeCursor.charAt(i + 1) == '`') {
+                    pathParts.unshift(textBeforeCursor.substring(i + 2, lastPathOperatorEnd - 1));
+                } else {
+                    pathParts.unshift(textBeforeCursor.substring(i + 1, lastPathOperatorEnd).trim());
+                }
+                lastPathOperatorEnd = i;
+            }
+            else if (!this.identifier.test(c)) {
                 textBeforeCursor = textBeforeCursor.substring(i + 1);
                 // Find the first non-whitespace offending char
                 do {
@@ -84,24 +123,41 @@ export class PathResolvingProvider {
 
                             if (parenthesis == 0) {
                                 textBeforeCursor = text;
-                                offendingChar = " ";
+                                offendingChar = ' ';
                                 continue OUTER;
                             }
                             i = oldPos;
-                        } else if (this.identifier.test(c) && this.pathOperators.test(textBeforeCursor.charAt(0))) {
+                        } else if (this.pathOperators.test(c)) {
+                            // To support suggestion in multi-line scenarios, we allow whitespace after a path operator character
+                            textBeforeCursor = text;
+                            offendingChar = ' ';
+                            i++;
+                            continue OUTER;
+                        } else if (this.identifier.test(c) && textBeforeCursor.length != 0 && this.pathOperators.test(textBeforeCursor.charAt(0))) {
                             // To support suggestion in multi-line scenarios, we allow whitespace before a path operator character
                             textBeforeCursor = text;
-                            offendingChar = " ";
+                            offendingChar = ' ';
                             continue OUTER;
                         }
                         break;
                     }
                     i--;
-                } while (i != 0);
+                } while (i >= 0);
                 break;
             }
         }
-        return { text: textBeforeCursor, offendingChar: offendingChar };
+        if (text.charAt(i + 1) == '`') {
+            pathParts.unshift(text.substring(i + 2, lastPathOperatorEnd - 1));
+        } else {
+            pathParts.unshift(text.substring(i + 1, lastPathOperatorEnd).trim());
+        }
+        return {
+            text: textBeforeCursor,
+            pathParts: pathParts,
+            lastPathPartDotIndex: lastPathPartDotIndex - (text.length - textBeforeCursor.length),
+            offendingChar: offendingChar,
+            offendingCharIndex: i
+        };
     }
 
     analyzePathAroundCursor(model: monaco.editor.ITextModel, position: monaco.Position): PathResult {
@@ -119,8 +175,9 @@ export class PathResolvingProvider {
             endColumn: model.getLineMaxColumn(position.lineNumber)
         });
 
+        let i = 0;
         let offendingChar = " ";
-        for (let i = 0; i < textAfterCursor.length; i++) {
+        for (; i < textAfterCursor.length; i++) {
             let c = textAfterCursor.charAt(i);
             if (this.pathOperators.test(c)) {
                 textAfterCursor = textAfterCursor.substring(0, i);
@@ -141,73 +198,92 @@ export class PathResolvingProvider {
                 break;
             }
         }
-        return { text: pathResult.text + textAfterCursor, offendingChar: offendingChar };
+        pathResult.pathParts[pathResult.pathParts.length - 1] = pathResult.pathParts[pathResult.pathParts.length - 1] + textAfterCursor;
+        return {
+            text: pathResult.text + textAfterCursor,
+            pathParts: pathResult.pathParts,
+            lastPathPartDotIndex: pathResult.lastPathPartDotIndex,
+            offendingChar: offendingChar,
+            offendingCharIndex: i
+        };
     }
 
-    varSuggestion(v: string, s: Symbol): monaco.languages.CompletionItem {
-        let doc: string | IMarkdownString = "";
+    // NOTE: that we use
+    //   filterText: identifier.toUpperCase()
+    // Because apparently otherwise, monaco won't suggest certain quote identifiers
+
+    varSuggestion(s: Symbol, range: monaco.IRange = null): monaco.languages.CompletionItem {
+        let doc: string | monaco.IMarkdownString = "";
         if (s.documentation != null) {
             doc = { value: s.documentation, isTrusted: true };
         }
+        let identifier = s.identifier;
         return {
-            label: v,
+            label: s.name,
             kind: monaco.languages.CompletionItemKind.Variable,
             detail: s.type.name,
             documentation: doc,
-            insertText: v,
-            range: null
+            insertText: identifier,
+            filterText: identifier.toUpperCase(),
+            range: this.rangeForIdentifier(range, identifier)
         }
     }
 
-    attrSuggestion(v: string, a: EntityAttribute): monaco.languages.CompletionItem {
-        let doc: string | IMarkdownString = "";
+    attrSuggestion(a: EntityAttribute, range: monaco.IRange = null): monaco.languages.CompletionItem {
+        let doc: string | monaco.IMarkdownString = "";
         if (a.documentation != null) {
             doc = { value: a.documentation, isTrusted: true };
         }
+        let identifier = (a as any).identifier;
         return {
-            label: v,
+            label: a.name,
             kind: monaco.languages.CompletionItemKind.Field,
             detail: a.type.name,
             documentation: doc,
-            insertText: v,
-            range: null
+            insertText: identifier,
+            filterText: identifier.toUpperCase(),
+            range: this.rangeForIdentifier(range, identifier)
         }
     }
 
-    enumSuggestion(v: string, t: EnumDomainType, e: EnumDomainTypeValue): monaco.languages.CompletionItem {
-        let doc: string | IMarkdownString = "";
+    enumSuggestion(t: EnumDomainType, e: EnumDomainTypeValue, range: monaco.IRange = null): monaco.languages.CompletionItem {
+        let doc: string | monaco.IMarkdownString = "";
         if (e.documentation != null) {
             doc = { value: e.documentation, isTrusted: true };
         }
+        let identifier = (e as any).identifier;
         return {
-            label: v,
+            label: e.value,
             kind: monaco.languages.CompletionItemKind.EnumMember,
             detail: t.name,
             documentation: doc,
-            insertText: v,
-            range: null
+            insertText: identifier,
+            filterText: identifier.toUpperCase(),
+            range: this.rangeForIdentifier(range, identifier)
         }
     }
 
-    typeSuggestion(v: string, t: DomainType): monaco.languages.CompletionItem {
+    typeSuggestion(t: DomainType, range: monaco.IRange = null): monaco.languages.CompletionItem {
         if (t instanceof EnumDomainType) {
-            let doc: string | IMarkdownString = "";
+            let doc: string | monaco.IMarkdownString = "";
             // if (t.documentation != null) {
             //     doc = { value: t.documentation, isTrusted: true };
             // }
+            let identifier = (t as any).identifier;
             return {
-                label: v,
+                label: t.name,
                 kind: monaco.languages.CompletionItemKind.Enum,
                 detail: t.name,
                 documentation: doc,
-                insertText: v,
-                range: null
+                insertText: identifier,
+                filterText: identifier.toUpperCase(),
+                range: this.rangeForIdentifier(range, identifier)
             }
         }
         return null;
     }
 
-    functionSuggestion(f: DomainFunction): monaco.languages.CompletionItem {
+    functionSuggestion(f: DomainFunction, range: monaco.IRange = null): monaco.languages.CompletionItem {
         let label: string;
         if (f.resultType == null) {
             label = "any";
@@ -222,35 +298,49 @@ export class PathResolvingProvider {
         if (f.documentation != null) {
             documentation += f.documentation + "\n\n";
         }
-        for (var i = 0; i < f.arguments.length; i++) {
-            if (i != 0) {
-                label += ", ";
+        if (f.arguments.length != 0) {
+            for (var i = 0; i < f.arguments.length; i++) {
+                if (i != 0) {
+                    label += ", ";
+                }
+                let p = f.arguments[i];
+                paramInfo += "\n| " + p.name + " | ";
+                if (p.documentation != null) {
+                    paramInfo += p.documentation;
+                }
+                if (p.type == null) {
+                    label += "any";
+                } else {
+                    label += p.type.name;
+                }
+                label += " " + p.name;
+                if (f.minArgumentCount != -1 && i >= f.minArgumentCount) {
+                    label += "?";
+                }
             }
-            let p = f.arguments[i];
-            paramInfo += "\n| " + p.name + " | ";
-            if (p.documentation != null) {
-                paramInfo += p.documentation;
-            }
-            if (p.type == null) {
-                label += "any";
-            } else {
-                label += p.type.name;
-            }
-            label += " " + p.name;
-            if (f.minArgumentCount != -1 && i >= f.minArgumentCount) {
-                label += "?";
-            }
+            documentation += "---\n\n" + paramInfo + " |";
         }
         label += ")";
-        documentation += "---\n\n" + paramInfo + " |";
+        let identifier = (f as any).identifier;
         return {
             label: f.name,
             detail: label,
             kind: monaco.languages.CompletionItemKind.Function,
             documentation: {value: documentation, isTrusted: true},
-            insertText: f.arguments.length == 0 && f.minArgumentCount == 0 ? f.name + "()" : f.name + "($0)",
+            insertText: f.arguments.length == 0 && f.minArgumentCount == 0 ? identifier + "()" : identifier + "($0)",
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            range: null
+            filterText: identifier.toUpperCase(),
+            range: this.rangeForIdentifier(range, identifier)
         }
+    }
+
+    private rangeForIdentifier(range: monaco.IRange, identifier: string): { insert: monaco.IRange, replace: monaco.IRange } {
+        if (range == null) {
+            return null;
+        }
+        return {
+            insert: range,
+            replace: range
+        };
     }
 }

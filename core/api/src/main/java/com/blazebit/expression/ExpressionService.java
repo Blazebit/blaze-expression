@@ -84,6 +84,20 @@ public interface ExpressionService {
     public ExpressionInterpreter createInterpreter();
 
     /**
+     * Creates and returns an expression serializer that produces an expression, which can be compiled again.
+     *
+     * @return the expression serializer
+     */
+    public ExpressionSerializer<StringBuilder> createSerializer();
+
+    /**
+     * Creates and returns an expression serializer that produces a template expression, which can be compiled again.
+     *
+     * @return the expression serializer
+     */
+    public ExpressionSerializer<StringBuilder> createTemplateSerializer();
+
+    /**
      * Creates and returns an expression serializer to serialize a compiled expression.
      *
      * @param serializationTarget The serialization target type

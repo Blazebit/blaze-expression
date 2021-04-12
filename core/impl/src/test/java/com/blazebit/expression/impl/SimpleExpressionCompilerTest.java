@@ -35,7 +35,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testAddition() {
-        Predicate predicate = parsePredicate("1>2+3");
+        Predicate predicate = parsePredicate("1 > 2 + 3");
         assertEquals(
                 gt(pos(number(1l)), plus(pos(number(2l)), pos(number(3l)))),
                 predicate
@@ -44,7 +44,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testAdditionParenthesis() {
-        Predicate predicate = parsePredicate("1>(2+3)");
+        Predicate predicate = parsePredicateOnly("1 > (2 + 3)");
         assertEquals(
                 gt(pos(number(1l)), pos(plus(pos(number(2l)), pos(number(3l))))),
                 predicate
@@ -53,7 +53,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testAdditionParenthesisNegated() {
-        Predicate predicate = parsePredicate("1>-(2+3)");
+        Predicate predicate = parsePredicate("1 > -(2 + 3)");
         assertEquals(
                 gt(pos(number(1l)), neg(plus(pos(number(2l)), pos(number(3l))))),
                 predicate
@@ -67,7 +67,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testAdditionParenthesisDoubleNegatedParanthesis() {
-        Predicate predicate = parsePredicate("1>-(-(2+3))");
+        Predicate predicate = parsePredicate("1 > -(-(2 + 3))");
         assertEquals(
                 gt(pos(number(1l)), neg(neg(plus(pos(number(2l)), pos(number(3l)))))),
                 predicate
@@ -139,7 +139,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testStringInLiterals() {
-        Predicate predicate = parsePredicate("'test' IN ('a','b','test')");
+        Predicate predicate = parsePredicate("'test' IN ('a', 'b', 'test')");
         assertEquals(
                 in(pos(string("test")), pos(string("a")), pos(string("b")), pos(string("test"))),
                 predicate
@@ -166,7 +166,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testArithmeticInLiterals() {
-        Predicate predicate = parsePredicate("1 + user.age IN (1,2,-3,4)");
+        Predicate predicate = parsePredicate("1 + user.age IN (1, 2, -3, 4)");
         assertEquals(
                 in(plus(pos(number(1)), pos(attr("user", "age"))), pos(number(1)), pos(number(2)), neg(number(3)), pos(number(4))),
                 predicate
@@ -175,7 +175,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testEnumInLiterals() {
-        Predicate predicate = parsePredicate("user.gender IN (gender.MALE,gender.FEMALE)");
+        Predicate predicate = parsePredicate("user.gender IN (gender.MALE, gender.FEMALE)");
         assertEquals(
                 in(pos(attr("user", "gender")), pos(enumValue("gender", "MALE")), pos(enumValue("gender", "FEMALE"))),
                 predicate
@@ -228,6 +228,24 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     @Test
     public void testDeReferenceFunction() {
         Expression expression = parseArithmeticExpression("self(user).active");
+        assertEquals(
+            attr(functionInvocation("self", attr("user")), "active"),
+            expression
+        );
+    }
+
+    @Test
+    public void testDeReferenceQuoted() {
+        Expression expression = parseArithmeticExpressionOnly("`user`.active");
+        assertEquals(
+            attr("user", "active"),
+            expression
+        );
+    }
+
+    @Test
+    public void testDeReferenceQuotedFunction() {
+        Expression expression = parseArithmeticExpressionOnly("`self`(user).`active`");
         assertEquals(
             attr(functionInvocation("self", attr("user")), "active"),
             expression

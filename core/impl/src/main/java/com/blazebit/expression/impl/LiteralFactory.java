@@ -22,9 +22,9 @@ import com.blazebit.domain.runtime.model.EnumDomainType;
 import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
 import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.DomainModelException;
-import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.Literal;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.spi.BooleanLiteralResolver;
 import com.blazebit.expression.spi.CollectionLiteralResolver;
@@ -51,6 +51,8 @@ import java.util.Map;
  */
 public class LiteralFactory {
 
+    static final char OPEN_BRACKET = '{';
+
     private static final DateTimeFormatter DATE_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter DATE_TIME_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter DATE_TIME_MILLISECONDS_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(ZoneOffset.UTC);
@@ -66,6 +68,67 @@ public class LiteralFactory {
 
     public LiteralFactory(ExpressionService expressionService) {
         this.expressionService = expressionService;
+    }
+
+    public static String unescapeString(String s) {
+        int end = s.length() - 1;
+        StringBuilder sb = new StringBuilder(end - 1);
+        for (int i = 1; i < end; i++) {
+            char c = s.charAt(i);
+            if (c == '\\' && (i + 1) < end) {
+                final char nextChar = s.charAt(++i);
+                switch (nextChar) {
+                    case 'b':
+                        c = '\b';
+                        break;
+                    case 't':
+                        c = '\t';
+                        break;
+                    case 'n':
+                        c = '\n';
+                        break;
+                    case 'f':
+                        c = '\f';
+                        break;
+                    case 'r':
+                        c = '\r';
+                        break;
+                    case '\\':
+                        c = '\\';
+                        break;
+                    case '\'':
+                        c = '\'';
+                        break;
+                    case '"':
+                        c = '"';
+                        break;
+                    case '`':
+                        c = '`';
+                        break;
+                    case 'u':
+                        c = (char) Integer.parseInt(s.substring(i + 1, i + 5), 16);
+                        i += 4;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    public static String unescapeTemplateText(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        int end = s.length();
+        for (int i = 0; i < end; i++) {
+            char c = s.charAt(i);
+            if (c == '\\' && (i + 1) < end && s.charAt(i + 1) == '#') {
+                continue;
+            }
+            sb.append(c);
+        }
+        return end == sb.length() ? s : sb.toString();
     }
 
     public ResolvedLiteral ofEnumValue(ExpressionCompiler.Context context, EnumDomainType enumDomainType, String value) {
@@ -84,11 +147,7 @@ public class LiteralFactory {
         return literal;
     }
 
-    public void appendEnumValue(StringBuilder sb, EnumDomainTypeValue domainEnumValue) {
-        sb.append(domainEnumValue.getOwner().getName()).append('.').append(domainEnumValue.getValue());
-    }
-
-    public ResolvedLiteral ofEntityAttributeValues(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, Expression> attributeValues) {
+    public ResolvedLiteral ofEntityAttributeValues(ExpressionCompiler.Context context, EntityDomainType entityDomainType, Map<EntityDomainTypeAttribute, ? extends Literal> attributeValues) {
         EntityLiteralResolver entityLiteralResolver = expressionService.getEntityLiteralResolver();
         if (entityLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for entity literals defined");
@@ -100,7 +159,7 @@ public class LiteralFactory {
         return literal;
     }
 
-    public ResolvedLiteral ofCollectionValues(ExpressionCompiler.Context context, CollectionDomainType collectionDomainType, Collection<Expression> expressions) {
+    public ResolvedLiteral ofCollectionValues(ExpressionCompiler.Context context, CollectionDomainType collectionDomainType, Collection<? extends Literal> expressions) {
         CollectionLiteralResolver collectionLiteralResolver = expressionService.getCollectionLiteralResolver();
         if (collectionLiteralResolver == null) {
             throw new DomainModelException("No literal resolver for collection literals defined");
@@ -180,29 +239,30 @@ public class LiteralFactory {
     }
 
     public void appendInterval(StringBuilder sb, TemporalInterval value) {
-        sb.append("INTERVAL ").append(value);
-    }
-
-    public ResolvedLiteral ofQuotedString(ExpressionCompiler.Context context, String quotedString) {
-        final char quoteChar;
-        if (quotedString.length() >= 2 && ((quoteChar = quotedString.charAt(0)) == '\'' || quoteChar == '"') && quotedString.charAt(quotedString.length() - 1) == quoteChar) {
-            StringBuilder sb = new StringBuilder();
-            int endIndex = quotedString.length() - 1;
-            for (int i = 1; i < endIndex; i++) {
-                char c = quotedString.charAt(i);
-                // Double quote
-                if (c == quoteChar) {
-                    if (quotedString.charAt(i + 1) != quoteChar) {
-                        throw new SyntaxErrorException("String quoting unbalanced [" + quotedString + "]");
-                    }
-                    i++;
-                }
-                sb.append(c);
-            }
-
-            return ofString(context, sb.toString());
-        } else {
-            throw new SyntaxErrorException("String not quoted [" + quotedString + "]");
+        sb.append("INTERVAL");
+        int years = value.getYears();
+        if (years != 0) {
+            sb.append(' ').append(years).append(" YEARS");
+        }
+        int months = value.getMonths();
+        if (months != 0) {
+            sb.append(' ').append(months).append(" MONTHS");
+        }
+        int days = value.getDays();
+        if (days != 0) {
+            sb.append(' ').append(days).append(" DAYS");
+        }
+        int hours = value.getHours();
+        if (hours != 0) {
+            sb.append(' ').append(hours).append(" HOURS");
+        }
+        int minutes = value.getMinutes();
+        if (minutes != 0) {
+            sb.append(' ').append(minutes).append(" MINUTES");
+        }
+        int seconds = value.getSeconds();
+        if (seconds != 0) {
+            sb.append(' ').append(seconds).append(" SECONDS");
         }
     }
 
@@ -216,15 +276,50 @@ public class LiteralFactory {
 
     public void appendString(StringBuilder sb, String value) {
         sb.append('\'');
-        for (int i = 0; i < value.length(); i++) {
+        int end = value.length();
+        sb.ensureCapacity(sb.length() + end + 10);
+        for (int i = 0; i < end; i++) {
             char c = value.charAt(i);
-            // Double quote
-            if (c == '\'') {
-                sb.append('\'');
+            switch (c) {
+                case '\b':
+                    sb.append('\\').append('b');
+                    break;
+                case '\t':
+                    sb.append('\\').append('t');
+                    break;
+                case '\n':
+                    sb.append('\\').append('n');
+                    break;
+                case '\f':
+                    sb.append('\\').append('f');
+                    break;
+                case '\r':
+                    sb.append('\\').append('r');
+                    break;
+                case '\\':
+                    sb.append('\\').append('\\');
+                    break;
+                case '\'':
+                    sb.append('\\').append('\'');
+                    break;
+                default:
+                    sb.append(c);
+                    break;
+            }
+        }
+        sb.append('\'');
+    }
+
+    public void appendTemplateString(StringBuilder sb, String value) {
+        int end = value.length();
+        sb.ensureCapacity(sb.length() + end + 10);
+        for (int i = 0; i < end; i++) {
+            char c = value.charAt(i);
+            if (c == '#' && (i + 1) < end && value.charAt(i + 1) == '{') {
+                sb.append('\\');
             }
             sb.append(c);
         }
-        sb.append('\'');
     }
 
     public ResolvedLiteral ofDateTimeString(ExpressionCompiler.Context context, String dateTimeString) {
@@ -256,6 +351,7 @@ public class LiteralFactory {
 
     public void appendInstant(StringBuilder sb, Instant value) {
         ZonedDateTime dateTime = value.atZone(ZoneOffset.UTC);
+        sb.append("TIMESTAMP(");
         if (dateTime.getNano() > 0) {
             DATE_TIME_MILLISECONDS_LITERAL_FORMAT.formatTo(dateTime, sb);
         } else if (dateTime.getSecond() > 0 || dateTime.getMinute() > 0 || dateTime.getHour() > 0) {
@@ -263,6 +359,7 @@ public class LiteralFactory {
         } else {
             DATE_LITERAL_FORMAT.formatTo(dateTime, sb);
         }
+        sb.append(')');
     }
 
     public ResolvedLiteral ofNumericString(ExpressionCompiler.Context context, String numericString) {

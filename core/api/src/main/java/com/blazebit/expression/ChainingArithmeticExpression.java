@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ChainingArithmeticExpression extends AbstractExpression implements ArithmeticExpression {
+public final class ChainingArithmeticExpression extends AbstractExpression implements ArithmeticExpression {
     private final ArithmeticExpression left;
     private final ArithmeticExpression right;
     private final ArithmeticOperatorType operator;

@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ExpressionPredicate extends AbstractPredicate {
+public final class ExpressionPredicate extends AbstractPredicate {
     private final Expression expression;
 
     /**

@@ -35,10 +35,13 @@ import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.ArithmeticOperatorType;
 import com.blazebit.expression.BetweenPredicate;
 import com.blazebit.expression.ChainingArithmeticExpression;
+import com.blazebit.expression.CollectionLiteral;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.DomainModelException;
+import com.blazebit.expression.EntityLiteral;
+import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionPredicate;
@@ -53,8 +56,10 @@ import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.TypeErrorException;
 import com.blazebit.expression.impl.PredicateParser.PathContext;
 import com.blazebit.expression.impl.PredicateParser.PathPredicateContext;
+import com.blazebit.expression.spi.DefaultResolvedLiteral;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
@@ -104,6 +109,45 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     @Override
     public Expression visitParseExpressionOrPredicate(PredicateParser.ParseExpressionOrPredicateContext ctx) {
         return ctx.predicateOrExpression().accept(this);
+    }
+
+    @Override
+    public Expression visitParseTemplate(PredicateParser.ParseTemplateContext ctx) {
+        PredicateParser.TemplateContext templateContext = ctx.template();
+        if (templateContext == null) {
+            return new Literal(literalFactory.ofString(compileContext, ""));
+        }
+        return templateContext.accept(this);
+    }
+
+    @Override
+    public Expression visitTemplate(PredicateParser.TemplateContext ctx) {
+        ArithmeticExpression expression;
+        int i = 0;
+        TerminalNode child = (TerminalNode) ctx.getChild(i);
+        if (child.getSymbol().getType() == PredicateLexer.TEXT) {
+            expression = new Literal(literalFactory.ofString(compileContext, child.getText()));
+            i += 1;
+        } else {
+            expression = new Literal(literalFactory.ofString(compileContext, ""));
+        }
+        int childCount = ctx.getChildCount();
+        for (; i < childCount; i++) {
+            child = (TerminalNode) ctx.getChild(i);
+            ArithmeticExpression subExpression;
+            if (child.getSymbol().getType() == PredicateLexer.TEXT) {
+                subExpression = new Literal(literalFactory.ofString(compileContext, child.getText()));
+            } else {
+                subExpression = (ArithmeticExpression) ctx.getChild(i + 1).accept(this);
+                i += 2;
+            }
+            expression = createArithmeticExpression(
+                expression,
+                subExpression,
+                ArithmeticOperatorType.PLUS
+            );
+        }
+        return expression;
     }
 
     @Override
@@ -377,7 +421,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         );
     }
 
-    protected Expression createArithmeticExpression(ArithmeticExpression left, ArithmeticExpression right, ArithmeticOperatorType operator) {
+    protected ArithmeticExpression createArithmeticExpression(ArithmeticExpression left, ArithmeticExpression right, ArithmeticOperatorType operator) {
         List<DomainType> operandTypes = Arrays.asList(left.getType(), right.getType());
         DomainOperationTypeResolver operationTypeResolver = domainModel.getOperationTypeResolver(left.getType().getName(), operator.getDomainOperator());
         if (operationTypeResolver == null) {
@@ -487,7 +531,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitCollectionLiteral(PredicateParser.CollectionLiteralContext ctx) {
-        List<Expression> literalList = getExpressionList(ctx.literal());
+        List<Literal> literalList = getExpressionList(ctx.literal());
         CollectionDomainType collectionDomainType;
         if (literalList.isEmpty()) {
             collectionDomainType = domainModel.getCollectionType(null);
@@ -495,7 +539,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             collectionDomainType = domainModel.getCollectionType(literalList.get(0).getType());
         }
 
-        return new Literal(literalFactory.ofCollectionValues(compileContext, collectionDomainType, literalList));
+        return new CollectionLiteral(literalList, literalFactory.ofCollectionValues(compileContext, collectionDomainType, literalList));
     }
 
     @Override
@@ -529,7 +573,9 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).size() == 1) {
                     type = domainModel.getType(alias);
                     if (type instanceof EnumDomainType) {
-                        return new Literal(literalFactory.ofEnumValue(compileContext, (EnumDomainType) type, identifiers.get(0).getText()));
+                        EnumDomainType enumDomainType = (EnumDomainType) type;
+                        String enumKey = identifiers.get(0).getText();
+                        return new EnumLiteral(enumDomainType.getEnumValues().get(enumKey), literalFactory.ofEnumValue(compileContext, enumDomainType, enumKey));
                     }
                 }
                 throw unknownType(alias);
@@ -638,15 +684,20 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     protected Expression createEntityLiteral(EntityDomainType entityDomainType, List<PredicateParser.IdentifierContext> argNames, List<Expression> literalList) {
-        Map<EntityDomainTypeAttribute, Expression> arguments = new LinkedHashMap<>(literalList.size());
+        Map<EntityDomainTypeAttribute, Literal> arguments = new LinkedHashMap<>(literalList.size());
         for (int i = 0; i < literalList.size(); i++) {
             EntityDomainTypeAttribute attribute = entityDomainType.getAttribute(argNames.get(i).getText());
             if (attribute == null) {
                 throw new DomainModelException("Invalid attribute name '" + argNames.get(i).getText() + "'! Entity '" + entityDomainType.getName() + "' expects the following attribute names: " + entityDomainType.getAttributes().keySet());
             }
-            arguments.put(attribute, literalList.get(i));
+            Expression expression = literalList.get(i);
+            if (!(expression instanceof Literal)) {
+                throw new DomainModelException("Invalid use of non-literal for entity literal at attribute name '" + argNames.get(i).getText() + "'!");
+            }
+            arguments.put(attribute, (Literal) expression);
         }
-        return new Literal(literalFactory.ofEntityAttributeValues(compileContext, entityDomainType, Collections.unmodifiableMap(arguments)));
+        Map<EntityDomainTypeAttribute, Literal> attributeValues = Collections.unmodifiableMap(arguments);
+        return new EntityLiteral(attributeValues, literalFactory.ofEntityAttributeValues(compileContext, entityDomainType, attributeValues));
     }
 
     @Override
@@ -706,13 +757,21 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @Override
+    public Expression visitStringLiteral(PredicateParser.StringLiteralContext ctx) {
+        List<ParseTree> children = ctx.children;
+        int size = children.size();
+        if (size == 2) {
+            return new Literal(literalFactory.ofString(compileContext, ""));
+        }
+        return new Literal(literalFactory.ofString(compileContext, LiteralFactory.unescapeString(ctx.getText())));
+    }
+
+    @Override
     public Expression visitTerminal(TerminalNode node) {
         if (node.getSymbol().getType() == PredicateLexer.EOF) {
             return null;
         }
         switch (node.getSymbol().getType()) {
-            case PredicateLexer.STRING_LITERAL:
-                return new Literal(literalFactory.ofString(compileContext, node.getText()));
             case PredicateLexer.TRUE:
                 return getBooleanTrueLiteral();
             case PredicateLexer.FALSE:

@@ -39,8 +39,11 @@ import com.blazebit.expression.ChainingArithmeticExpression;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
+import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
+import com.blazebit.expression.ExpressionSerializer;
+import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
@@ -53,6 +56,7 @@ import com.blazebit.expression.impl.domain.DefaultNumericLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultStringLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultTemporalLiteralResolver;
 import com.blazebit.expression.impl.model.Gender;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -85,6 +89,8 @@ public abstract class AbstractExpressionCompilerTest {
     private DomainModel domainModel;
     private ExpressionCompilerImpl expressionCompiler;
     private ExpressionCompiler.Context context;
+    private ExpressionSerializer<StringBuilder> expressionSerializer;
+    private ExpressionSerializer<StringBuilder> expressionTemplateSerializer;
 
     @BeforeClass
     public static void createDefaultTestDomainModel() {
@@ -143,27 +149,53 @@ public abstract class AbstractExpressionCompilerTest {
     @Before
     public void setup() {
         domainModel = createDomainModel();
-        expressionCompiler = (ExpressionCompilerImpl) Expressions.getDefaultProvider().createEmptyBuilder(domainModel)
+        ExpressionService expressionService = Expressions.getDefaultProvider().createEmptyBuilder(domainModel)
             .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
             .withStringLiteralResolver(new DefaultStringLiteralResolver())
             .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())
             .withEnumLiteralResolver(new DefaultEnumLiteralResolver())
             .withBooleanLiteralResolver(new DefaultBooleanLiteralResolver())
-            .build()
-            .createCompiler();
+            .build();
+        expressionCompiler = (ExpressionCompilerImpl) expressionService.createCompiler();
         context = expressionCompiler.createContext(Collections.singletonMap("user", domainModel.getType("user")));
+        expressionSerializer = expressionService.createSerializer();
+        expressionTemplateSerializer = expressionService.createTemplateSerializer();
     }
 
     protected DomainModel createDomainModel() {
         return defaultDomainModel;
     }
 
-    protected Predicate parsePredicate(String input) {
+    protected Predicate parsePredicateOnly(String input) {
         return expressionCompiler.createPredicate(input, context);
     }
 
-    protected Expression parseArithmeticExpression(String input) {
+    protected Predicate parsePredicate(String input) {
+        Predicate predicate = expressionCompiler.createPredicate(input, context);
+        StringBuilder sb = new StringBuilder();
+        expressionSerializer.serializeTo(predicate, sb);
+        Assert.assertEquals(input, sb.toString());
+        return predicate;
+    }
+
+    protected Expression parseArithmeticExpressionOnly(String input) {
         return expressionCompiler.createExpression(input, context);
+    }
+
+    protected Expression parseArithmeticExpression(String input) {
+        Expression expression = expressionCompiler.createExpression(input, context);
+        StringBuilder sb = new StringBuilder();
+        expressionSerializer.serializeTo(expression, sb);
+        Assert.assertEquals(input, sb.toString());
+        return expression;
+    }
+
+    protected Expression parseTemplateExpression(String input) {
+        Expression templateExpression = expressionCompiler.createTemplateExpression(input, context);
+        StringBuilder sb = new StringBuilder();
+        expressionTemplateSerializer.serializeTo(templateExpression, sb);
+        Assert.assertEquals(input, sb.toString());
+        return templateExpression;
     }
 
     protected CompoundPredicate or(Predicate... disjuncts) {
@@ -259,7 +291,8 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Literal enumValue(String enumName, String enumKey) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofEnumValue(context, (EnumDomainType) domainModel.getType(enumName), enumKey));
+        EnumDomainType enumDomainType = (EnumDomainType) domainModel.getType(enumName);
+        return new EnumLiteral(enumDomainType.getEnumValues().get(enumKey), expressionCompiler.getLiteralFactory().ofEnumValue(context, enumDomainType, enumKey));
     }
 
 //	protected static CollectionAtom collectionAttr(String identifier) {

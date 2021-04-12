@@ -22,12 +22,19 @@ import * as monaco from "monaco-editor";
  * @since 1.0.0
  */
 export class PredicateState implements monaco.languages.IState {
+
+    public readonly mode: number;
+
+    constructor(mode: number) {
+        this.mode = mode;
+    }
+
     clone(): monaco.languages.IState {
-        return new PredicateState();
+        return new PredicateState(this.mode);
     }
 
     equals(other: monaco.languages.IState): boolean {
-        return true;
+        return this.mode == (other as PredicateState).mode;
     }
 
 }

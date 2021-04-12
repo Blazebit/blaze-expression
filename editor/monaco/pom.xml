@@ -126,16 +126,16 @@
                             <arguments>run build</arguments>
                         </configuration>
                     </execution>
-<!--                    <execution>-->
-<!--                        <id>test</id>-->
-<!--                        <phase>test</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>npm</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <arguments>test</arguments>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
+                    <execution>
+                        <id>test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test</arguments>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

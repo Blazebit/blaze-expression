@@ -22,18 +22,22 @@ import {PredicateCompletionProvider} from "./PredicateCompletionProvider";
 import {SymbolTable} from "./SymbolTable";
 import * as monaco from "monaco-editor";
 import {ErrorEntry} from "./ErrorEntry";
-import {CharStreams, CommonTokenStream, ConsoleErrorListener} from "antlr4ts";
 import {CollectorErrorListener} from "./CollectorErrorListener";
 import {BlazeExpressionErrorStrategy} from "./BlazeExpressionErrorStrategy";
 import {DomainType} from "blaze-domain";
-import {MyBlazeExpressionParserVisitor} from "./MyBlazeExpressionParserVisitor";
 import {ExpressionException} from "./ExpressionException";
-import {BlazeExpressionLexer} from "./blaze-expression-predicate/BlazeExpressionLexer";
-import {BlazeExpressionParser} from "./blaze-expression-predicate/BlazeExpressionParser";
 
 export let symbolTables: StringMap<SymbolTable> = {};
 
+export function createTemplateEditor(monaco, opts: BlazeExpressionConstructOptions, options?: monaco.editor.IStandaloneEditorConstructionOptions): monaco.editor.IStandaloneCodeEditor {
+    return _createEditor(monaco, true, opts, options);
+}
+
 export function createEditor(monaco, opts: BlazeExpressionConstructOptions, options?: monaco.editor.IStandaloneEditorConstructionOptions): monaco.editor.IStandaloneCodeEditor {
+    return _createEditor(monaco, false, opts, options);
+}
+
+function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConstructOptions, options?: monaco.editor.IStandaloneEditorConstructionOptions): monaco.editor.IStandaloneCodeEditor {
     let domElement = opts.domElement;
     let input = opts.jsonContext;
     let singleLineMode = typeof opts.singleLineMode === 'undefined' ? false : opts.singleLineMode;
@@ -50,38 +54,62 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
     } else {
         wrongResultTypeErrorMessage = opts.wrongResultTypeErrorMessage;
     }
+    let required = opts.required === true;
+    let requiredMessage;
+    if (required) {
+        if (typeof opts.requiredMessage === 'undefined') {
+            requiredMessage = "Input is required";
+        } else {
+            requiredMessage = opts.requiredMessage;
+        }
+    } else {
+        requiredMessage = null;
+    }
     if (monaco.languages.getEncodedLanguageId('predicate') == 0) {
         monaco.languages.register({id: 'predicate'});
-        monaco.languages.setTokensProvider('predicate', new PredicateTokensProvider());
-        monaco.languages.setLanguageConfiguration('predicate', {
-            brackets: [['[', ']'], ['(', ')']],
+        monaco.languages.register({id: 'template'});
+        monaco.languages.setTokensProvider('predicate', new PredicateTokensProvider(false));
+        monaco.languages.setTokensProvider('template', new PredicateTokensProvider(true));
+        let languageConfig: monaco.languages.LanguageConfiguration = {
+            brackets: [['[', ']'], ['(', ')'], ['{', '}']],
             surroundingPairs: [
                 { open: '[', close: ']' },
                 { open: '(', close: ')' },
+                { open: '{', close: '}' },
                 { open: "'", close: "'" },
                 { open: '"', close: '"' },
             ],
             autoClosingPairs: [
                 { open: '[', close: ']', notIn: ['string'] },
                 { open: '(', close: ')', notIn: ['string'] },
+                { open: '{', close: '}', notIn: ['string'] },
                 { open: "'", close: "'", notIn: ['string'] },
                 { open: '"', close: '"', notIn: ['string'] },
             ]
-        });
+        };
+        monaco.languages.setLanguageConfiguration('predicate', languageConfig);
+        monaco.languages.setLanguageConfiguration('template', languageConfig);
 
-        var literalFg = '3b8737';
+        var literalFg = '3B8737';
         var idFg = '344482';
         var symbolsFg = '000000';
-        var keywordFg = '7132a8';
-        var errorFg = 'ff0000';
+        var textFg = '000001';
+        var keywordFg = '7132A8';
+        var errorFg = 'FF0000';
 
-        monaco.editor.defineTheme('blazeTheme', {
+        let blazeTheme: monaco.editor.IStandaloneThemeData = {
             base: 'vs',
             inherit: false,
             rules: [
                 {token: 'numeric_literal.blaze', foreground: literalFg},
                 {token: 'leading_zero_numeric_literal.blaze', foreground: literalFg},
-                {token: 'String', foreground: literalFg},
+
+                {token: 'start_quote.blaze', foreground: literalFg},
+                {token: 'start_double_quote.blaze', foreground: literalFg},
+                {token: 'end_quote.blaze', foreground: literalFg},
+                {token: 'end_double_quote.blaze', foreground: literalFg},
+                {token: 'text_in_quote.blaze', foreground: literalFg},
+                {token: 'text_in_double_quote.blaze', foreground: literalFg},
 
                 {token: 'identifier.blaze', foreground: idFg, fontStyle: 'italic'},
                 {token: 'quoted_identifier.blaze', foreground: idFg, fontStyle: 'italic'},
@@ -107,7 +135,6 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
                 {token: 'colon.blaze', foreground: symbolsFg},
                 {token: 'exclamation_mark.blaze', foreground: symbolsFg},
 
-
                 {token: 'and.blaze', foreground: keywordFg, fontStyle: 'bold'},
                 {token: 'between.blaze', foreground: keywordFg, fontStyle: 'bold'},
                 {token: 'days.blaze', foreground: keywordFg, fontStyle: 'bold'},
@@ -128,12 +155,47 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
                 {token: 'years.blaze', foreground: keywordFg, fontStyle: 'bold'},
 
                 {token: 'error.blaze', foreground: errorFg}
-            ]
-        });
+            ], colors: {}
+        };
+        monaco.editor.defineTheme('blazeTheme', blazeTheme);
+        // For templates we try to use a special background to highlight expressions
+        // NOTE: This kind of styling currently does not work and requires manual CSS work
+        // Also see https://github.com/microsoft/monaco-editor/issues/586
+        let expressionBg = 'C6BF5540';
+        let blazeTemplateTheme: monaco.editor.IStandaloneThemeData = JSON.parse(JSON.stringify(blazeTheme));
+        for (const rule of blazeTemplateTheme.rules) {
+            rule.background = expressionBg;
+        }
+        blazeTemplateTheme.rules.push( {token: 'text.blaze', foreground: textFg, background: 'ffffff'});
+        blazeTemplateTheme.rules.push( {token: 'expression_start.blaze', foreground: literalFg, fontStyle: 'italic', background: expressionBg});
+        blazeTemplateTheme.rules.push( {token: 'expression_end.blaze', foreground: literalFg, fontStyle: 'italic', background: expressionBg});
+        monaco.editor.defineTheme('blazeTemplateTheme', blazeTemplateTheme);
 
-        monaco.languages.registerHoverProvider('predicate', new PredicateHoverProvider());
-        monaco.languages.registerSignatureHelpProvider('predicate', new PredicateSignatureHelpProvider());
-        monaco.languages.registerCompletionItemProvider('predicate', new PredicateCompletionProvider());
+        // This is a "hack" to be able to avoid suggestions in string literals
+        // The line token API is not public and the matching against the class name is also not nice
+        // But this is the only way without tokenizing again
+        let predicateLiteralClass = 'mtk4';
+        let templateLiteralClass = 'mtk5';
+
+        try {
+            monaco.editor.setTheme('blazeTheme');
+            let tempModel1 = monaco.editor.createModel('""', 'predicate', null);
+            predicateLiteralClass = 'mtk' + tempModel1._tokenization._tokenizationSupport._standaloneThemeService._theme._tokenTheme._colorMap._color2id.get(literalFg);
+            tempModel1.dispose();
+            monaco.editor.setTheme('blazeTemplateTheme');
+            let tempModel2 = monaco.editor.createModel('#{""}', 'template', null);
+            templateLiteralClass = 'mtk' + tempModel2._tokenization._tokenizationSupport._standaloneThemeService._theme._tokenTheme._colorMap._color2id.get(literalFg);
+            tempModel2.dispose();
+        } catch (e) {
+            // Ignore
+        }
+
+        monaco.languages.registerHoverProvider('predicate', new PredicateHoverProvider(false));
+        monaco.languages.registerSignatureHelpProvider('predicate', new PredicateSignatureHelpProvider(false));
+        monaco.languages.registerCompletionItemProvider('predicate', new PredicateCompletionProvider(false, predicateLiteralClass));
+        monaco.languages.registerHoverProvider('template', new PredicateHoverProvider(true));
+        monaco.languages.registerSignatureHelpProvider('template', new PredicateSignatureHelpProvider(true));
+        monaco.languages.registerCompletionItemProvider('template', new PredicateCompletionProvider(true, templateLiteralClass));
     }
 
     let symbolTable;
@@ -143,13 +205,13 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
         symbolTable = SymbolTable.parse(input, extensions);
     }
     let textArea = domElement.getElementsByTagName('textarea')[0];
-    let textModel = monaco.editor.createModel(textArea.innerText, 'predicate');
+    let textModel = monaco.editor.createModel(textArea.innerText, templateMode ? 'template' : 'predicate');
     symbolTables[textModel.id] = symbolTable;
     textModel.onWillDispose(function() {
         symbolTables[textModel.id] = null;
     });
     let singleLineOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
-        theme: 'blazeTheme',
+        theme: templateMode ? 'blazeTemplateTheme' : 'blazeTheme',
         contextmenu: false,
         wordWrap: 'off',
         lineNumbers: 'off',
@@ -167,7 +229,7 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
         suggest: { showWords: false }
     };
     let multiLineOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
-        theme: 'blazeTheme',
+        theme: templateMode ? 'blazeTemplateTheme' : 'blazeTheme',
         contextmenu: false,
         wordWrap: 'off',
         lineNumbers: 'off',
@@ -203,7 +265,7 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
             };
         }
     }
-    options.language = 'predicate';
+    options.language = templateMode ? 'template' : 'predicate';
     options.model = textModel;
     let editor = monaco.editor.create(domElement, options);
     if (singleLineMode) {
@@ -247,38 +309,56 @@ export function createEditor(monaco, opts: BlazeExpressionConstructOptions, opti
         textArea.innerText = code;
         var model = editor.getModel();
         let symbolTable = symbolTables[model.id];
-        var syntaxErrors = validate(code, symbolTable, expectedResultTypes, wrongResultTypeErrorMessage);
+        var syntaxErrors = validate(code, symbolTable, templateMode, expectedResultTypes, wrongResultTypeErrorMessage);
         var monacoErrors: monaco.editor.IMarkerData[] = [];
-        for (var e of syntaxErrors) {
-            monacoErrors.push({
-                startLineNumber: e.startLine,
-                startColumn: e.startCol,
-                endLineNumber: e.endLine,
-                endColumn: e.endCol,
-                message: e.message,
-                severity: monaco.MarkerSeverity.Error
-            });
+        if (code.length == 0) {
+            if (required) {
+                monacoErrors.push({
+                    startLineNumber: 1,
+                    startColumn: 1,
+                    endLineNumber: 1,
+                    endColumn: 1,
+                    message: requiredMessage,
+                    severity: monaco.MarkerSeverity.Error
+                });
+            }
+        } else {
+            for (var e of syntaxErrors) {
+                monacoErrors.push({
+                    startLineNumber: e.startLine,
+                    startColumn: e.startCol,
+                    endLineNumber: e.endLine,
+                    endColumn: e.endCol,
+                    message: e.message,
+                    severity: monaco.MarkerSeverity.Error
+                });
+            }
         }
         monaco.editor.setModelMarkers(model, "owner", monacoErrors);
     });
     return editor;
 }
 
-function validate(input: string, symbolTable: SymbolTable, expectedResultTypes: string[], errorMessage: string) : ErrorEntry[] {
+function validate(input: string, symbolTable: SymbolTable, templateMode: boolean, expectedResultTypes: string[], errorMessage: string) : ErrorEntry[] {
     let errors : ErrorEntry[] = [];
 
-    const lexer = new BlazeExpressionLexer(CharStreams.fromString(input));
+    const lexer = templateMode ? symbolTable.model.createTemplateLexer(input) : symbolTable.model.createLexer(input);
     lexer.removeErrorListeners();
-    lexer.addErrorListener(new ConsoleErrorListener());
+    lexer.addErrorListener(new CollectorErrorListener(errors));
 
-    const parser = new BlazeExpressionParser(new CommonTokenStream(lexer));
+    const parser = symbolTable.model.parserFactory(lexer);
     parser.removeErrorListeners();
     parser.addErrorListener(new CollectorErrorListener(errors));
     parser.errorHandler = new BlazeExpressionErrorStrategy();
 
-    const tree = parser.parseExpressionOrPredicate();
+    let tree;
+    if (templateMode) {
+        tree = symbolTable.model.parseTemplateRuleInvoker(parser);
+    } else {
+        tree = symbolTable.model.parseRuleInvoker(parser);
+    }
     try {
-        let resultType: DomainType = tree.accept(new MyBlazeExpressionParserVisitor(symbolTable));
+        let resultType: DomainType = symbolTable.model.typeResolver(tree, symbolTable);
         if (resultType != null && expectedResultTypes && expectedResultTypes.length != 0) {
             for (let expectedResultType of expectedResultTypes) {
                 if (resultType.name == expectedResultType) {

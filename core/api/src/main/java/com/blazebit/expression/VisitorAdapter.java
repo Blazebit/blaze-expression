@@ -98,4 +98,19 @@ public abstract class VisitorAdapter implements Expression.Visitor {
     public void visit(Literal e) {
 
     }
+
+    @Override
+    public void visit(EnumLiteral e) {
+
+    }
+
+    @Override
+    public void visit(EntityLiteral e) {
+
+    }
+
+    @Override
+    public void visit(CollectionLiteral e) {
+
+    }
 }

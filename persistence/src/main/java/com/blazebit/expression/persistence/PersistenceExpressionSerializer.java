@@ -23,9 +23,12 @@ import com.blazebit.expression.ArithmeticExpression;
 import com.blazebit.expression.ArithmeticFactor;
 import com.blazebit.expression.BetweenPredicate;
 import com.blazebit.expression.ChainingArithmeticExpression;
+import com.blazebit.expression.CollectionLiteral;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
 import com.blazebit.expression.DomainModelException;
+import com.blazebit.expression.EntityLiteral;
+import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
@@ -240,6 +243,21 @@ public class PersistenceExpressionSerializer implements Expression.Visitor, Expr
                 sb.append(value);
             }
         }
+    }
+
+    @Override
+    public void visit(EnumLiteral e) {
+        visit((Literal) e);
+    }
+
+    @Override
+    public void visit(EntityLiteral e) {
+        visit((Literal) e);
+    }
+
+    @Override
+    public void visit(CollectionLiteral e) {
+        visit((Literal) e);
     }
 
     @Override
