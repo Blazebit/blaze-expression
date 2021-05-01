@@ -72,22 +72,6 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
     }
 
     @Override
-    public Context createContext(Map<String, Object> contextParameters) {
-        return new Context() {
-
-            @Override
-            public ExpressionService getExpressionService() {
-                return expressionService;
-            }
-
-            @Override
-            public Object getContextParameter(String contextParameterName) {
-                return contextParameters.get(contextParameterName);
-            }
-        };
-    }
-
-    @Override
     public void serializeTo(Expression expression, StringBuilder target) {
         serializeTo(null, expression, target);
     }

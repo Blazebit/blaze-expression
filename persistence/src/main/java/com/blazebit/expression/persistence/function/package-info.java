@@ -15,7 +15,7 @@
  */
 
 /**
- * Blaze-Expression JPQL function interpreter implementations.
+ * Blaze-Expression Base function renderer implementations for JPQL.next.
  */
 package com.blazebit.expression.persistence.function;
 

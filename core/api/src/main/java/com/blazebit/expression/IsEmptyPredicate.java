@@ -18,16 +18,15 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
- * The nullness predicate that checks if the expression evaluates to <code>null</code>.
+ * The emptyness predicate that checks if the expression evaluates to an empty value.
  *
  * @author Christian Beikov
  * @since 1.0.0
  */
 public final class IsEmptyPredicate extends AbstractPredicate {
     private final Expression left;
+    private final int hash;
 
     /**
      * Constructs a new possibly negated nullness predicate for the given expressions returning a result of the given domain type.
@@ -38,6 +37,7 @@ public final class IsEmptyPredicate extends AbstractPredicate {
     public IsEmptyPredicate(DomainType type, Expression left) {
         super(type);
         this.left = left;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -50,6 +50,7 @@ public final class IsEmptyPredicate extends AbstractPredicate {
     public IsEmptyPredicate(DomainType type, Expression left, boolean negated) {
         super(type, negated);
         this.left = left;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -96,11 +97,16 @@ public final class IsEmptyPredicate extends AbstractPredicate {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         IsEmptyPredicate that = (IsEmptyPredicate) o;
-        return Objects.equals(left, that.left);
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && left.equals(that.left);
+    }
+
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + left.hashCode();
+        return result;
     }
 
     /**
@@ -108,6 +114,6 @@ public final class IsEmptyPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), left);
+        return hash;
     }
 }

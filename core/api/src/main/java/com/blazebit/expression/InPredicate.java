@@ -19,7 +19,6 @@ package com.blazebit.expression;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The in predicate which is semantically equivalent to <code>left = item1 OR ... OR left = itemN</code>.
@@ -30,6 +29,7 @@ import java.util.Objects;
 public final class InPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final List<ArithmeticExpression> inItems;
+    private final int hash;
 
     /**
      * Constructs a new possibly negated in predicate for the given expressions returning a result of the given domain type.
@@ -42,6 +42,7 @@ public final class InPredicate extends AbstractPredicate {
         super(type);
         this.left = left;
         this.inItems = inItems;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -56,6 +57,7 @@ public final class InPredicate extends AbstractPredicate {
         super(type, negated);
         this.left = left;
         this.inItems = inItems;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -111,12 +113,18 @@ public final class InPredicate extends AbstractPredicate {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         InPredicate that = (InPredicate) o;
-        return Objects.equals(left, that.left) &&
-                Objects.equals(inItems, that.inItems);
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && left.equals(that.left)
+            && inItems.equals(that.inItems);
+    }
+
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + left.hashCode();
+        result = 31 * result + inItems.hashCode();
+        return result;
     }
 
     /**
@@ -124,6 +132,6 @@ public final class InPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), left, inItems);
+        return hash;
     }
 }

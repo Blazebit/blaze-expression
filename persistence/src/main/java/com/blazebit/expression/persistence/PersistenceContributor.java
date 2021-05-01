@@ -17,516 +17,138 @@
 package com.blazebit.expression.persistence;
 
 import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.boot.model.DomainFunctionDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
-import com.blazebit.domain.runtime.model.DomainModel;
-import com.blazebit.domain.runtime.model.DomainOperationTypeResolver;
-import com.blazebit.domain.runtime.model.DomainOperator;
-import com.blazebit.domain.runtime.model.DomainPredicate;
-import com.blazebit.domain.runtime.model.DomainPredicateTypeResolver;
-import com.blazebit.domain.runtime.model.DomainType;
-import com.blazebit.domain.runtime.model.DomainTypeResolverException;
-import com.blazebit.domain.runtime.model.EnumDomainTypeValue;
-import com.blazebit.domain.runtime.model.StaticDomainOperationTypeResolvers;
-import com.blazebit.domain.runtime.model.StaticDomainPredicateTypeResolvers;
-import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.domain.spi.DomainContributor;
-import com.blazebit.domain.spi.DomainSerializer;
-import com.blazebit.expression.DocumentationMetadataDefinition;
-import com.blazebit.expression.ExpressionCompiler;
-import com.blazebit.expression.ExpressionService;
-import com.blazebit.expression.ExpressionServiceBuilder;
-import com.blazebit.expression.persistence.function.AbsFunction;
-import com.blazebit.expression.persistence.function.Atan2Function;
-import com.blazebit.expression.persistence.function.CeilFunction;
-import com.blazebit.expression.persistence.function.CurrentDateFunction;
-import com.blazebit.expression.persistence.function.CurrentTimeFunction;
-import com.blazebit.expression.persistence.function.CurrentTimestampFunction;
-import com.blazebit.expression.persistence.function.EndsWithFunction;
-import com.blazebit.expression.persistence.function.FloorFunction;
-import com.blazebit.expression.persistence.function.GreatestFunction;
-import com.blazebit.expression.persistence.function.LTrimFunction;
-import com.blazebit.expression.persistence.function.LeastFunction;
-import com.blazebit.expression.persistence.function.LengthFunction;
-import com.blazebit.expression.persistence.function.LocateFunction;
-import com.blazebit.expression.persistence.function.LocateLastFunction;
-import com.blazebit.expression.persistence.function.LowerFunction;
-import com.blazebit.expression.persistence.function.NumericFunction;
-import com.blazebit.expression.persistence.function.PowFunction;
-import com.blazebit.expression.persistence.function.RTrimFunction;
-import com.blazebit.expression.persistence.function.RandomFunction;
-import com.blazebit.expression.persistence.function.ReplaceFunction;
-import com.blazebit.expression.persistence.function.RoundFunction;
-import com.blazebit.expression.persistence.function.SizeFunction;
-import com.blazebit.expression.persistence.function.StartsWithFunction;
-import com.blazebit.expression.persistence.function.SubstringFunction;
-import com.blazebit.expression.persistence.function.TrimFunction;
-import com.blazebit.expression.persistence.function.UpperFunction;
-import com.blazebit.expression.spi.BooleanLiteralResolver;
-import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
-import com.blazebit.expression.spi.DefaultResolvedLiteral;
-import com.blazebit.expression.spi.DomainOperatorInterpreter;
-import com.blazebit.expression.spi.EnumLiteralResolver;
-import com.blazebit.expression.spi.ExpressionServiceContributor;
-import com.blazebit.expression.spi.ExpressionServiceSerializer;
-import com.blazebit.expression.spi.NumericLiteralResolver;
-import com.blazebit.expression.spi.ResolvedLiteral;
-import com.blazebit.expression.spi.StringLiteralResolver;
-import com.blazebit.expression.spi.TemporalLiteralResolver;
+import com.blazebit.expression.base.BaseContributor;
+import com.blazebit.expression.base.GlobalStringlyTypeDestructorFunctionInvoker;
+import com.blazebit.expression.base.StringlyTypeConstructorFunctionInvoker;
+import com.blazebit.expression.base.StringlyTypeDestructorFunctionInvoker;
+import com.blazebit.expression.persistence.function.PersistenceAbsFunction;
+import com.blazebit.expression.persistence.function.PersistenceAtan2Function;
+import com.blazebit.expression.persistence.function.PersistenceCeilFunction;
+import com.blazebit.expression.persistence.function.PersistenceCurrentDateFunction;
+import com.blazebit.expression.persistence.function.PersistenceCurrentTimeFunction;
+import com.blazebit.expression.persistence.function.PersistenceCurrentTimestampFunction;
+import com.blazebit.expression.persistence.function.PersistenceEndsWithFunction;
+import com.blazebit.expression.persistence.function.PersistenceFloorFunction;
+import com.blazebit.expression.persistence.function.PersistenceFunctionRendererMetadataDefinition;
+import com.blazebit.expression.persistence.function.PersistenceGreatestFunction;
+import com.blazebit.expression.persistence.function.PersistenceLTrimFunction;
+import com.blazebit.expression.persistence.function.PersistenceLeastFunction;
+import com.blazebit.expression.persistence.function.PersistenceLengthFunction;
+import com.blazebit.expression.persistence.function.PersistenceLocateFunction;
+import com.blazebit.expression.persistence.function.PersistenceLocateLastFunction;
+import com.blazebit.expression.persistence.function.PersistenceLowerFunction;
+import com.blazebit.expression.persistence.function.PersistenceNumericFunction;
+import com.blazebit.expression.persistence.function.PersistencePowFunction;
+import com.blazebit.expression.persistence.function.PersistenceRTrimFunction;
+import com.blazebit.expression.persistence.function.PersistenceRandomFunction;
+import com.blazebit.expression.persistence.function.PersistenceReplaceFunction;
+import com.blazebit.expression.persistence.function.PersistenceRoundFunction;
+import com.blazebit.expression.persistence.function.PersistenceSizeFunction;
+import com.blazebit.expression.persistence.function.PersistenceStartsWithFunction;
+import com.blazebit.expression.persistence.function.PersistenceSubstringFunction;
+import com.blazebit.expression.persistence.function.PersistenceTrimFunction;
+import com.blazebit.expression.persistence.function.PersistenceUpperFunction;
+import com.blazebit.expression.spi.FunctionInvoker;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Instant;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class PersistenceContributor implements DomainContributor, ExpressionServiceContributor {
-
-    // NOTE: Copied to TypeAdapterRegistry. Keep in sync
-    public static final Class<?> BOOLEAN = Boolean.class;
-    public static final String BOOLEAN_TYPE_NAME = "Boolean";
-    public static final Class<?> INTEGER = BigInteger.class;
-    public static final String INTEGER_TYPE_NAME = "Integer";
-    public static final Class<?> NUMERIC = BigDecimal.class;
-    public static final String NUMERIC_TYPE_NAME = "Numeric";
-    public static final Class<?> TIMESTAMP = Instant.class;
-    public static final String TIMESTAMP_TYPE_NAME = "Timestamp";
-    public static final Class<?> TIME = LocalTime.class;
-    public static final String TIME_TYPE_NAME = "Time";
-    public static final Class<?> INTERVAL = TemporalInterval.class;
-    public static final String INTERVAL_TYPE_NAME = "Interval";
-    public static final Class<?> STRING = String.class;
-    public static final String STRING_TYPE_NAME = "String";
-
-    public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
-    public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
-    public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolverImpl();
-    public static final StringLiteralResolver STRING_LITERAL_TYPE_RESOLVER = new StringLiteralResolverImpl();
-    public static final EnumLiteralResolver ENUM_LITERAL_RESOLVER = new EnumLiteralResolverImpl();
-
-    @Override
-    public void contribute(ExpressionServiceBuilder expressionServiceBuilder) {
-        expressionServiceBuilder.withNumericLiteralResolver(NUMERIC_LITERAL_TYPE_RESOLVER);
-        expressionServiceBuilder.withStringLiteralResolver(STRING_LITERAL_TYPE_RESOLVER);
-        expressionServiceBuilder.withTemporalLiteralResolver(TEMPORAL_LITERAL_TYPE_RESOLVER);
-        expressionServiceBuilder.withBooleanLiteralResolver(BOOLEAN_LITERAL_TYPE_RESOLVER);
-        expressionServiceBuilder.withEnumLiteralResolver(ENUM_LITERAL_RESOLVER);
-    }
+public class PersistenceContributor implements DomainContributor {
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        createBasicType(domainBuilder, INTEGER, INTEGER_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "INTEGER"));
-        createBasicType(domainBuilder, NUMERIC, NUMERIC_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorHandler.INSTANCE, "NUMERIC"));
-        createBasicType(domainBuilder, STRING, STRING_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorHandler.INSTANCE, "STRING"));
-        createBasicType(domainBuilder, TIMESTAMP, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorHandler.INSTANCE, "TIMESTAMP"));
-        createBasicType(domainBuilder, TIME, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorHandler.INSTANCE, "TIME"));
-        createBasicType(domainBuilder, INTERVAL, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorHandler.INSTANCE, "INTERVAL"));
-        createBasicType(domainBuilder, BOOLEAN, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorHandler.INSTANCE, "BOOLEAN"));
+        domainBuilder.extendBasicType(BaseContributor.INTEGER_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.NUMERIC_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.STRING_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceStringOperatorRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimestampOperatorRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimeOperatorRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceIntervalOperatorRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
 
-        for (String type : Arrays.asList(INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME)) {
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.widest(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_MINUS, StaticDomainOperationTypeResolvers.returning(type));
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.UNARY_PLUS, StaticDomainOperationTypeResolvers.returning(type));
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME));
-            for (DomainOperator domainOperator : Arrays.asList(DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
-                domainBuilder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
+        for (DomainFunctionDefinition functionDefinition : domainBuilder.getFunctions().values()) {
+            Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = functionDefinition.getMetadataDefinitions();
+            if (!metadataDefinitions.containsKey(PersistenceFunctionRenderer.class)) {
+                // For functions that do not contain a persistence function renderer,
+                // we check if they are stringly typed, and if so, by default assume we can render-through
+                MetadataDefinition<FunctionInvoker> metadataDefinition = (MetadataDefinition<FunctionInvoker>) metadataDefinitions.get(FunctionInvoker.class);
+                FunctionInvoker functionInvoker = metadataDefinition.build(null);
+                if (functionInvoker instanceof StringlyTypeDestructorFunctionInvoker) {
+                    domainBuilder.extendFunction(functionDefinition.getName(), new PersistenceFunctionRendererMetadataDefinition(new PersistenceStringlyTypeDestructorFunctionRenderer(PersistenceStringlyTypeHandler.INSTANCE)));
+                } else if (functionInvoker instanceof StringlyTypeConstructorFunctionInvoker) {
+                    domainBuilder.extendFunction(functionDefinition.getName(), new PersistenceFunctionRendererMetadataDefinition(new PersistenceStringlyTypeConstructorFunctionRenderer(PersistenceStringlyTypeHandler.INSTANCE)));
+                } else if (functionInvoker instanceof GlobalStringlyTypeDestructorFunctionInvoker) {
+                    GlobalStringlyTypeDestructorFunctionInvoker functionHandler = (GlobalStringlyTypeDestructorFunctionInvoker) functionInvoker;
+                    domainBuilder.extendFunction(functionDefinition.getName(), new PersistenceFunctionRendererMetadataDefinition(new PersistenceGlobalStringlyTypeDestructorFunctionRenderer(functionHandler, functionDefinition.getName())));
+                }
             }
-            domainBuilder.withOperationTypeResolver(type, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(STRING_TYPE_NAME, NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
-
-            withPredicateTypeResolvers(domainBuilder, type, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME);
         }
 
-        domainBuilder.withOperationTypeResolver(STRING_TYPE_NAME, DomainOperator.PLUS, new StringlyDomainOperationTypeResolver(STRING_TYPE_NAME, STRING_TYPE_NAME, INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME));
-        StringlyDomainPredicateTypeResolver stringlyDomainPredicateTypeResolver = new StringlyDomainPredicateTypeResolver(BOOLEAN_TYPE_NAME, STRING_TYPE_NAME);
-        for (DomainPredicate domainPredicate : domainBuilder.getEnabledPredicates(domainBuilder.getType(STRING_TYPE_NAME).getName())) {
-            domainBuilder.withPredicateTypeResolver(STRING_TYPE_NAME, domainPredicate, stringlyDomainPredicateTypeResolver);
-        }
-
-        domainBuilder.withDefaultPredicateResultType(BOOLEAN_TYPE_NAME);
-        domainBuilder.withOperationTypeResolver(BOOLEAN_TYPE_NAME, DomainOperator.NOT, StaticDomainOperationTypeResolvers.returning(BOOLEAN_TYPE_NAME));
-        withPredicateTypeResolvers(domainBuilder, BOOLEAN_TYPE_NAME, BOOLEAN_TYPE_NAME);
-
-        domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, new String[][]{ { TIMESTAMP_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, new String[][]{ { TIMESTAMP_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        withPredicateTypeResolvers(domainBuilder, TIMESTAMP_TYPE_NAME, TIMESTAMP_TYPE_NAME);
-
-        domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, new String[][]{ { TIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, new String[][]{ { TIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        withPredicateTypeResolvers(domainBuilder, TIME_TYPE_NAME, TIME_TYPE_NAME);
-
-        domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
-        domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
-        withPredicateTypeResolvers(domainBuilder, INTERVAL_TYPE_NAME, INTERVAL_TYPE_NAME);
-
-        CurrentTimestampFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        CurrentDateFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        CurrentTimeFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        SubstringFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        ReplaceFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        TrimFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LTrimFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        RTrimFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        UpperFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LowerFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LengthFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LocateFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LocateLastFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        StartsWithFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        EndsWithFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        AbsFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        CeilFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        FloorFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        NumericFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        Atan2Function.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        RoundFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        RandomFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        PowFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        GreatestFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        LeastFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
-        SizeFunction.addFunction(domainBuilder, PersistenceContributor.class.getClassLoader());
+        PersistenceCurrentTimestampFunction.addFunction(domainBuilder);
+        PersistenceCurrentDateFunction.addFunction(domainBuilder);
+        PersistenceCurrentTimeFunction.addFunction(domainBuilder);
+        PersistenceSubstringFunction.addFunction(domainBuilder);
+        PersistenceReplaceFunction.addFunction(domainBuilder);
+        PersistenceTrimFunction.addFunction(domainBuilder);
+        PersistenceLTrimFunction.addFunction(domainBuilder);
+        PersistenceRTrimFunction.addFunction(domainBuilder);
+        PersistenceUpperFunction.addFunction(domainBuilder);
+        PersistenceLowerFunction.addFunction(domainBuilder);
+        PersistenceLengthFunction.addFunction(domainBuilder);
+        PersistenceLocateFunction.addFunction(domainBuilder);
+        PersistenceLocateLastFunction.addFunction(domainBuilder);
+        PersistenceStartsWithFunction.addFunction(domainBuilder);
+        PersistenceEndsWithFunction.addFunction(domainBuilder);
+        PersistenceAbsFunction.addFunction(domainBuilder);
+        PersistenceCeilFunction.addFunction(domainBuilder);
+        PersistenceFloorFunction.addFunction(domainBuilder);
+        PersistenceNumericFunction.addFunction(domainBuilder);
+        PersistenceAtan2Function.addFunction(domainBuilder);
+        PersistenceRoundFunction.addFunction(domainBuilder);
+        PersistenceRandomFunction.addFunction(domainBuilder);
+        PersistencePowFunction.addFunction(domainBuilder);
+        PersistenceGreatestFunction.addFunction(domainBuilder);
+        PersistenceLeastFunction.addFunction(domainBuilder);
+        PersistenceSizeFunction.addFunction(domainBuilder);
     }
 
     @Override
     public int priority() {
-        // We use a priority of 500 so that user contributors, which usually don't configure a priority, are guaranteed to run afterwards
-        return 500;
-    }
-
-    private static void withPredicateTypeResolvers(DomainBuilder domainBuilder, String type, String... supportedTypes) {
-        Set<DomainPredicate> enabledPredicates = domainBuilder.getEnabledPredicates(domainBuilder.getType(type).getName());
-        if (!enabledPredicates.isEmpty()) {
-            DomainPredicateTypeResolver predicateTypeResolver = StaticDomainPredicateTypeResolvers.returning(BOOLEAN_TYPE_NAME, supportedTypes);
-            for (DomainPredicate domainPredicate : enabledPredicates) {
-                domainBuilder.withPredicateTypeResolver(type, domainPredicate, predicateTypeResolver);
-            }
-        }
-    }
-
-    private <T extends ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance, String documentationKey) {
-        return new MetadataDefinition[] {
-            new ComparisonOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer.SIMPLE),
-            DocumentationMetadataDefinition.localized(documentationKey, PersistenceContributor.class.getClassLoader())
-        };
-    }
-
-    private <T extends DomainOperatorRenderer & ComparisonOperatorInterpreter & DomainOperatorInterpreter> MetadataDefinition<?>[] handlersFor(T instance, String documentationKey) {
-        return new MetadataDefinition[] {
-            new ComparisonOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorInterpreterMetadataDefinition(instance),
-            new DomainOperatorRendererMetadataDefinition(instance),
-            DocumentationMetadataDefinition.localized(documentationKey, PersistenceContributor.class.getClassLoader())
-        };
-    }
-
-    private static void createBasicType(DomainBuilder domainBuilder, Class<?> type, String name, DomainOperator[] operators, DomainPredicate[] predicates, MetadataDefinition<?>... metadataDefinitions) {
-        domainBuilder.createBasicType(name, type, metadataDefinitions);
-        domainBuilder.withOperator(name, operators);
-        domainBuilder.withPredicate(name, predicates);
+        // We use a priority of 600 so that user contributors, which usually don't configure a priority, are guaranteed to run afterwards
+        return 600;
     }
 
     /**
      * @author Christian Beikov
      * @since 1.0.0
      */
-    private static class BooleanLiteralResolverImpl implements ExpressionServiceSerializer<BooleanLiteralResolver>, BooleanLiteralResolver, Serializable {
-        @Override
-        public <T> T serialize(ExpressionService expressionService, BooleanLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            return (T) "\"BooleanLiteralResolver\"";
-        }
+    static class PersistenceDomainOperatorRendererMetadataDefinition implements MetadataDefinition<PersistenceDomainOperatorRenderer> {
 
-        @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, boolean value) {
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(BOOLEAN_TYPE_NAME), value);
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class NumericLiteralResolverImpl implements ExpressionServiceSerializer<NumericLiteralResolver>, NumericLiteralResolver, Serializable {
-        @Override
-        public <T> T serialize(ExpressionService expressionService, NumericLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            return (T) "\"NumericLiteralResolver\"";
-        }
-
-        @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, Number value) {
-            if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
-                return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(NUMERIC_TYPE_NAME), value);
-            } else if (value instanceof BigInteger) {
-                return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), value);
-            }
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), BigInteger.valueOf(value.longValue()));
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class TemporalLiteralResolverImpl implements ExpressionServiceSerializer<TemporalLiteralResolver>, TemporalLiteralResolver, Serializable {
-        @Override
-        public <T> T serialize(ExpressionService expressionService, TemporalLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            return (T) "\"TemporalLiteralResolver\"";
-        }
-
-        @Override
-        public ResolvedLiteral resolveTimestampLiteral(ExpressionCompiler.Context context, Instant value) {
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(TIMESTAMP_TYPE_NAME), value);
-        }
-
-        @Override
-        public ResolvedLiteral resolveIntervalLiteral(ExpressionCompiler.Context context, TemporalInterval value) {
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTERVAL_TYPE_NAME), value);
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class StringLiteralResolverImpl implements ExpressionServiceSerializer<StringLiteralResolver>, StringLiteralResolver, Serializable {
-
-        @Override
-        public <T> T serialize(ExpressionService expressionService, StringLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            return (T) "\"StringLiteralResolver\"";
-        }
-
-        @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, String value) {
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(STRING_TYPE_NAME), value);
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class EnumLiteralResolverImpl implements ExpressionServiceSerializer<EnumLiteralResolver>, EnumLiteralResolver, Serializable {
-
-        @Override
-        public <T> T serialize(ExpressionService expressionService, EnumLiteralResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            return (T) "\"SimpleEnumLiteralResolver\"";
-        }
-
-        @Override
-        public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, EnumDomainTypeValue value) {
-            return new DefaultResolvedLiteral(value.getOwner(), value);
-        }
-
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    static class ComparisonOperatorInterpreterMetadataDefinition implements MetadataDefinition<ComparisonOperatorInterpreter>, Serializable {
-
-        private final ComparisonOperatorInterpreter comparisonOperatorInterpreter;
+        private final PersistenceDomainOperatorRenderer persistenceDomainOperatorRenderer;
 
         /**
-         * Creates a metadata definition for the given {@link ComparisonOperatorInterpreter}.
+         * Creates a metadata definition for the given {@link PersistenceDomainOperatorRenderer}.
          *
-         * @param comparisonOperatorInterpreter The comparison operator interpreter
+         * @param persistenceDomainOperatorRenderer The domain operator renderer
          */
-        public ComparisonOperatorInterpreterMetadataDefinition(ComparisonOperatorInterpreter comparisonOperatorInterpreter) {
-            this.comparisonOperatorInterpreter = comparisonOperatorInterpreter;
+        public PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer persistenceDomainOperatorRenderer) {
+            this.persistenceDomainOperatorRenderer = persistenceDomainOperatorRenderer;
         }
 
         @Override
-        public Class<ComparisonOperatorInterpreter> getJavaType() {
-            return ComparisonOperatorInterpreter.class;
+        public Class<PersistenceDomainOperatorRenderer> getJavaType() {
+            return PersistenceDomainOperatorRenderer.class;
         }
 
         @Override
-        public ComparisonOperatorInterpreter build(MetadataDefinitionHolder definitionHolder) {
-            return comparisonOperatorInterpreter;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    static class DomainOperatorInterpreterMetadataDefinition implements MetadataDefinition<DomainOperatorInterpreter> {
-
-        private final DomainOperatorInterpreter domainOperatorInterpreter;
-
-        /**
-         * Creates a metadata definition for the given {@link DomainOperatorInterpreter}.
-         *
-         * @param domainOperatorInterpreter The domain operator interpreter
-         */
-        public DomainOperatorInterpreterMetadataDefinition(DomainOperatorInterpreter domainOperatorInterpreter) {
-            this.domainOperatorInterpreter = domainOperatorInterpreter;
-        }
-
-        @Override
-        public Class<DomainOperatorInterpreter> getJavaType() {
-            return DomainOperatorInterpreter.class;
-        }
-
-        @Override
-        public DomainOperatorInterpreter build(MetadataDefinitionHolder definitionHolder) {
-            return domainOperatorInterpreter;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    static class DomainOperatorRendererMetadataDefinition implements MetadataDefinition<DomainOperatorRenderer> {
-
-        private final DomainOperatorRenderer domainOperatorRenderer;
-
-        /**
-         * Creates a metadata definition for the given {@link DomainOperatorRenderer}.
-         *
-         * @param domainOperatorRenderer The domain operator renderer
-         */
-        public DomainOperatorRendererMetadataDefinition(DomainOperatorRenderer domainOperatorRenderer) {
-            this.domainOperatorRenderer = domainOperatorRenderer;
-        }
-
-        @Override
-        public Class<DomainOperatorRenderer> getJavaType() {
-            return DomainOperatorRenderer.class;
-        }
-
-        @Override
-        public DomainOperatorRenderer build(MetadataDefinitionHolder definitionHolder) {
-            return domainOperatorRenderer;
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class StringlyDomainOperationTypeResolver implements DomainOperationTypeResolver, DomainSerializer<DomainOperationTypeResolver>, Serializable {
-
-        private final String returningType;
-        private final Set<String> supportedTypeNames;
-
-        public StringlyDomainOperationTypeResolver(String returningType, String... supportedTypeNames) {
-            this.returningType = returningType;
-            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
-        }
-
-        @Override
-        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-            for (int i = 0; i < domainTypes.size(); i++) {
-                DomainType domainType = domainTypes.get(i);
-                if (!supportedTypeNames.contains(domainType.getName())) {
-                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
-                    for (String typeName : supportedTypeNames) {
-                        types.add(domainModel.getType(typeName));
-                    }
-                    if (domainType.getMetadata(StringlyTypeHandler.class) == null) {
-                        throw new DomainTypeResolverException("The operation operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following: " + types);
-                    }
-                }
-            }
-            return domainModel.getType(returningType);
-        }
-
-        @Override
-        public <T> T serialize(DomainModel domainModel, DomainOperationTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\"RestrictedDomainOperationTypeResolver\":[");
-            sb.append('"').append(returningType).append("\",[");
-            for (DomainType domainType : domainModel.getTypes().values()) {
-                String typeName = domainType.getName();
-                if (supportedTypeNames.contains(typeName) || domainType.getMetadata(StringlyTypeHandler.class) != null) {
-                    sb.append('"').append(typeName).append("\",");
-                }
-            }
-            sb.setCharAt(sb.length() - 1, ']');
-            sb.append(']').append('}');
-            return (T) sb.toString();
-        }
-    }
-
-    /**
-     * @author Christian Beikov
-     * @since 1.0.0
-     */
-    private static class StringlyDomainPredicateTypeResolver implements DomainPredicateTypeResolver, DomainSerializer<DomainPredicateTypeResolver>, Serializable {
-
-        private final String returningType;
-        private final Set<String> supportedTypeNames;
-
-        public StringlyDomainPredicateTypeResolver(String returningType, String... supportedTypeNames) {
-            this.returningType = returningType;
-            this.supportedTypeNames = new HashSet<>(Arrays.asList(supportedTypeNames));
-        }
-
-        @Override
-        public DomainType resolveType(DomainModel domainModel, List<DomainType> domainTypes) {
-            for (int i = 0; i < domainTypes.size(); i++) {
-                DomainType domainType = domainTypes.get(i);
-                if (!supportedTypeNames.contains(domainType.getName())) {
-                    List<DomainType> types = new ArrayList<>(supportedTypeNames.size());
-                    for (String typeName : supportedTypeNames) {
-                        types.add(domainModel.getType(typeName));
-                    }
-                    if (domainType.getMetadata(StringlyTypeHandler.class) == null) {
-                        throw new DomainTypeResolverException("The predicate operand at index " + i + " with the domain type '" + domainType + "' is unsupported! Expected one of the following types: " + types);
-                    }
-                }
-            }
-            return domainModel.getType(returningType);
-        }
-
-        @Override
-        public <T> T serialize(DomainModel domainModel, DomainPredicateTypeResolver element, Class<T> targetType, String format, Map<String, Object> properties) {
-            if (targetType != String.class || !"json".equals(format)) {
-                return null;
-            }
-            StringBuilder sb = new StringBuilder();
-            sb.append("{\"RestrictedDomainPredicateTypeResolver\":[");
-            sb.append('"').append(domainModel.getType(returningType).getName()).append("\",[");
-            for (DomainType domainType : domainModel.getTypes().values()) {
-                String typeName = domainType.getName();
-                if (supportedTypeNames.contains(typeName) || domainType.getMetadata(StringlyTypeHandler.class) != null) {
-                    sb.append('"').append(typeName).append("\",");
-                }
-            }
-            sb.setCharAt(sb.length() - 1, ']');
-            sb.append(']').append('}');
-            return (T) sb.toString();
+        public PersistenceDomainOperatorRenderer build(MetadataDefinitionHolder definitionHolder) {
+            return persistenceDomainOperatorRenderer;
         }
     }
 

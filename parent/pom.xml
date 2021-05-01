@@ -18,8 +18,8 @@
         <blaze-expression.codename>Enceladus</blaze-expression.codename>
 
         <version.blaze-utils>0.1.21</version.blaze-utils>
-        <version.blaze-persistence>1.6.0-Alpha2</version.blaze-persistence>
-        <version.blaze-domain>2.0.2</version.blaze-domain>
+        <version.blaze-persistence>1.6.0</version.blaze-persistence>
+        <version.blaze-domain>2.0.3</version.blaze-domain>
         <version.weld>2.4.5.Final</version.weld>
         <version.junit>4.12</version.junit>
 

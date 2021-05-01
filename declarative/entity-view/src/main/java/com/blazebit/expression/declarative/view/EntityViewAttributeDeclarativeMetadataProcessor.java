@@ -44,6 +44,11 @@ public class EntityViewAttributeDeclarativeMetadataProcessor implements Declarat
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, ServiceProvider serviceProvider) {
+        return null;
+    }
+
+    @Override
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, String attributeName, String typeName, boolean collection, ServiceProvider serviceProvider) {
         EntityViewManager entityViewManager = serviceProvider.getService(EntityViewManager.class);
         if (entityViewManager == null) {
             throw new IllegalStateException("Missing EntityViewManager! Please provide the EntityViewManager as service via DeclarativeDomainConfiguration.withService(EntityViewManager.class, evm)");
@@ -54,16 +59,16 @@ public class EntityViewAttributeDeclarativeMetadataProcessor implements Declarat
                 MethodAttribute<?, ?> attribute = managedViewType.getAttribute(getAttributeName(method));
                 if (attribute instanceof MappingAttribute<?, ?>) {
                     if (attribute.getLimitExpression() == null) {
-                        return new MappingExpressionRendererImpl((MappingAttribute<?, ?>) attribute);
+                        return new PersistenceMappingExpressionRenderer((MappingAttribute<?, ?>) attribute);
                     } else {
-                        return new MappingExpressionCorrelationRendererImpl((MappingAttribute<?, ?>) attribute);
+                        return new PersistenceMappingExpressionCorrelationRenderer((MappingAttribute<?, ?>) attribute);
                     }
                 } else if (attribute instanceof SubqueryAttribute<?, ?>) {
                     SubqueryAttribute<?, ?> subqueryAttribute = (SubqueryAttribute<?, ?>) attribute;
-                    return new SubqueryCorrelationRendererImpl(subqueryAttribute);
+                    return new PersistenceSubqueryCorrelationRenderer(subqueryAttribute);
                 } else if (attribute instanceof CorrelatedAttribute<?, ?>) {
                     CorrelatedAttribute<?, ?> correlatedAttribute = (CorrelatedAttribute<?, ?>) attribute;
-                    return new CorrelationProviderCorrelationRendererImpl(correlatedAttribute);
+                    return new PersistenceCorrelationProviderCorrelationRenderer(correlatedAttribute);
                 } else {
                     throw new IllegalStateException("Unknown attribute type: " + attribute);
                 }

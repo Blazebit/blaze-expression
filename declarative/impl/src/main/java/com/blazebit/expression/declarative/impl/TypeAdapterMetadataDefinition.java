@@ -28,7 +28,7 @@ import java.lang.reflect.Field;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<TypeAdapter>, Serializable {
+public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<TypeAdapter<X, Y>>, Serializable {
 
     private static final Field INTERNAL_TYPE;
 
@@ -55,12 +55,12 @@ public class TypeAdapterMetadataDefinition<X, Y> implements MetadataDefinition<T
     }
 
     @Override
-    public Class<TypeAdapter> getJavaType() {
-        return TypeAdapter.class;
+    public Class<TypeAdapter<X, Y>> getJavaType() {
+        return (Class) TypeAdapter.class;
     }
 
     @Override
-    public TypeAdapter build(MetadataDefinitionHolder definitionHolder) {
+    public TypeAdapter<X, Y> build(MetadataDefinitionHolder definitionHolder) {
         return typeAdapter;
     }
 

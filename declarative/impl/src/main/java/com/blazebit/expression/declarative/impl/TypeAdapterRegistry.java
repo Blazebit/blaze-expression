@@ -41,7 +41,7 @@ import java.util.ServiceLoader;
  */
 public final class TypeAdapterRegistry implements TypeResolver {
 
-    // Copy from PersistenceDomainContributor. Keep in sync
+    // Copy from BaseContributor. Keep in sync
     private static final Class<Boolean> BOOLEAN = Boolean.class;
     private static final Class<BigInteger> INTEGER = BigInteger.class;
     private static final Class<BigDecimal> NUMERIC = BigDecimal.class;

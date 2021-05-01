@@ -19,8 +19,8 @@ package com.blazebit.expression.examples.web.editor;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.EnumDomainTypeBuilder;
 import com.blazebit.domain.spi.DomainContributor;
+import com.blazebit.expression.base.StringlyTypeUtils;
 import com.blazebit.expression.examples.web.editor.entity.Gender;
-import com.blazebit.expression.persistence.TypeUtils;
 
 /**
  * @author Christian Beikov
@@ -31,10 +31,10 @@ public class ExampleDomainContributor implements DomainContributor {
     @Override
     public void contribute(DomainBuilder domainBuilder) {
         EnumDomainTypeBuilder genderEnumBuilder = domainBuilder.createEnumType("Gender", Gender.class);
-        TypeUtils.registerStringlyEnumType(domainBuilder, genderEnumBuilder);
         for (Gender gender : Gender.values()) {
             genderEnumBuilder.withValue(gender.name());
         }
         genderEnumBuilder.build();
+        StringlyTypeUtils.registerStringlyType(domainBuilder, "Gender");
     }
 }

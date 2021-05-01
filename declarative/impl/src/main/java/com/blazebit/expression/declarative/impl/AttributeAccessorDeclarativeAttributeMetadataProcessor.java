@@ -37,6 +37,11 @@ public class AttributeAccessorDeclarativeAttributeMetadataProcessor implements D
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
+        return null;
+    }
+
+    @Override
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, String attributeName, String typeName, boolean collection, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
         return new MethodAttributeAccessor(method);
     }
 }

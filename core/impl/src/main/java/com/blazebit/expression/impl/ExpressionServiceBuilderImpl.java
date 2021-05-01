@@ -63,7 +63,7 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
 
     private final ExpressionService baseExpressionService;
     private final DomainModel domainModel;
-    private Map<Class<?>, ExpressionSerializerFactory<?>> expressionSerializers;
+    private Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers;
     private Set<ExpressionServiceSerializer<?>> expressionServiceSerializers;
     private NumericLiteralResolver numericLiteralResolver;
     private BooleanLiteralResolver booleanLiteralResolver;
@@ -234,7 +234,8 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
                 expressionSerializers = new HashMap<>(baseExpressionService.getExpressionSerializerFactories());
             }
         }
-        expressionSerializers.put(serializer.getSerializationTargetType(), serializer);
+        expressionSerializers.computeIfAbsent(serializer.getSerializationTargetType(), k -> new HashMap<>())
+            .put(serializer.getSerializationFormat(), serializer);
         return this;
     }
 
@@ -247,14 +248,18 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
         );
     }
 
-    private Map<Class<?>, ExpressionSerializerFactory<?>> getImmutableSerializerFactories() {
+    private Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> getImmutableSerializerFactories() {
         if (expressionSerializers == null) {
             if (baseExpressionService == null) {
                 return Collections.emptyMap();
             }
             return baseExpressionService.getExpressionSerializerFactories();
         }
-        return Collections.unmodifiableMap(new HashMap<>(expressionSerializers));
+        Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> serializerFactories = new HashMap<>(expressionSerializers.size());
+        for (Map.Entry<Class<?>, Map<String, ExpressionSerializerFactory<?>>> entry : expressionSerializers.entrySet()) {
+            serializerFactories.put(entry.getKey(), Collections.unmodifiableMap(new HashMap<>(entry.getValue())));
+        }
+        return Collections.unmodifiableMap(serializerFactories);
     }
 
     private List<ExpressionServiceSerializer<?>> getImmutableExpressionServiceSerializers() {
@@ -315,14 +320,14 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
      */
     private static class Providers {
         private final Iterable<ExpressionServiceContributor> expressionServiceContributors;
-        private final Map<Class<?>, ExpressionSerializerFactory<?>> expressionSerializerFactories;
+        private final Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializerFactories;
         private final Iterable<ExpressionServiceSerializer<?>> expressionServiceSerializers;
 
         public Providers() {
             this.expressionServiceContributors = StreamSupport.stream(ServiceLoader.load(ExpressionServiceContributor.class).spliterator(), false)
                 .sorted(Comparator.comparing(ExpressionServiceContributor::priority))
                 .collect(Collectors.toList());
-            Map<Class<?>, ExpressionSerializerFactory<?>> expressionSerializers = new HashMap<>();
+            Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers = new HashMap<>();
             @SuppressWarnings("rawtypes")
             Iterator<ExpressionSerializerFactory> iterator = ServiceLoader.load(ExpressionSerializerFactory.class).iterator();
             while (iterator.hasNext()) {
@@ -330,7 +335,8 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
                 try {
                     ExpressionSerializerFactory<?> expressionSerializerFactory = iterator.next();
                     name = expressionSerializerFactory.getClass().getName();
-                    expressionSerializers.put(expressionSerializerFactory.getSerializationTargetType(), expressionSerializerFactory);
+                    expressionSerializers.computeIfAbsent(expressionSerializerFactory.getSerializationTargetType(), k -> new HashMap<>())
+                        .put(expressionSerializerFactory.getSerializationFormat(), expressionSerializerFactory);
                 } catch (Throwable ex) {
                     if (name == null) {
                         LOG.log(Level.WARNING, "Ignoring expression serializer due to exception", ex);

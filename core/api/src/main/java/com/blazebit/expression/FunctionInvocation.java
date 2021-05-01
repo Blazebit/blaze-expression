@@ -20,7 +20,6 @@ import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainType;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A function invocation expression.
@@ -28,10 +27,10 @@ import java.util.Objects;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public final class FunctionInvocation implements ArithmeticExpression {
+public final class FunctionInvocation extends AbstractExpression implements ArithmeticExpression {
     private final DomainFunction function;
     private final Map<DomainFunctionArgument, Expression> arguments;
-    private final DomainType type;
+    private final int hash;
 
     /**
      * Creates a new function invocation expression from the given domain function and function argument assignments returning a result of the given domain type.
@@ -41,9 +40,10 @@ public final class FunctionInvocation implements ArithmeticExpression {
      * @param type The result domain type
      */
     public FunctionInvocation(DomainFunction function, Map<DomainFunctionArgument, Expression> arguments, DomainType type) {
+        super(type);
         this.function = function;
         this.arguments = arguments;
-        this.type = type;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -62,14 +62,6 @@ public final class FunctionInvocation implements ArithmeticExpression {
      */
     public Map<DomainFunctionArgument, Expression> getArguments() {
         return arguments;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DomainType getType() {
-        return type;
     }
 
     /**
@@ -102,7 +94,14 @@ public final class FunctionInvocation implements ArithmeticExpression {
         FunctionInvocation that = (FunctionInvocation) o;
         return function.equals(that.function) &&
                 arguments.equals(that.arguments) &&
-                type.equals(that.type);
+                getType().equals(that.getType());
+    }
+
+    private int computeHashCode() {
+        int result = getType().hashCode();
+        result = 31 * result + function.hashCode();
+        result = 31 * result + arguments.hashCode();
+        return result;
     }
 
     /**
@@ -110,6 +109,6 @@ public final class FunctionInvocation implements ArithmeticExpression {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(function, arguments, type);
+        return hash;
     }
 }

@@ -25,9 +25,11 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.ExpressionInterpreterContext;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializerContext;
 import com.blazebit.persistence.BaseWhereBuilder;
 import com.blazebit.persistence.BetweenBuilder;
 import com.blazebit.persistence.CaseWhenStarterBuilder;
@@ -70,7 +72,8 @@ public class ModelTest {
         ExpressionInterpreter interpreter = expressionService.createInterpreter();
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Expression expression = compiler.createExpression(expr, compilerContext);
-        ExpressionInterpreter.Context context = interpreter.createContext(Collections.singletonMap("user", domainType), Collections.singletonMap("user", user));
+        ExpressionInterpreter.Context context = ExpressionInterpreterContext.create(expressionService)
+            .withRoot("user", user);
         return interpreter.evaluate(expression, context);
     }
 
@@ -93,7 +96,8 @@ public class ModelTest {
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Expression expression = compiler.createExpression("IS_OLD(user)", compilerContext);
         ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
-        ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "u"));
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService, null)
+            .withAlias("user", "u");
         WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
         serializer.serializeTo(serializerContext, expression, whereBuilderMock);
         Assert.assertEquals("u.age > 18", whereBuilderMock.predicate);
@@ -102,7 +106,7 @@ public class ModelTest {
     @DomainFunctions
     static class Functions {
         @DomainFunction("IS_OLD")
-        @FunctionExpression("?1.age > 18")
+        @PersistenceFunction("?1.age > 18")
         static Boolean isOld(ExpressionInterpreter.Context context, @DomainFunctionParam("person") User user, String... args) {
             return user.getAge() > 18;
         }

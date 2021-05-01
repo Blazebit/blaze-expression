@@ -211,7 +211,7 @@ export class UserModel {
                         name: "ABS",
                         argCount: 1,
                         minArgCount: 1,
-                        typeResolver: "FirstArgumentDomainFunctionTypeResolver",
+                        typeResolver: {"NthArgumentDomainFunctionTypeResolver": [0]},
                         args: [{
                             name: "number",
                             meta: [{doc: "The number argument whose absolute value is to be determined"}]

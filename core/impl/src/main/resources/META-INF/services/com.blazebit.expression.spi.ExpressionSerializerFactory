@@ -1,0 +1,2 @@
+com.blazebit.expression.impl.TemplateExpressionSerializerFactory
+com.blazebit.expression.impl.PredicateExpressionSerializerFactory

@@ -38,7 +38,7 @@ public class EntityResolvedLiteral implements ResolvedLiteral, Serializable {
     private final Object idValue;
     private final boolean isIdString;
     private final String expressionPrefix;
-    private final EntityLiteralRestrictionProvider entityLiteralRestrictionProvider;
+    private final EntityLiteralPersistenceRestrictionProvider entityLiteralRestrictionProvider;
     private transient String expression;
 
     /**
@@ -51,7 +51,7 @@ public class EntityResolvedLiteral implements ResolvedLiteral, Serializable {
      * @param expressionPrefix The JPQL expression prefix
      * @param restrictionProvider The restriction provider
      */
-    public EntityResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object idValue, boolean isIdString, String expressionPrefix, EntityLiteralRestrictionProvider restrictionProvider) {
+    public EntityResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object idValue, boolean isIdString, String expressionPrefix, EntityLiteralPersistenceRestrictionProvider restrictionProvider) {
         this.domainModel = domainModel;
         this.entityDomainType = entityDomainType;
         this.idValue = idValue;

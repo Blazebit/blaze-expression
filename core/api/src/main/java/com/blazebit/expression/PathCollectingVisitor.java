@@ -40,5 +40,8 @@ public class PathCollectingVisitor extends VisitorAdapter {
     @Override
     public void visit(Path e) {
         paths.add(e);
+        if (e.getBase() != null) {
+            e.getBase().accept(this);
+        }
     }
 }

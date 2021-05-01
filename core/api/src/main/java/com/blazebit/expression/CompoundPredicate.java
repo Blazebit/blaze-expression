@@ -30,6 +30,7 @@ public final class CompoundPredicate extends AbstractPredicate {
 
     private final boolean conjunction;
     private final List<Predicate> predicates;
+    private final int hash;
 
     /**
      * Creates a new compound predicate from the given predicates as conjunction or disjunction returning a result of the given domain type.
@@ -54,6 +55,7 @@ public final class CompoundPredicate extends AbstractPredicate {
         super(type, negated);
         this.predicates = predicates;
         this.conjunction = conjunction;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -109,16 +111,18 @@ public final class CompoundPredicate extends AbstractPredicate {
         if (!(o instanceof CompoundPredicate)) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
-
         CompoundPredicate that = (CompoundPredicate) o;
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && conjunction == that.conjunction
+            && predicates.equals(that.predicates);
+    }
 
-        if (conjunction != that.conjunction) {
-            return false;
-        }
-        return getPredicates().equals(that.getPredicates());
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + (conjunction ? 1 : 0);
+        result = 31 * result + predicates.hashCode();
+        return result;
     }
 
     /**
@@ -126,9 +130,6 @@ public final class CompoundPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (conjunction ? 1 : 0);
-        result = 31 * result + getPredicates().hashCode();
-        return result;
+        return hash;
     }
 }

@@ -19,7 +19,7 @@ package com.blazebit.expression.declarative.view;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
-import com.blazebit.expression.declarative.persistence.EntityLiteralRestrictionProvider;
+import com.blazebit.expression.declarative.persistence.EntityLiteralPersistenceRestrictionProvider;
 import com.blazebit.expression.spi.ResolvedLiteral;
 
 import java.io.Serializable;
@@ -38,7 +38,7 @@ public class EntityViewResolvedLiteral implements ResolvedLiteral, Serializable 
     private final Object viewId;
     private final boolean isViewIdString;
     private final String expressionPrefix;
-    private final EntityLiteralRestrictionProvider entityLiteralRestrictionProvider;
+    private final EntityLiteralPersistenceRestrictionProvider entityLiteralRestrictionProvider;
     private transient String expression;
 
     /**
@@ -52,7 +52,7 @@ public class EntityViewResolvedLiteral implements ResolvedLiteral, Serializable 
      * @param expressionPrefix The JPQL expression prefix
      * @param restrictionProvider The restriction provider
      */
-    public EntityViewResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object value, Object viewId, boolean isViewIdString, String expressionPrefix, EntityLiteralRestrictionProvider restrictionProvider) {
+    public EntityViewResolvedLiteral(DomainModel domainModel, EntityDomainType entityDomainType, Object value, Object viewId, boolean isViewIdString, String expressionPrefix, EntityLiteralPersistenceRestrictionProvider restrictionProvider) {
         this.domainModel = domainModel;
         this.entityDomainType = entityDomainType;
         this.value = value;

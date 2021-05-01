@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * The predicate wrapper for boolean expressions.
  *
@@ -28,6 +26,7 @@ import java.util.Objects;
  */
 public final class ExpressionPredicate extends AbstractPredicate {
     private final Expression expression;
+    private final int hash;
 
     /**
      * Constructs a new possibly negated predicate wrapper for the given expression returning a result of the given domain type.
@@ -38,6 +37,7 @@ public final class ExpressionPredicate extends AbstractPredicate {
     public ExpressionPredicate(DomainType type, Expression expression) {
         super(type);
         this.expression = expression;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -50,6 +50,7 @@ public final class ExpressionPredicate extends AbstractPredicate {
     public ExpressionPredicate(DomainType type, Expression expression, boolean negated) {
         super(type, negated);
         this.expression = expression;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -96,11 +97,16 @@ public final class ExpressionPredicate extends AbstractPredicate {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         ExpressionPredicate that = (ExpressionPredicate) o;
-        return Objects.equals(expression, that.expression);
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && expression.equals(that.expression);
+    }
+
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + expression.hashCode();
+        return result;
     }
 
     /**
@@ -108,6 +114,6 @@ public final class ExpressionPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), expression);
+        return hash;
     }
 }

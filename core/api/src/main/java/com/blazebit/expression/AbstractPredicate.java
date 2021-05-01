@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * A base implementation for predicates.
  *
@@ -69,20 +67,13 @@ public abstract class AbstractPredicate extends AbstractExpression implements Pr
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
-
         AbstractPredicate that = (AbstractPredicate) o;
-
-        return isNegated() == that.isNegated();
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), negated);
+        return negated ? 1 : 0;
     }
 }

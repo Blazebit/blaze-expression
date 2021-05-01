@@ -149,7 +149,7 @@ public abstract class AbstractExpressionCompilerTest {
     @Before
     public void setup() {
         domainModel = createDomainModel();
-        ExpressionService expressionService = Expressions.getDefaultProvider().createEmptyBuilder(domainModel)
+        ExpressionService expressionService = Expressions.getDefaultProvider().createDefaultBuilder(domainModel)
             .withNumericLiteralResolver(new DefaultNumericLiteralResolver())
             .withStringLiteralResolver(new DefaultStringLiteralResolver())
             .withTemporalLiteralResolver(new DefaultTemporalLiteralResolver())

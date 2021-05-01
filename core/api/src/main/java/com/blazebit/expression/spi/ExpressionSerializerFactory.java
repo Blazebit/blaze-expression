@@ -39,6 +39,15 @@ public interface ExpressionSerializerFactory<T> {
     public Class<T> getSerializationTargetType();
 
     /**
+     * Returns the supported serialization format.
+     *
+     * @return the supported serialization format
+     */
+    default String getSerializationFormat() {
+        return null;
+    }
+
+    /**
      * Returns a new serializer for the given expression service.
      *
      * @param expressionService The expression service the serializer should be based on

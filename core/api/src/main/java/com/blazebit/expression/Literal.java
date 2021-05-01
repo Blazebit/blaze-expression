@@ -19,8 +19,6 @@ package com.blazebit.expression;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.spi.ResolvedLiteral;
 
-import java.util.Objects;
-
 /**
  * A literal expression.
  *
@@ -30,6 +28,7 @@ import java.util.Objects;
 public class Literal implements ArithmeticExpression {
 
     private final ResolvedLiteral resolvedLiteral;
+    private final int hash;
 
     /**
      * Creates a new literal expression from the given resolved literal.
@@ -38,6 +37,7 @@ public class Literal implements ArithmeticExpression {
      */
     public Literal(ResolvedLiteral resolvedLiteral) {
         this.resolvedLiteral = resolvedLiteral;
+        this.hash = resolvedLiteral.hashCode();
     }
 
     /**
@@ -94,7 +94,7 @@ public class Literal implements ArithmeticExpression {
             return false;
         }
         Literal literal = (Literal) o;
-        return Objects.equals(resolvedLiteral, literal.resolvedLiteral);
+        return resolvedLiteral.equals(literal.resolvedLiteral);
     }
 
     /**
@@ -102,6 +102,6 @@ public class Literal implements ArithmeticExpression {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(resolvedLiteral);
+        return hash;
     }
 }

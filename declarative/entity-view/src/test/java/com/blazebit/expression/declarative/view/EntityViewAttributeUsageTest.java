@@ -25,7 +25,8 @@ import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.Predicate;
-import com.blazebit.expression.declarative.persistence.FunctionExpression;
+import com.blazebit.expression.declarative.persistence.PersistenceFunction;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializerContext;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.SubqueryInitiator;
 import com.blazebit.persistence.WhereBuilder;
@@ -84,7 +85,8 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
         ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
         Predicate predicate = compiler.createPredicate("contains(user.sameAgeIds, 1) AND user.oldestNamedAge > 10 AND user.parent IS NOT NULL AND user.second IS NOT NULL", compilerContext);
         ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
-        ExpressionSerializer.Context serializerContext = serializer.createContext(Collections.singletonMap("user", "userEntity"));
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService, null)
+            .withAlias("user", "userEntity");
         CriteriaBuilder<UserEntity> cb = cbf.create(em, UserEntity.class);
         serializer.serializeTo(serializerContext, predicate, cb);
         Assert.assertEquals("SELECT userEntity FROM UserEntity userEntity " +
@@ -110,7 +112,7 @@ public class EntityViewAttributeUsageTest extends AbstractCoreTest {
 
     @DomainFunctions
     public static interface Functions {
-        @FunctionExpression(value = "?1 = ?2", predicate = true)
+        @PersistenceFunction(value = "?1 = ?2", predicate = true)
         boolean contains(Collection<Integer> collection, Integer id);
     }
 

@@ -27,11 +27,11 @@ import java.util.List;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public final class Path implements ArithmeticExpression {
+public final class Path extends AbstractExpression implements ArithmeticExpression {
     private final String alias;
     private final ArithmeticExpression base;
     private final List<EntityDomainTypeAttribute> attributes;
-    private final DomainType type;
+    private final int hash;
 
     /**
      * Creates a new path expression from the given root alias and attribute dereference chain returning a result of the given domain type.
@@ -41,10 +41,11 @@ public final class Path implements ArithmeticExpression {
      * @param type The result domain type
      */
     public Path(String alias, List<EntityDomainTypeAttribute> attributes, DomainType type) {
+        super(type);
         this.alias = alias;
         this.base = null;
         this.attributes = attributes;
-        this.type = type;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -55,10 +56,11 @@ public final class Path implements ArithmeticExpression {
      * @param type The result domain type
      */
     public Path(ArithmeticExpression base, List<EntityDomainTypeAttribute> attributes, DomainType type) {
+        super(type);
         this.alias = null;
         this.base = base;
         this.attributes = attributes;
-        this.type = type;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -86,14 +88,6 @@ public final class Path implements ArithmeticExpression {
      */
     public List<EntityDomainTypeAttribute> getAttributes() {
         return attributes;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DomainType getType() {
-        return type;
     }
 
     /**
@@ -138,15 +132,19 @@ public final class Path implements ArithmeticExpression {
         return getType().equals(path.getType());
     }
 
+    private int computeHashCode() {
+        int result = getType().hashCode();
+        result = 31 * result + (alias != null ? alias.hashCode() : 0);
+        result = 31 * result + (base != null ? base.hashCode() : 0);
+        result = 31 * result + attributes.hashCode();
+        return result;
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public int hashCode() {
-        int result = getAlias() != null ? getAlias().hashCode() : 0;
-        result = 31 * result + (getBase() != null ? getBase().hashCode() : 0);
-        result = 31 * result + getAttributes().hashCode();
-        result = 31 * result + getType().hashCode();
-        return result;
+        return hash;
     }
 }

@@ -17,6 +17,7 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.DomainModel;
+import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionSerializer;
@@ -50,10 +51,10 @@ public class ExpressionServiceImpl implements ExpressionService {
     private final EntityLiteralResolver entityLiteralResolver;
     private final CollectionLiteralResolver collectionLiteralResolver;
     private final LiteralFactory literalFactory;
-    private final Map<Class<?>, ExpressionSerializerFactory<?>> expressionSerializers;
+    private final Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers;
     private final List<ExpressionServiceSerializer<?>> expressionServiceSerializers;
 
-    public ExpressionServiceImpl(ExpressionServiceBuilder builder, Map<Class<?>, ExpressionSerializerFactory<?>> expressionSerializers, List<ExpressionServiceSerializer<?>> expressionServiceSerializers) {
+    public ExpressionServiceImpl(ExpressionServiceBuilder builder, Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers, List<ExpressionServiceSerializer<?>> expressionServiceSerializers) {
         this.domainModel = builder.getDomainModel();
         this.numericLiteralResolver = builder.getNumericLiteralResolver();
         this.booleanLiteralResolver = builder.getBooleanLiteralResolver();
@@ -86,6 +87,10 @@ public class ExpressionServiceImpl implements ExpressionService {
         return domainModel;
     }
 
+    public LiteralFactory getLiteralFactory() {
+        return literalFactory;
+    }
+
     @Override
     public ExpressionService withSubDomainModel(DomainModel subDomainModel) {
         DomainModel baseModel = subDomainModel;
@@ -102,7 +107,7 @@ public class ExpressionServiceImpl implements ExpressionService {
     }
 
     @Override
-    public Map<Class<?>, ExpressionSerializerFactory<?>> getExpressionSerializerFactories() {
+    public Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> getExpressionSerializerFactories() {
         return expressionSerializers;
     }
 
@@ -158,25 +163,56 @@ public class ExpressionServiceImpl implements ExpressionService {
 
     @Override
     public ExpressionSerializer<StringBuilder> createSerializer() {
-        return new ExpressionSerializerImpl(this, literalFactory, false);
+        return createSerializer(StringBuilder.class, PredicateExpressionSerializerFactory.SERIALIZATION_FORMAT);
     }
 
     @Override
     public ExpressionSerializer<StringBuilder> createTemplateSerializer() {
-        return new ExpressionSerializerImpl(this, literalFactory, true);
+        return createSerializer(StringBuilder.class, TemplateExpressionSerializerFactory.SERIALIZATION_FORMAT);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> ExpressionSerializer<T> createSerializer(Class<T> serializationTarget) {
-        ExpressionSerializerFactory<?> serializerFactory = expressionSerializers.get(serializationTarget);
-        if (serializerFactory == null) {
-            if (serializationTarget == StringBuilder.class) {
-                return (ExpressionSerializer<T>) new ExpressionSerializerImpl(this, literalFactory, false);
+        return createSerializer(serializationTarget, null);
+    }
+
+    @Override
+    public <T> ExpressionSerializer<T> createSerializer(Class<T> serializationTarget, String serializationFormat) {
+        Map<String, ExpressionSerializerFactory<?>> serializerFactories = expressionSerializers.get(serializationTarget);
+        if (serializerFactories == null || serializerFactories.isEmpty()) {
+            return null;
+        }
+        if (serializationFormat == null) {
+            if (serializerFactories.size() == 1) {
+                return (ExpressionSerializer<T>) serializerFactories.values().iterator().next().createSerializer(this);
+            } else if (serializationTarget == StringBuilder.class) {
+                serializationFormat = PredicateExpressionSerializerFactory.SERIALIZATION_FORMAT;
+            } else {
+                throw new IllegalArgumentException("Multiple serialization formats possible: " + serializerFactories.keySet());
             }
+        }
+        ExpressionSerializerFactory<?> serializerFactory = serializerFactories.get(serializationFormat);
+        if (serializerFactory == null) {
             return null;
         }
         return (ExpressionSerializer<T>) serializerFactory.createSerializer(this);
+    }
+
+    @Override
+    public String serialize(Expression expression) {
+        ExpressionSerializer<StringBuilder> serializer = createSerializer(StringBuilder.class, null);
+        StringBuilder sb = new StringBuilder();
+        serializer.serializeTo(expression, sb);
+        return sb.toString();
+    }
+
+    @Override
+    public String serialize(Expression expression, String serializationFormat) {
+        ExpressionSerializer<StringBuilder> serializer = createSerializer(StringBuilder.class, serializationFormat);
+        StringBuilder sb = new StringBuilder();
+        serializer.serializeTo(expression, sb);
+        return sb.toString();
     }
 
     @Override

@@ -68,7 +68,7 @@ public class EntityExpressionServiceContributor implements ExpressionServiceCont
         for (DomainType domainType : domainModel.getTypes().values()) {
             if (domainType instanceof EntityDomainType) {
                 if (domainType.getJavaType() != null) {
-                    EntityLiteralRestrictionProvider restrictionProvider = domainType.getMetadata(EntityLiteralRestrictionProvider.class);
+                    EntityLiteralPersistenceRestrictionProvider restrictionProvider = domainType.getMetadata(EntityLiteralPersistenceRestrictionProvider.class);
                     if (restrictionProvider != null || mode == Mode.ALL) {
                         EntityType<?> entityType;
                         try {
@@ -172,9 +172,9 @@ public class EntityExpressionServiceContributor implements ExpressionServiceCont
         final boolean isIdString;
         final TypeAdapter typeAdapter;
         final String expressionPrefix;
-        final EntityLiteralRestrictionProvider restrictionProvider;
+        final EntityLiteralPersistenceRestrictionProvider restrictionProvider;
 
-        public Resolver(EntityDomainType entityDomainType, EntityType<?> entityType, EntityLiteralRestrictionProvider restrictionProvider) {
+        public Resolver(EntityDomainType entityDomainType, EntityType<?> entityType, EntityLiteralPersistenceRestrictionProvider restrictionProvider) {
             SingularAttribute<?, ?> idAttribute = null;
             try {
                 for (SingularAttribute<?, ?> singularAttribute : entityType.getSingularAttributes()) {

@@ -19,8 +19,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * The between predicate which is semantically equivalent to <code>left &gt;= lower AND left &lt;= upper</code>.
  *
@@ -31,6 +29,7 @@ public final class BetweenPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final ArithmeticExpression upper;
     private final ArithmeticExpression lower;
+    private final int hash;
 
     /**
      * Constructs a new between predicate for the given arithmetic expressions returning a result of the given domain type.
@@ -45,6 +44,7 @@ public final class BetweenPredicate extends AbstractPredicate {
         this.left = left;
         this.upper = upper;
         this.lower = lower;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -61,6 +61,7 @@ public final class BetweenPredicate extends AbstractPredicate {
         this.left = left;
         this.upper = upper;
         this.lower = lower;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -125,13 +126,20 @@ public final class BetweenPredicate extends AbstractPredicate {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         BetweenPredicate that = (BetweenPredicate) o;
-        return Objects.equals(left, that.left) &&
-                Objects.equals(upper, that.upper) &&
-                Objects.equals(lower, that.lower);
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && left.equals(that.left)
+            && upper.equals(that.upper)
+            && lower.equals(that.lower);
+    }
+
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + left.hashCode();
+        result = 31 * result + upper.hashCode();
+        result = 31 * result + lower.hashCode();
+        return result;
     }
 
     /**
@@ -139,6 +147,6 @@ public final class BetweenPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), left, upper, lower);
+        return hash;
     }
 }

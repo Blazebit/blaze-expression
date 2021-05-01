@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * A predicate for doing relational or equality comparisons between arithmetic expressions.
  *
@@ -30,6 +28,7 @@ public final class ComparisonPredicate extends AbstractPredicate {
     private final ArithmeticExpression left;
     private final ArithmeticExpression right;
     private final ComparisonOperator operator;
+    private final int hash;
 
     /**
      * Creates a new comparison predicate from the given operands and the given operator returning a result of the given domain type.
@@ -44,6 +43,7 @@ public final class ComparisonPredicate extends AbstractPredicate {
         this.left = left;
         this.right = right;
         this.operator = operator;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -60,6 +60,7 @@ public final class ComparisonPredicate extends AbstractPredicate {
         this.left = left;
         this.right = right;
         this.operator = operator;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -124,13 +125,20 @@ public final class ComparisonPredicate extends AbstractPredicate {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         ComparisonPredicate that = (ComparisonPredicate) o;
-        return Objects.equals(left, that.left) &&
-                Objects.equals(right, that.right) &&
-                operator == that.operator;
+        return isNegated() == that.isNegated()
+            && getType().equals(that.getType())
+            && left.equals(that.left)
+            && right.equals(that.right)
+            && operator == that.operator;
+    }
+
+    private int computeHashCode() {
+        int result = isNegated() ? 1 : 0;
+        result = 31 * result + left.hashCode();
+        result = 31 * result + right.hashCode();
+        result = 31 * result + operator.hashCode();
+        return result;
     }
 
     /**
@@ -138,6 +146,6 @@ public final class ComparisonPredicate extends AbstractPredicate {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), left, right, operator);
+        return hash;
     }
 }

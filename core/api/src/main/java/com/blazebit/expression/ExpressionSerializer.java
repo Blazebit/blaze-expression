@@ -16,8 +16,6 @@
 
 package com.blazebit.expression;
 
-import java.util.Map;
-
 /**
  * A serializer for expressions that serializes to a serialization target.
  *
@@ -26,14 +24,6 @@ import java.util.Map;
  * @since 1.0.0
  */
 public interface ExpressionSerializer<T> {
-
-    /**
-     * Creates a serialization context based on the given context parameter map.
-     *
-     * @param contextParameters The context parameters
-     * @return a new serialization context
-     */
-    public Context createContext(Map<String, Object> contextParameters);
 
     /**
      * Serializes the given expression without a serialization context to the given target.

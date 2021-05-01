@@ -14,7 +14,9 @@
         <module>dist</module>
         <module>core</module>
         <module>declarative</module>
+        <module>base</module>
         <module>persistence</module>
+        <module>excel</module>
         <module>editor</module>
         <module>documentation</module>
         <module>examples</module>

@@ -35,6 +35,7 @@ import com.blazebit.expression.EntityLiteral;
 import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.ExpressionInterpreterContext;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.FunctionInvocation;
@@ -54,7 +55,6 @@ import com.blazebit.expression.spi.TypeAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,42 +72,13 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         this.expressionService = expressionService;
     }
 
-    @Override
-    public Context createContext(Map<String, DomainType> rootDomainTypes, Map<String, Object> rootObjects) {
-        return new Context() {
-
-            private final Map<String, Object> properties = new HashMap<>();
-
-            @Override
-            public ExpressionService getExpressionService() {
-                return expressionService;
-            }
-
-            @Override
-            public Object getProperty(String key) {
-                return properties.get(key);
-            }
-
-            @Override
-            public void setProperty(String key, Object value) {
-                properties.put(key, value);
-            }
-
-            @Override
-            public Object getRoot(String alias) {
-                return rootObjects.get(alias);
-            }
-
-            @Override
-            public DomainType getRootDomainType(String alias) {
-                return rootDomainTypes.get(alias);
-            }
-        };
-    }
-
     protected <T> T evaluate(Expression expression, Context interpreterContext, boolean asModelType) {
         Context oldContext = context;
-        context = interpreterContext;
+        if (interpreterContext == null) {
+            context = ExpressionInterpreterContext.create(expressionService);
+        } else {
+            context = interpreterContext;
+        }
         try {
             Object value = expression.accept(this);
             if (typeAdapter != null && asModelType) {
@@ -424,8 +395,10 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                 }
                 resolved.add(value);
             }
+            typeAdapter = e.getType().getMetadata(TypeAdapter.class);
             return resolved;
         } else {
+            typeAdapter = e.getType().getMetadata(TypeAdapter.class);
             return e.getValue();
         }
     }

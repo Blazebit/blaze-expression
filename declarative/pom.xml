@@ -16,6 +16,7 @@
         <module>impl</module>
         <module>persistence</module>
         <module>entity-view</module>
+        <module>excel</module>
     </modules>
 
 </project>

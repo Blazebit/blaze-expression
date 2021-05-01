@@ -16,11 +16,6 @@
 
 package com.blazebit.expression;
 
-import com.blazebit.domain.runtime.model.DomainType;
-
-import java.util.Collections;
-import java.util.Map;
-
 /**
  * An interpreter for expressions based on a set of root variable object assignments.
  *
@@ -30,15 +25,6 @@ import java.util.Map;
 public interface ExpressionInterpreter {
 
     /**
-     * Creates an interpreter context based on the given root variable domain type mapping and root variable object assignments.
-     *
-     * @param rootDomainTypes The root variable domain type mapping
-     * @param rootObjects The root variable object assignments
-     * @return a new interpreter context
-     */
-    public Context createContext(Map<String, DomainType> rootDomainTypes, Map<String, Object> rootObjects);
-
-    /**
      * Evaluates the given expression to the call site defined type with an empty interpreter context.
      *
      * @param expression The expression to evaluate
@@ -46,8 +32,9 @@ public interface ExpressionInterpreter {
      * @return The evaluation result
      */
     public default <T> T evaluate(Expression expression) {
-        return evaluate(expression, createContext(Collections.emptyMap(), Collections.emptyMap()));
+        return evaluate(expression, null);
     }
+
     /**
      * Evaluates the given expression to the call site defined type with an empty interpreter context and converts it using the {@link com.blazebit.expression.spi.TypeAdapter} defined for the returned attribute.
      *
@@ -56,7 +43,7 @@ public interface ExpressionInterpreter {
      * @return The evaluation result
      */
     public default <T> T evaluateAsModelType(Expression expression) {
-        return evaluateAsModelType(expression, createContext(Collections.emptyMap(), Collections.emptyMap()));
+        return evaluateAsModelType(expression, null);
     }
 
     /**
@@ -86,7 +73,7 @@ public interface ExpressionInterpreter {
      * @return The evaluation result
      */
     public default Boolean evaluate(Predicate expression) {
-        return evaluate(expression, createContext(Collections.emptyMap(), Collections.emptyMap()));
+        return evaluate(expression, null);
     }
 
     /**
@@ -138,14 +125,6 @@ public interface ExpressionInterpreter {
          * @return the object assignment or <code>null</code>
          */
         public <X> X getRoot(String alias);
-
-        /**
-         * Returns the domain type of the root variable with the given name or <code>null</code>.
-         *
-         * @param alias The root variable name
-         * @return the domain type or <code>null</code>
-         */
-        public DomainType getRootDomainType(String alias);
 
     }
 }

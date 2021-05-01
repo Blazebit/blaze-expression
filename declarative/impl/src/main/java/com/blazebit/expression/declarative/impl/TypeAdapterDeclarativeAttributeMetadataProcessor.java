@@ -17,8 +17,11 @@
 package com.blazebit.expression.declarative.impl;
 
 import com.blazebit.apt.service.ServiceProvider;
+import com.blazebit.domain.boot.model.DomainBuilder;
+import com.blazebit.domain.boot.model.DomainTypeDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.declarative.spi.DeclarativeAttributeMetadataProcessor;
+import com.blazebit.expression.spi.TypeAdapter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -37,6 +40,20 @@ public class TypeAdapterDeclarativeAttributeMetadataProcessor implements Declara
 
     @Override
     public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
-        return TypeAdapterRegistry.getTypeAdapter(method.getReturnType());
+        return null;
+    }
+
+    @Override
+    public MetadataDefinition<?> process(Class<?> annotatedClass, Method method, Annotation annotation, String attributeName, String typeName, boolean collection, com.blazebit.domain.spi.ServiceProvider serviceProvider) {
+        MetadataDefinition<?> typeAdapter = TypeAdapterRegistry.getTypeAdapter(method.getReturnType());
+        if (typeAdapter != null || collection) {
+            return typeAdapter;
+        }
+        DomainBuilder domainBuilder = serviceProvider.getService(DomainBuilder.class);
+        DomainTypeDefinition type = domainBuilder.getType(typeName);
+        if (type == null) {
+            return null;
+        }
+        return type.getMetadataDefinitions().get(TypeAdapter.class);
     }
 }

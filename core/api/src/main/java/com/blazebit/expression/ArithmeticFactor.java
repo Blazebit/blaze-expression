@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * An arithmetic factor capturing the signum of an arithmetic expression.
  *
@@ -29,6 +27,7 @@ import java.util.Objects;
 public final class ArithmeticFactor extends AbstractExpression implements ArithmeticExpression {
     private final ArithmeticExpression expression;
     private final boolean invertSignum;
+    private final int hash;
 
     /**
      * Creates a new arithmetic factor expression for the given arithmetic expression with the given signum returning a result of the given domain type.
@@ -41,6 +40,7 @@ public final class ArithmeticFactor extends AbstractExpression implements Arithm
         super(type);
         this.expression = expression;
         this.invertSignum = invertSignum;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -88,12 +88,17 @@ public final class ArithmeticFactor extends AbstractExpression implements Arithm
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         ArithmeticFactor that = (ArithmeticFactor) o;
-        return invertSignum == that.invertSignum &&
-                Objects.equals(expression, that.expression);
+        return getType().equals(that.getType())
+            && invertSignum == that.invertSignum
+            && expression.equals(that.expression);
+    }
+
+    private int computeHashCode() {
+        int result = getType().hashCode();
+        result = 31 * result + expression.hashCode();
+        result = 31 * result + (invertSignum ? 1 : 0);
+        return result;
     }
 
     /**
@@ -101,6 +106,6 @@ public final class ArithmeticFactor extends AbstractExpression implements Arithm
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), expression, invertSignum);
+        return hash;
     }
 }

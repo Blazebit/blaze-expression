@@ -25,7 +25,7 @@ import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.ExpressionServiceBuilder;
 import com.blazebit.expression.Literal;
-import com.blazebit.expression.declarative.persistence.EntityLiteralRestrictionProvider;
+import com.blazebit.expression.declarative.persistence.EntityLiteralPersistenceRestrictionProvider;
 import com.blazebit.expression.spi.EntityLiteralResolver;
 import com.blazebit.expression.spi.ExpressionServiceContributor;
 import com.blazebit.expression.spi.ExpressionServiceSerializer;
@@ -72,7 +72,7 @@ public class EntityViewExpressionServiceContributor implements ExpressionService
             if (domainType instanceof EntityDomainType) {
                 ViewType<?> viewType;
                 if (domainType.getJavaType() != null && (viewType = viewMetamodel.view(domainType.getJavaType())) != null) {
-                    EntityLiteralRestrictionProvider restrictionProvider = domainType.getMetadata(EntityLiteralRestrictionProvider.class);
+                    EntityLiteralPersistenceRestrictionProvider restrictionProvider = domainType.getMetadata(EntityLiteralPersistenceRestrictionProvider.class);
                     if (restrictionProvider != null || mode == Mode.ALL) {
                         entityViewResolvers.put(domainType.getName(), new Resolver(entityViewManager, (EntityDomainType) domainType, viewType, restrictionProvider));
                     }
@@ -173,9 +173,9 @@ public class EntityViewExpressionServiceContributor implements ExpressionService
         final boolean isViewIdString;
         final TypeAdapter typeAdapter;
         final String expressionPrefix;
-        final EntityLiteralRestrictionProvider restrictionProvider;
+        final EntityLiteralPersistenceRestrictionProvider restrictionProvider;
 
-        public Resolver(EntityViewManager evm, EntityDomainType entityDomainType, ViewType<?> viewType, EntityLiteralRestrictionProvider restrictionProvider) {
+        public Resolver(EntityViewManager evm, EntityDomainType entityDomainType, ViewType<?> viewType, EntityLiteralPersistenceRestrictionProvider restrictionProvider) {
             MethodAttribute<?, ?> viewIdAttribute = viewType.getIdAttribute();
             this.viewIdAttributeName = viewIdAttribute.getName();
             this.isViewIdString = viewIdAttribute.getJavaType() == String.class;

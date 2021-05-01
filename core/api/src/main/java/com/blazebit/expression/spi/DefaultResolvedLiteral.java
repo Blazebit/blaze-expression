@@ -18,8 +18,6 @@ package com.blazebit.expression.spi;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * @author Christian Beikov
  * @since 1.0.0
@@ -28,6 +26,7 @@ public final class DefaultResolvedLiteral implements ResolvedLiteral {
 
     private final DomainType type;
     private final Object value;
+    private final int hash;
 
     /**
      * Creates a new resolved literal.
@@ -38,6 +37,7 @@ public final class DefaultResolvedLiteral implements ResolvedLiteral {
     public DefaultResolvedLiteral(DomainType type, Object value) {
         this.type = type;
         this.value = value;
+        this.hash = computeHashCode();
     }
 
     @Override
@@ -58,13 +58,23 @@ public final class DefaultResolvedLiteral implements ResolvedLiteral {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+
         DefaultResolvedLiteral that = (DefaultResolvedLiteral) o;
-        return Objects.equals(type, that.type) &&
-            Objects.equals(value, that.value);
+
+        if (!type.equals(that.type)) {
+            return false;
+        }
+        return value != null ? value.equals(that.value) : that.value == null;
+    }
+
+    private int computeHashCode() {
+        int result = type.hashCode();
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        return result;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, value);
+        return hash;
     }
 }

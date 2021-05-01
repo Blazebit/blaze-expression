@@ -60,7 +60,7 @@ public interface ExpressionService {
      *
      * @return the expression serializer factories
      */
-    Map<Class<?>, ExpressionSerializerFactory<?>> getExpressionSerializerFactories();
+    Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> getExpressionSerializerFactories();
 
     /**
      * The expression service serializers.
@@ -105,6 +105,16 @@ public interface ExpressionService {
      * @return the expression serializer
      */
     public <T> ExpressionSerializer<T> createSerializer(Class<T> serializationTarget);
+
+    /**
+     * Creates and returns an expression serializer to serialize a compiled expression.
+     *
+     * @param serializationTarget The serialization target type
+     * @param serializationFormat The serialization format
+     * @param <T> The serialization target type
+     * @return the expression serializer
+     */
+    public <T> ExpressionSerializer<T> createSerializer(Class<T> serializationTarget, String serializationFormat);
 
     /**
      * Returns the numeric literal resolver.
@@ -187,10 +197,14 @@ public interface ExpressionService {
      * @param expression The expression to serialize
      * @return the string serialized form of the expression
      */
-    public default String serialize(Expression expression) {
-        ExpressionSerializer<StringBuilder> serializer = createSerializer(StringBuilder.class);
-        StringBuilder sb = new StringBuilder();
-        serializer.serializeTo(expression, sb);
-        return sb.toString();
-    }
+    public String serialize(Expression expression);
+
+    /**
+     * Serializes the given compiled expression to a string.
+     *
+     * @param expression The expression to serialize
+     * @param serializationFormat The serialization format
+     * @return the string serialized form of the expression
+     */
+    public String serialize(Expression expression, String serializationFormat);
 }

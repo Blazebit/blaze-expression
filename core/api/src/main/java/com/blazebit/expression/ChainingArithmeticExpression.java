@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * An arithmetic expression connecting two arithmetic expression operands with an arithmetic operator.
  *
@@ -30,6 +28,7 @@ public final class ChainingArithmeticExpression extends AbstractExpression imple
     private final ArithmeticExpression left;
     private final ArithmeticExpression right;
     private final ArithmeticOperatorType operator;
+    private final int hash;
 
     /**
      * Creates a new expression from the given operands and the given operator returning a result of the given domain type.
@@ -44,6 +43,7 @@ public final class ChainingArithmeticExpression extends AbstractExpression imple
         this.left = left;
         this.right = right;
         this.operator = operator;
+        this.hash = computeHashCode();
     }
 
     /**
@@ -100,13 +100,19 @@ public final class ChainingArithmeticExpression extends AbstractExpression imple
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         ChainingArithmeticExpression that = (ChainingArithmeticExpression) o;
-        return Objects.equals(left, that.left) &&
-                Objects.equals(right, that.right) &&
-                operator == that.operator;
+        return getType().equals(that.getType())
+            && left.equals(that.left)
+            && right.equals(that.right)
+            && operator == that.operator;
+    }
+
+    private int computeHashCode() {
+        int result = getType().hashCode();
+        result = 31 * result + left.hashCode();
+        result = 31 * result + right.hashCode();
+        result = 31 * result + operator.hashCode();
+        return result;
     }
 
     /**
@@ -114,6 +120,6 @@ public final class ChainingArithmeticExpression extends AbstractExpression imple
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), left, right, operator);
+        return hash;
     }
 }

@@ -18,8 +18,6 @@ package com.blazebit.expression;
 
 import com.blazebit.domain.runtime.model.DomainType;
 
-import java.util.Objects;
-
 /**
  * A base implementation for expressions.
  *
@@ -66,6 +64,6 @@ public abstract class AbstractExpression implements Expression {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return type.hashCode();
     }
 }

@@ -14,7 +14,7 @@
   "homepage": "http://github.com/Blazebit/blaze-expression",
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.4",
-    "blaze-domain": "^2.0.2",
+    "blaze-domain": "^2.0.3",
     "monaco-editor": "^0.23.0"
   },
   "devDependencies": {
