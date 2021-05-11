@@ -26,6 +26,7 @@ package com.blazebit.expression.excel;
  */
 public final class ExcelColumn {
 
+    private final String sheetName;
     private final int columnNumber;
 
     /**
@@ -34,9 +35,20 @@ public final class ExcelColumn {
      * @param columnNumber The 0-based column number
      */
     public ExcelColumn(int columnNumber) {
+        this(null, columnNumber);
+    }
+
+    /**
+     * Creates a new excel column with the given 0-based number.
+     *
+     * @param sheetName The name of the sheet on which the column is located
+     * @param columnNumber The 0-based column number
+     */
+    public ExcelColumn(String sheetName, int columnNumber) {
         if (columnNumber < 0) {
             throw new IllegalArgumentException("Column number must be greater or equal to 0: " + columnNumber);
         }
+        this.sheetName = sheetName;
         this.columnNumber = columnNumber;
     }
 
@@ -47,5 +59,14 @@ public final class ExcelColumn {
      */
     public int getColumnNumber() {
         return columnNumber;
+    }
+
+    /**
+     * Returns the name of the sheet the column is located.
+     *
+     * @return the name of the sheet the column is located
+     */
+    public String getSheetName() {
+        return sheetName;
     }
 }

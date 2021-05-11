@@ -132,7 +132,8 @@ public class ExcelStringlyTypeUtils {
             function = domainBuilder.getFunction(destructorName);
         }
         Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = function.getMetadataDefinitions();
-        ExcelGlobalStringlyTypeDestructorFunctionRenderer renderer = (ExcelGlobalStringlyTypeDestructorFunctionRenderer) ((ExcelFunctionRendererMetadataDefinition) metadataDefinitions.get(ExcelFunctionRenderer.class)).build(null);
+        ExcelFunctionRendererMetadataDefinition metadataDefinition = (ExcelFunctionRendererMetadataDefinition) metadataDefinitions.get(ExcelFunctionRenderer.class);
+        ExcelGlobalStringlyTypeDestructorFunctionRenderer renderer = metadataDefinition == null ? null : (ExcelGlobalStringlyTypeDestructorFunctionRenderer) metadataDefinition.build(null);
         if (renderer == null) {
             GlobalStringlyTypeDestructorFunctionInvoker handler = (GlobalStringlyTypeDestructorFunctionInvoker) ((FunctionInvokerMetadataDefinition) metadataDefinitions.get(FunctionInvoker.class)).build(null);
             renderer = new ExcelGlobalStringlyTypeDestructorFunctionRenderer(handler, destructorName);
@@ -701,7 +702,12 @@ public class ExcelStringlyTypeUtils {
             domainBuilder.extendFunction(destructorName, new ExcelFunctionRendererMetadataDefinition(constructorHandler));
         }
 
-        if (destructorName != null) {
+        if (destructorName != null && !registerGlobalDestructor) {
+            DomainFunctionDefinition existingFunction = domainBuilder.getFunction(destructorName);
+            ExcelFunctionRendererMetadataDefinition metadataDefinition = existingFunction == null ? null : (ExcelFunctionRendererMetadataDefinition) existingFunction.getMetadataDefinitions().get(ExcelFunctionRenderer.class);
+            if (metadataDefinition != null && metadataDefinition.build(null) instanceof ExcelGlobalStringlyTypeDestructorFunctionRenderer) {
+                throw new IllegalStateException("Can't register a destructor for stringly type '" + name + "' under the function name '" + destructorName + "' as a global destructor is already registered under this name!");
+            }
             ExcelStringlyTypeDestructorFunctionRenderer destructorHandler = new ExcelStringlyTypeDestructorFunctionRenderer(excelStringlyTypeHandler);
             domainBuilder.extendFunction(destructorName, new ExcelFunctionRendererMetadataDefinition(destructorHandler));
         }

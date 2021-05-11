@@ -132,7 +132,8 @@ public class PersistenceStringlyTypeUtils {
             function = domainBuilder.getFunction(destructorName);
         }
         Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = function.getMetadataDefinitions();
-        PersistenceGlobalStringlyTypeDestructorFunctionRenderer renderer = (PersistenceGlobalStringlyTypeDestructorFunctionRenderer) ((PersistenceFunctionRendererMetadataDefinition) metadataDefinitions.get(PersistenceFunctionRenderer.class)).build(null);
+        PersistenceFunctionRendererMetadataDefinition metadataDefinition = (PersistenceFunctionRendererMetadataDefinition) metadataDefinitions.get(PersistenceFunctionRenderer.class);
+        PersistenceGlobalStringlyTypeDestructorFunctionRenderer renderer = metadataDefinition == null ? null : (PersistenceGlobalStringlyTypeDestructorFunctionRenderer) metadataDefinition.build(null);
         if (renderer == null) {
             GlobalStringlyTypeDestructorFunctionInvoker handler = (GlobalStringlyTypeDestructorFunctionInvoker) ((FunctionInvokerMetadataDefinition) metadataDefinitions.get(FunctionInvoker.class)).build(null);
             renderer = new PersistenceGlobalStringlyTypeDestructorFunctionRenderer(handler, destructorName);
@@ -701,7 +702,12 @@ public class PersistenceStringlyTypeUtils {
             domainBuilder.extendFunction(destructorName, new PersistenceFunctionRendererMetadataDefinition(constructorHandler));
         }
 
-        if (destructorName != null) {
+        if (destructorName != null && !registerGlobalDestructor) {
+            DomainFunctionDefinition existingFunction = domainBuilder.getFunction(destructorName);
+            PersistenceFunctionRendererMetadataDefinition metadataDefinition = existingFunction == null ? null : (PersistenceFunctionRendererMetadataDefinition) existingFunction.getMetadataDefinitions().get(PersistenceFunctionRenderer.class);
+            if (metadataDefinition != null && metadataDefinition.build(null) instanceof PersistenceGlobalStringlyTypeDestructorFunctionRenderer) {
+                throw new IllegalStateException("Can't register a destructor for stringly type '" + name + "' under the function name '" + destructorName + "' as a global destructor is already registered under this name!");
+            }
             PersistenceStringlyTypeDestructorFunctionRenderer destructorHandler = new PersistenceStringlyTypeDestructorFunctionRenderer(persistenceStringlyTypeHandler);
             domainBuilder.extendFunction(destructorName, new PersistenceFunctionRendererMetadataDefinition(destructorHandler));
         }

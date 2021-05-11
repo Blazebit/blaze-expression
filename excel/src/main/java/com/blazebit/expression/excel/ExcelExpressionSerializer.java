@@ -227,6 +227,12 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
             Object value = e.getValue();
             if (value instanceof CharSequence) {
                 renderStringLiteral((CharSequence) value);
+            } else if (value instanceof Boolean) {
+                if ((boolean) value) {
+                    sb.append("TRUE()");
+                } else {
+                    sb.append("FALSE()");
+                }
             } else {
                 sb.append(value);
             }
@@ -272,7 +278,11 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
         Object mapping = getExcelMapping(e);
 
         if (mapping instanceof ExcelColumn) {
-            sb.append(getExcelColumnName(((ExcelColumn) mapping).getColumnNumber())).append(currentRow);
+            ExcelColumn excelColumn = (ExcelColumn) mapping;
+            if (excelColumn.getSheetName() != null) {
+                sb.append(excelColumn.getSheetName()).append('!');
+            }
+            sb.append(getExcelColumnName(excelColumn.getColumnNumber())).append(currentRow);
             return Boolean.FALSE;
         } else if (mapping instanceof CharSequence) {
             renderStringLiteral((CharSequence) mapping);
@@ -429,7 +439,7 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
             }
             for (int i = 1; i < size; i++) {
                 predicate = predicates.get(i);
-                sb.append("; ");
+                sb.append(argumentSeparator).append(' ');
                 if (predicate instanceof CompoundPredicate && !predicate.isNegated() && e.isConjunction() != ((CompoundPredicate) predicate).isConjunction()) {
                     sb.append('(');
                     isConstant = predicate.accept(this) && isConstant;

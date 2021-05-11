@@ -82,6 +82,19 @@ public class ExcelExpressionSerializerContext implements ExpressionSerializer.Co
     }
 
     /**
+     * Maps the given expression path to the given excel column number.
+     *
+     * @param path The expression path for which to add the column number mapping
+     * @param sheetName The name of the sheet on which the column is located
+     * @param columnNumber The 0-based column number
+     * @return <code>this</code> for method chaining
+     */
+    public ExcelExpressionSerializerContext withExcelColumn(String path, String sheetName, int columnNumber) {
+        excelColumns.put(path, new ExcelColumn(sheetName, columnNumber));
+        return this;
+    }
+
+    /**
      * Returns the excel column mappings.
      *
      * @return the excel column mappings

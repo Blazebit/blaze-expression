@@ -51,6 +51,10 @@ public interface ExcelDomainFunctionArgumentRenderers {
         public boolean renderArgument(StringBuilder sb, int position) {
             throw new IndexOutOfBoundsException(Integer.toString(position));
         }
+
+        @Override
+        public void renderArguments(StringBuilder sb) {
+        }
     };
 
     /**
@@ -110,14 +114,5 @@ public interface ExcelDomainFunctionArgumentRenderers {
      *
      * @param sb The string builder to render to
      */
-    default void renderArguments(StringBuilder sb) {
-        int size = assignedArguments();
-        if (size != 0) {
-            for (int i = 0; i < size; i++) {
-                renderArgument(sb, i);
-                sb.append("; ");
-            }
-            sb.setLength(sb.length() - 2);
-        }
-    }
+    void renderArguments(StringBuilder sb);
 }

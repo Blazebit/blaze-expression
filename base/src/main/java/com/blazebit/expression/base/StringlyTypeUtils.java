@@ -391,7 +391,12 @@ public class StringlyTypeUtils {
             functionBuilder.build();
         }
 
-        if (destructorName != null) {
+        if (destructorName != null && !registerGlobalDestructor) {
+            DomainFunctionDefinition existingFunction = domainBuilder.getFunction(destructorName);
+            FunctionInvokerMetadataDefinition metadataDefinition = existingFunction == null ? null : (FunctionInvokerMetadataDefinition) existingFunction.getMetadataDefinitions().get(FunctionInvoker.class);
+            if (metadataDefinition != null && metadataDefinition.build(null) instanceof GlobalStringlyTypeDestructorFunctionInvoker) {
+                throw new IllegalStateException("Can't register a destructor for stringly type '" + name + "' under the function name '" + destructorName + "' as a global destructor is already registered under this name!");
+            }
             MetadataDefinition[] destructorArgumentMetadata;
             if (destructorArgumentDocumentationKey == null) {
                 destructorArgumentMetadata = new MetadataDefinition[0];
