@@ -275,7 +275,14 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
             }
             throw new UnsupportedOperationException("De-referencing arithmetic expressions is not supported for excel");
         }
+
         Object mapping = getExcelMapping(e);
+        if (mapping == null) {
+            if (interpreterContextForInlining != null) {
+                return inlineIfConstant(e, sb.length(), true);
+            }
+            throw new IllegalArgumentException("Couldn't find an excel mapping for path: " + e);
+        }
 
         if (mapping instanceof ExcelColumn) {
             ExcelColumn excelColumn = (ExcelColumn) mapping;
@@ -323,9 +330,6 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
         }
         Object mapping = context.getContextParameter(tempSb.toString());
         tempSb.setLength(0);
-        if (mapping == null) {
-            throw new IllegalArgumentException("Couldn't find an excel mapping for path: " + p);
-        }
         return mapping;
     }
 
