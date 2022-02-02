@@ -26,24 +26,22 @@ import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
 import java.io.Serializable;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 
-public class LocalDateOperatorInterpreter
+public class DateTimeOperatorInterpreter
         implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
 
-    public static final LocalDateOperatorInterpreter INSTANCE = new LocalDateOperatorInterpreter();
+    public static final DateTimeOperatorInterpreter INSTANCE = new DateTimeOperatorInterpreter();
 
-    private LocalDateOperatorInterpreter() {
+    private DateTimeOperatorInterpreter() {
     }
 
     @Override
     public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType,
             Object leftValue, Object rightValue, ComparisonOperator operator) {
-        if (leftValue instanceof LocalDate && rightValue instanceof LocalDate) {
-            LocalDate l = (LocalDate) leftValue;
-            LocalDate r = (LocalDate) rightValue;
+        if (leftValue instanceof LocalDateTime && rightValue instanceof LocalDateTime) {
+            LocalDateTime l = (LocalDateTime) leftValue;
+            LocalDateTime r = (LocalDateTime) rightValue;
             switch (operator) {
             case EQUAL:
                 return l.compareTo(r) == 0;
@@ -84,25 +82,23 @@ public class LocalDateOperatorInterpreter
             default:
                 break;
             }
-        } else if (leftValue instanceof LocalDate && rightValue instanceof TemporalInterval) {
-            LocalDate localDate = (LocalDate) leftValue;
-            Instant instant = localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        } else if (leftValue instanceof LocalDateTime && rightValue instanceof TemporalInterval) {
+            LocalDateTime localDateTime = (LocalDateTime) leftValue;
             TemporalInterval interval = (TemporalInterval) rightValue;
             switch (operator) {
             case PLUS:
-                return interval.add(instant);
+                return interval.add(localDateTime);
             case MINUS:
-                return interval.subtract(instant);
+                return interval.subtract(localDateTime);
             default:
                 break;
             }
-        } else if (leftValue instanceof TemporalInterval && rightValue instanceof LocalDate) {
+        } else if (leftValue instanceof TemporalInterval && rightValue instanceof LocalDateTime) {
             TemporalInterval interval = (TemporalInterval) leftValue;
-            LocalDate localDate = (LocalDate) rightValue;
-            Instant instant = localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            LocalDateTime localDateTime = (LocalDateTime) rightValue;
 
             if (operator == DomainOperator.PLUS) {
-                return interval.add(instant);
+                return interval.add(localDateTime);
             }
         } else {
             throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");

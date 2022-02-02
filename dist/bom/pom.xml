@@ -32,7 +32,7 @@
 
     <properties>
         <version.blazeutils>0.1.21</version.blazeutils>
-        <version.blazedomain>1.0.0-Alpha3</version.blazedomain>
+	    <version.blaze-domain>2.0.5</version.blaze-domain>
     </properties>
 
     <dependencyManagement>
@@ -48,23 +48,23 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>blaze-domain-core-api</artifactId>
-                <version>${version.blazedomain}</version>
+                <version>${version.blaze-domain}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>blaze-domain-core-impl</artifactId>
-                <version>${version.blazedomain}</version>
+                <version>${version.blaze-domain}</version>
                 <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>blaze-domain-declarative-api</artifactId>
-                <version>${version.blazedomain}</version>
+                <version>${version.blaze-domain}</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>blaze-domain-declarative-impl</artifactId>
-                <version>${version.blazedomain}</version>
+                <version>${version.blaze-domain}</version>
                 <scope>runtime</scope>
             </dependency>
 
