@@ -108,8 +108,8 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
     public static final String INTERVAL_TYPE_NAME = "Interval";
     public static final Class<?> STRING = String.class;
     public static final String STRING_TYPE_NAME = "String";
-    public static final String LOCAL_DATE_TYPE_NAME = "LocalDate";
-    public static final Class<?> LOCAL_DATE = LocalDate.class;
+    public static final String DATE_TYPE_NAME = "Date";
+    public static final Class<?> DATE = LocalDate.class;
 
     public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
     public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
