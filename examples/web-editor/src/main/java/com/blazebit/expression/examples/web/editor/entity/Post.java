@@ -20,6 +20,8 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,6 +35,8 @@ public class Post extends BaseEntity {
     private String name;
     private User writer;
     private Set<Comment> comments = new HashSet<>(0);
+    private LocalDate date;
+    private LocalDateTime dateTime;
 
     public String getName() {
         return name;
@@ -58,5 +62,21 @@ public class Post extends BaseEntity {
 
     public void setComments(Set<Comment> comments) {
         this.comments = comments;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
     }
 }
