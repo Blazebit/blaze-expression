@@ -133,7 +133,7 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
         createBasicType(domainBuilder, STRING, STRING_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorInterpreter.INSTANCE, "STRING"));
         createBasicType(domainBuilder, TIMESTAMP, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorInterpreter.INSTANCE, "TIMESTAMP"));
         createBasicType(domainBuilder, TIME, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorInterpreter.INSTANCE, "TIME"));
-        createBasicType(domainBuilder, LOCAL_DATE, LOCAL_DATE_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(LocalDateOperatorInterpreter.INSTANCE, "LOCAL_DATE"));
+        createBasicType(domainBuilder, LOCAL_DATE, LOCAL_DATE_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(LocalDateOperatorInterpreter.INSTANCE, "DATE"));
         createBasicType(domainBuilder, INTERVAL, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorInterpreter.INSTANCE, "INTERVAL"));
         createBasicType(domainBuilder, BOOLEAN, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorInterpreter.INSTANCE, "BOOLEAN"));
 
