@@ -79,7 +79,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,8 +110,6 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
     public static final String STRING_TYPE_NAME = "String";
     public static final String DATE_TYPE_NAME = "Date";
     public static final Class<?> DATE = LocalDate.class;
-    public static final String DATETIME_TYPE_NAME = "DateTime";
-    public static final Class<?> DATETIME = LocalDateTime.class;
 
     public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
     public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
@@ -137,7 +134,6 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
         createBasicType(domainBuilder, TIMESTAMP, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorInterpreter.INSTANCE, "TIMESTAMP"));
         createBasicType(domainBuilder, TIME, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorInterpreter.INSTANCE, "TIME"));
         createBasicType(domainBuilder, DATE, DATE_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(DateOperatorInterpreter.INSTANCE, "DATE"));
-        createBasicType(domainBuilder, DATETIME, DATETIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(DateTimeOperatorInterpreter.INSTANCE, "DATETIME"));
         createBasicType(domainBuilder, INTERVAL, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorInterpreter.INSTANCE, "INTERVAL"));
         createBasicType(domainBuilder, BOOLEAN, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorInterpreter.INSTANCE, "BOOLEAN"));
 
@@ -175,10 +171,6 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
         domainBuilder.withOperationTypeResolver(DATE_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(DATE_TYPE_NAME, new String[][]{ { DATE_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
         domainBuilder.withOperationTypeResolver(DATE_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(DATE_TYPE_NAME, new String[][]{ { DATE_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
         withPredicateTypeResolvers(domainBuilder, DATE_TYPE_NAME, DATE_TYPE_NAME);
-
-        domainBuilder.withOperationTypeResolver(DATETIME_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(DATETIME_TYPE_NAME, new String[][]{ { DATETIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        domainBuilder.withOperationTypeResolver(DATETIME_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(DATETIME_TYPE_NAME, new String[][]{ { DATETIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        withPredicateTypeResolvers(domainBuilder, DATETIME_TYPE_NAME, DATETIME_TYPE_NAME);
 
         domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
         domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));

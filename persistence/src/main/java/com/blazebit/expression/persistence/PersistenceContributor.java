@@ -70,7 +70,6 @@ public class PersistenceContributor implements DomainContributor {
         domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimestampOperatorRenderer.INSTANCE));
         domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimeOperatorRenderer.INSTANCE));
         domainBuilder.extendBasicType(BaseContributor.DATE_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceLocalDateOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.DATETIME_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceLocalDateTimeOperatorRenderer.INSTANCE));
         domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceIntervalOperatorRenderer.INSTANCE));
         domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
 
