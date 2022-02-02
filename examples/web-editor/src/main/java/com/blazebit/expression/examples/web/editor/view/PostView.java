@@ -20,6 +20,7 @@ import com.blazebit.domain.declarative.DomainType;
 import com.blazebit.expression.examples.web.editor.entity.Post;
 import com.blazebit.persistence.view.EntityView;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 /**
@@ -33,4 +34,5 @@ public interface PostView extends IdHolderView {
     String getName();
     UserView getWriter();
     Set<CommentView> getComments();
+    LocalDate getDate();
 }
