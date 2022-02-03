@@ -38,25 +38,25 @@ public class DateOperatorInterpreter
 
     @Override
     public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType,
-            Object leftValue, Object rightValue, ComparisonOperator operator) {
+                             Object leftValue, Object rightValue, ComparisonOperator operator) {
         if (leftValue instanceof LocalDate && rightValue instanceof LocalDate) {
             LocalDate l = (LocalDate) leftValue;
             LocalDate r = (LocalDate) rightValue;
             switch (operator) {
-            case EQUAL:
-                return l.compareTo(r) == 0;
-            case NOT_EQUAL:
-                return l.compareTo(r) != 0;
-            case GREATER_OR_EQUAL:
-                return l.compareTo(r) > -1;
-            case GREATER:
-                return l.compareTo(r) > 0;
-            case LOWER_OR_EQUAL:
-                return l.compareTo(r) < 1;
-            case LOWER:
-                return l.compareTo(r) < 0;
-            default:
-                break;
+                case EQUAL:
+                    return l.compareTo(r) == 0;
+                case NOT_EQUAL:
+                    return l.compareTo(r) != 0;
+                case GREATER_OR_EQUAL:
+                    return l.compareTo(r) > -1;
+                case GREATER:
+                    return l.compareTo(r) > 0;
+                case LOWER_OR_EQUAL:
+                    return l.compareTo(r) < 1;
+                case LOWER:
+                    return l.compareTo(r) < 0;
+                default:
+                    break;
             }
         } else {
             throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
@@ -69,29 +69,29 @@ public class DateOperatorInterpreter
 
     @Override
     public Object interpret(ExpressionInterpreter.Context context, DomainType targetType, DomainType leftType,
-            DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
+                            DomainType rightType, Object leftValue, Object rightValue, DomainOperator operator) {
         if (leftValue instanceof TemporalInterval && rightValue instanceof TemporalInterval) {
             TemporalInterval interval1 = (TemporalInterval) leftValue;
             TemporalInterval interval2 = (TemporalInterval) rightValue;
 
             switch (operator) {
-            case PLUS:
-                return interval1.add(interval2);
-            case MINUS:
-                return interval1.subtract(interval2);
-            default:
-                break;
+                case PLUS:
+                    return interval1.add(interval2);
+                case MINUS:
+                    return interval1.subtract(interval2);
+                default:
+                    break;
             }
         } else if (leftValue instanceof LocalDate && rightValue instanceof TemporalInterval) {
             LocalDate localDate = (LocalDate) leftValue;
             TemporalInterval interval = (TemporalInterval) rightValue;
             switch (operator) {
-            case PLUS:
-                return interval.add(localDate);
-            case MINUS:
-                return interval.subtract(localDate);
-            default:
-                break;
+                case PLUS:
+                    return interval.add(localDate);
+                case MINUS:
+                    return interval.subtract(localDate);
+                default:
+                    break;
             }
         } else if (leftValue instanceof TemporalInterval && rightValue instanceof LocalDate) {
             TemporalInterval interval = (TemporalInterval) leftValue;
