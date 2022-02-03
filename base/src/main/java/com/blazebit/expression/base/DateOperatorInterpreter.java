@@ -28,6 +28,10 @@ import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+/**
+ * @author Yevhen Tucha
+ * @since 1.0.0
+ */
 public class DateOperatorInterpreter
         implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
 

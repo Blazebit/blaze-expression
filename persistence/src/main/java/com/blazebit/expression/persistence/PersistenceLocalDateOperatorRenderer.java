@@ -25,6 +25,10 @@ import com.blazebit.expression.Literal;
 
 import java.io.Serializable;
 
+/**
+ * @author Yevhen Tucha
+ * @since 1.0.0
+ */
 public class PersistenceLocalDateOperatorRenderer implements PersistenceDomainOperatorRenderer, Serializable {
 
     public static final PersistenceLocalDateOperatorRenderer INSTANCE = new PersistenceLocalDateOperatorRenderer();
