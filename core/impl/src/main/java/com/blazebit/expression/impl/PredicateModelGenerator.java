@@ -46,6 +46,7 @@ import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.FunctionInvocation;
+import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
@@ -570,12 +571,44 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             DomainType type = compileContext.getRootDomainType(alias);
             if (type == null) {
                 List<PredicateParser.IdentifierContext> identifiers;
-                if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).size() == 1) {
-                    type = domainModel.getType(alias);
-                    if (type instanceof EnumDomainType) {
-                        EnumDomainType enumDomainType = (EnumDomainType) type;
-                        String enumKey = identifiers.get(0).getText();
-                        return new EnumLiteral(enumDomainType.getEnumValues().get(enumKey), literalFactory.ofEnumValue(compileContext, enumDomainType, enumKey));
+                if (pathAttributesContext != null) {
+                    identifiers = pathAttributesContext.identifier();
+                    if (identifiers.size() == 1) {
+                        type = domainModel.getType(alias);
+                        if (type instanceof EnumDomainType) {
+                            EnumDomainType enumDomainType = (EnumDomainType) type;
+                            String enumKey = identifiers.get(0).getText();
+                            return new EnumLiteral(enumDomainType.getEnumValues().get(enumKey), literalFactory.ofEnumValue(compileContext, enumDomainType, enumKey));
+                        }
+                    }
+                    ImplicitRootProvider implicitRootProvider = compileContext.getImplicitRootProvider();
+                    if (implicitRootProvider != null) {
+                        List<String> pathParts = new ArrayList<>(identifiers.size() + 1);
+                        pathParts.add(alias);
+                        for (PredicateParser.IdentifierContext identifier : identifiers) {
+                            pathParts.add(identifier.getText());
+                        }
+                        String rootAlias = implicitRootProvider.determineImplicitRoot(pathParts, compileContext);
+                        if (rootAlias != null) {
+                            type = compileContext.getRootDomainType(rootAlias);
+                            if (type != null) {
+                                type = visitPathAttribute(type, pathAttributes, alias);
+                                DomainType domainType = visitPathAttributes(type, pathAttributes, pathAttributesContext);
+                                return new Path(rootAlias, Collections.unmodifiableList(pathAttributes), domainType);
+                            }
+                        }
+                    }
+                } else {
+                    ImplicitRootProvider implicitRootProvider = compileContext.getImplicitRootProvider();
+                    if (implicitRootProvider != null) {
+                        String rootAlias = implicitRootProvider.determineImplicitRoot(Collections.singletonList(alias), compileContext);
+                        if (rootAlias != null) {
+                            type = compileContext.getRootDomainType(rootAlias);
+                            if (type != null) {
+                                DomainType domainType = visitPathAttribute(type, pathAttributes, alias);
+                                return new Path(rootAlias, Collections.unmodifiableList(pathAttributes), domainType);
+                            }
+                        }
                     }
                 }
                 throw unknownType(alias);
@@ -583,6 +616,25 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
             DomainType domainType = visitPathAttributes(type, pathAttributes, pathAttributesContext);
             return new Path(alias, Collections.unmodifiableList(pathAttributes), domainType);
         }
+    }
+
+    protected DomainType visitPathAttribute(DomainType type, ArrayList<EntityDomainTypeAttribute> pathAttributes, String pathElement) {
+        if (type instanceof CollectionDomainType) {
+            type = ((CollectionDomainType) type).getElementType();
+        }
+        if (type instanceof EntityDomainType) {
+            EntityDomainType entityType = ((EntityDomainType) type);
+            EntityDomainTypeAttribute attribute = entityType.getAttribute(pathElement);
+            pathAttributes.add(attribute);
+            if (attribute == null) {
+                throw unknownEntityAttribute(entityType, pathElement);
+            } else {
+                type = attribute.getType();
+            }
+        } else {
+            throw unsupportedType(type.toString());
+        }
+        return type;
     }
 
     protected DomainType visitPathAttributes(DomainType type, ArrayList<EntityDomainTypeAttribute> pathAttributes, PredicateParser.PathAttributesContext pathAttributesContext) {

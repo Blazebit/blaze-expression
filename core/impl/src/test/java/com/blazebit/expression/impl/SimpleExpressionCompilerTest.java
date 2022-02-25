@@ -37,7 +37,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testAddition() {
         Predicate predicate = parsePredicate("1 > 2 + 3");
         assertEquals(
-                gt(pos(number(1l)), plus(pos(number(2l)), pos(number(3l)))),
+                gt(pos(number(1L)), plus(pos(number(2L)), pos(number(3L)))),
                 predicate
         );
     }
@@ -46,7 +46,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testAdditionParenthesis() {
         Predicate predicate = parsePredicateOnly("1 > (2 + 3)");
         assertEquals(
-                gt(pos(number(1l)), pos(plus(pos(number(2l)), pos(number(3l))))),
+                gt(pos(number(1L)), pos(plus(pos(number(2L)), pos(number(3L))))),
                 predicate
         );
     }
@@ -55,7 +55,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testAdditionParenthesisNegated() {
         Predicate predicate = parsePredicate("1 > -(2 + 3)");
         assertEquals(
-                gt(pos(number(1l)), neg(plus(pos(number(2l)), pos(number(3l))))),
+                gt(pos(number(1L)), neg(plus(pos(number(2L)), pos(number(3L))))),
                 predicate
         );
     }
@@ -69,7 +69,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testAdditionParenthesisDoubleNegatedParanthesis() {
         Predicate predicate = parsePredicate("1 > -(-(2 + 3))");
         assertEquals(
-                gt(pos(number(1l)), neg(neg(plus(pos(number(2l)), pos(number(3l)))))),
+                gt(pos(number(1L)), neg(neg(plus(pos(number(2L)), pos(number(3L)))))),
                 predicate
         );
     }
@@ -78,7 +78,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testBetween() {
         Predicate predicate = parsePredicate("1 BETWEEN 3 AND 5");
         assertEquals(
-                between(pos(number(1l)), pos(number(3l)), pos(number(5))),
+                between(pos(number(1L)), pos(number(3L)), pos(number(5))),
                 predicate
         );
     }
@@ -87,7 +87,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testAttributeBetween() {
         Predicate predicate = parsePredicate("user.id BETWEEN 3 AND 5");
         assertEquals(
-                between(pos(attr("user", "id")), pos(number(3l)), pos(number(5))),
+                between(pos(attr("user", "id")), pos(number(3L)), pos(number(5))),
                 predicate
         );
     }
@@ -96,7 +96,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
     public void testNumericAttribute() {
         Predicate predicate = parsePredicate("1 BETWEEN user.age AND 5");
         assertEquals(
-                between(pos(number(1l)), pos(attr("user", "age")), pos(number(5))),
+                between(pos(number(1L)), pos(attr("user", "age")), pos(number(5))),
                 predicate
         );
     }
@@ -222,7 +222,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test(expected = TypeErrorException.class)
     public void testNonBooleanPathPredicate() {
-        Predicate predicate = parsePredicate("user.email");
+        parsePredicate("user.email");
     }
 
     @Test

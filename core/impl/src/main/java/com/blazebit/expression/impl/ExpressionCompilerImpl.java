@@ -20,6 +20,7 @@ import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.Predicate;
 import com.blazebit.expression.SyntaxErrorException;
 import org.antlr.v4.runtime.ANTLRErrorListener;
@@ -84,6 +85,11 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
 
     @Override
     public Context createContext(Map<String, DomainType> rootDomainTypes) {
+        return createContext(rootDomainTypes, null);
+    }
+
+    @Override
+    public Context createContext(Map<String, DomainType> rootDomainTypes, ImplicitRootProvider implicitRootProvider) {
         return new Context() {
             @Override
             public ExpressionService getExpressionService() {
@@ -93,6 +99,16 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
             @Override
             public DomainType getRootDomainType(String alias) {
                 return rootDomainTypes.get(alias);
+            }
+
+            @Override
+            public Map<String, DomainType> getRootDomainTypes() {
+                return rootDomainTypes;
+            }
+
+            @Override
+            public ImplicitRootProvider getImplicitRootProvider() {
+                return implicitRootProvider;
             }
         };
     }

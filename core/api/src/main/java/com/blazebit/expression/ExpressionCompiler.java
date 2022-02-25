@@ -38,6 +38,15 @@ public interface ExpressionCompiler {
     public Context createContext(Map<String, DomainType> rootDomainTypes);
 
     /**
+     * Creates a compile context based on the given root variable domain type mapping.
+     *
+     * @param rootDomainTypes The root variable domain type mapping
+     * @param implicitRootProvider The implicit root provider
+     * @return a new compile context
+     */
+    public Context createContext(Map<String, DomainType> rootDomainTypes, ImplicitRootProvider implicitRootProvider);
+
+    /**
      * Creates and compiles the given expression string with an empty compile context.
      *
      * @param expressionString The expression string to compile
@@ -135,6 +144,20 @@ public interface ExpressionCompiler {
          * @return the domain type or <code>null</code>
          */
         public DomainType getRootDomainType(String alias);
+
+        /**
+         * Returns the root domain types.
+         *
+         * @return the root domain types
+         */
+        public Map<String, DomainType> getRootDomainTypes();
+
+        /**
+         * Returns the implicit root provider or <code>null</code>.
+         *
+         * @return the implicit root provider or <code>null</code>
+         */
+        public ImplicitRootProvider getImplicitRootProvider();
 
     }
 }

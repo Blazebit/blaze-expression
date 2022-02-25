@@ -46,6 +46,7 @@ import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.FunctionInvocation;
+import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
@@ -158,9 +159,13 @@ public abstract class AbstractExpressionCompilerTest {
             .withBooleanLiteralResolver(new DefaultBooleanLiteralResolver())
             .build();
         expressionCompiler = (ExpressionCompilerImpl) expressionService.createCompiler();
-        context = expressionCompiler.createContext(Collections.singletonMap("user", domainModel.getType("user")));
+        setImplicitRootProvider(null);
         expressionSerializer = expressionService.createSerializer();
         expressionTemplateSerializer = expressionService.createTemplateSerializer();
+    }
+
+    protected void setImplicitRootProvider(ImplicitRootProvider implicitRootProvider) {
+        context = expressionCompiler.createContext(Collections.singletonMap("user", domainModel.getType("user")), implicitRootProvider);
     }
 
     protected DomainModel createDomainModel() {
