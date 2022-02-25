@@ -329,10 +329,12 @@ public class PersistenceExpressionSerializer implements Expression.ResultVisitor
         if (pathsToInline == null || e.getAlias() == null) {
             for (int i = 0; i < attributes.size(); i++) {
                 EntityDomainTypeAttribute attribute = attributes.get(i);
-                if (appendPersistenceAttribute(tempSb, attribute) && interpreterContextForInlining != null) {
-                    tempSb.setLength(0);
-                    if (isConstant) {
-                        return inlineIfConstant(e, startIndex, true);
+                if (appendPersistenceAttribute(tempSb, attribute)) {
+                    if (interpreterContextForInlining != null) {
+                        tempSb.setLength(0);
+                        if (isConstant) {
+                            return inlineIfConstant(e, startIndex, true);
+                        }
                     }
                     throw new IllegalStateException("The domain attribute '" + attribute.getOwner().getName() + "." + attribute.getName() + "' has no registered ExpressionRenderer or CorrelationRenderer metadata!");
                 }
@@ -344,8 +346,13 @@ public class PersistenceExpressionSerializer implements Expression.ResultVisitor
                 EntityDomainTypeAttribute attribute = attributes.get(i);
                 pathSb.append('.').append(attribute.getName());
                 if (appendPersistenceAttribute(tempSb, attribute)) {
-                    tempSb.setLength(0);
-                    return inlineIfConstant(e, startIndex, true);
+                    if (interpreterContextForInlining != null) {
+                        tempSb.setLength(0);
+                        if (isConstant) {
+                            return inlineIfConstant(e, startIndex, true);
+                        }
+                    }
+                    throw new IllegalStateException("The domain attribute '" + attribute.getOwner().getName() + "." + attribute.getName() + "' has no registered ExpressionRenderer or CorrelationRenderer metadata!");
                 }
             }
             if (pathsToInline.contains(pathSb.toString())) {

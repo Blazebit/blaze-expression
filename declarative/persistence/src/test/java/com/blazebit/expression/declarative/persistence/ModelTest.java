@@ -52,6 +52,8 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.junit.Assert.assertTrue;
+
 public class ModelTest {
 
     private final DomainType domainType;
@@ -101,6 +103,22 @@ public class ModelTest {
         WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
         serializer.serializeTo(serializerContext, expression, whereBuilderMock);
         Assert.assertEquals("u.age > 18", whereBuilderMock.predicate);
+    }
+
+    @Test
+    public void test4() {
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
+        Expression expression = compiler.createPredicate("user.age > 18", compilerContext);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService, null)
+            .withAlias("user", "u");
+        WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
+        try {
+            serializer.serializeTo(serializerContext, expression, whereBuilderMock);
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage().contains("'User.age'"));
+        }
     }
 
     @DomainFunctions
