@@ -49,8 +49,8 @@ public class Atan2Function implements FunctionInvoker, Serializable {
         domainBuilder.createFunction("ATAN2")
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ATAN2", classLoader))
-                .withArgument("y", BaseContributor.NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
-                .withArgument("x", BaseContributor.NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
+                .withArgument("y", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
+                .withArgument("x", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("ATAN2", StaticDomainFunctionTypeResolvers.returning(BaseContributor.NUMERIC_TYPE_NAME));
     }
@@ -66,6 +66,6 @@ public class Atan2Function implements FunctionInvoker, Serializable {
             return null;
         }
 
-        return new BigDecimal(Math.atan2(((Number) y).doubleValue(), ((Number) x).doubleValue()));
+        return BigDecimal.valueOf(Math.atan2(((Number) y).doubleValue(), ((Number) x).doubleValue()));
     }
 }

@@ -111,6 +111,8 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
     public static final String DATE_TYPE_NAME = "Date";
     public static final Class<?> DATE = LocalDate.class;
 
+    public static final String NUMERIC_OR_INTEGER_TYPE_NAME = NUMERIC_TYPE_NAME + "|" + INTEGER_TYPE_NAME;
+
     public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
     public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();
     public static final TemporalLiteralResolver TEMPORAL_LITERAL_TYPE_RESOLVER = new TemporalLiteralResolverImpl();
@@ -268,7 +270,7 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
 
         @Override
         public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, Number value) {
-            if (value instanceof BigDecimal && ((BigDecimal) value).scale() > 0) {
+            if (value instanceof BigDecimal) {
                 return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(NUMERIC_TYPE_NAME), value);
             } else if (value instanceof BigInteger) {
                 return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), value);

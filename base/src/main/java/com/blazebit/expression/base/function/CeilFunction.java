@@ -51,7 +51,7 @@ public class CeilFunction implements FunctionInvoker, Serializable {
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("CEIL", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", DocumentationMetadataDefinition.localized("CEIL_ARG", classLoader))
+                .withArgument("number", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("CEIL_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("CEIL", StaticDomainFunctionTypeResolvers.returning(BaseContributor.INTEGER_TYPE_NAME));
     }

@@ -51,7 +51,7 @@ public class FloorFunction implements FunctionInvoker, Serializable {
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("FLOOR", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", DocumentationMetadataDefinition.localized("FLOOR_ARG", classLoader))
+                .withArgument("number", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("FLOOR_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("FLOOR", StaticDomainFunctionTypeResolvers.returning(BaseContributor.INTEGER_TYPE_NAME));
     }

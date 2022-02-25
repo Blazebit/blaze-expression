@@ -778,6 +778,8 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 return getBooleanFalseLiteral();
             case PredicateLexer.NUMERIC_LITERAL:
                 return new Literal(literalFactory.ofNumericString(compileContext, node.getText()));
+            case PredicateLexer.INTEGER_LITERAL:
+                return new Literal(literalFactory.ofIntegerString(compileContext, node.getText()));
             default:
                 throw new IllegalStateException("Terminal node '" + node.getText() + "' not handled");
         }

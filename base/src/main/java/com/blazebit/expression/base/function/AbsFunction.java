@@ -22,6 +22,7 @@ import com.blazebit.domain.runtime.model.StaticDomainFunctionTypeResolvers;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.ExpressionInterpreter;
+import com.blazebit.expression.base.BaseContributor;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
@@ -51,7 +52,7 @@ public class AbsFunction implements FunctionInvoker, Serializable {
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ABS", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", DocumentationMetadataDefinition.localized("ABS_ARG", classLoader))
+                .withArgument("number", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("ABS_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("ABS", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
     }

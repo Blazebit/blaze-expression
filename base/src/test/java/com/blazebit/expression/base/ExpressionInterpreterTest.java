@@ -288,6 +288,7 @@ public class ExpressionInterpreterTest {
     public void testBooleanVariableTrue() {
         Assert.assertEquals(Boolean.TRUE, testPredicate("user.status"));
     }
+
     @Test
     public void testBooleanVariableTrueNegated() {
         Assert.assertEquals(Boolean.FALSE, testPredicate("!user.status"));
@@ -377,5 +378,11 @@ public class ExpressionInterpreterTest {
     @Test
     public void testTypeAdapterForFunction() {
         Assert.assertEquals(true, testExpressionModelType("is_true(user.status)"));
+    }
+
+    @Test
+    public void testFunctionWithUnionType() {
+        Assert.assertEquals(BigInteger.ONE, testExpression("abs(1)"));
+        Assert.assertEquals(new BigDecimal("1.0"), testExpression("abs(1.0)"));
     }
 }

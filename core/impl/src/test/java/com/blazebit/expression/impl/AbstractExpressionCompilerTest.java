@@ -61,6 +61,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -227,7 +228,7 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Literal number(long value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(context, new BigDecimal(value)));
+        return new Literal(expressionCompiler.getLiteralFactory().ofBigInteger(context, BigInteger.valueOf(value)));
     }
 
     protected Literal number(BigDecimal value) {

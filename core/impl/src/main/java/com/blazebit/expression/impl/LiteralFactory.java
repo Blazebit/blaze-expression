@@ -36,6 +36,7 @@ import com.blazebit.expression.spi.StringLiteralResolver;
 import com.blazebit.expression.spi.TemporalLiteralResolver;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -376,6 +377,22 @@ public class LiteralFactory {
             throw new DomainModelException("No literal resolver for numeric literals defined");
         }
         return numericLiteralResolver.resolveLiteral(context, bigDecimal);
+    }
+
+    public ResolvedLiteral ofIntegerString(ExpressionCompiler.Context context, String integerString) {
+        try {
+            return ofBigInteger(context, new BigInteger(integerString));
+        } catch (NumberFormatException e) {
+            throw new SyntaxErrorException(e);
+        }
+    }
+
+    public ResolvedLiteral ofBigInteger(ExpressionCompiler.Context context, BigInteger bigInteger) {
+        NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
+        if (numericLiteralResolver == null) {
+            throw new DomainModelException("No literal resolver for numeric literals defined");
+        }
+        return numericLiteralResolver.resolveLiteral(context, bigInteger);
     }
 
     public void appendNumeric(StringBuilder sb, Number value) {

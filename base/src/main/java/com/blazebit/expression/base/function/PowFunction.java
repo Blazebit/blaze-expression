@@ -49,8 +49,8 @@ public class PowFunction implements FunctionInvoker, Serializable {
         domainBuilder.createFunction("POW")
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("POW", classLoader))
-                .withArgument("base", BaseContributor.NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_BASE", classLoader))
-                .withArgument("power", BaseContributor.NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_POWER", classLoader))
+                .withArgument("base", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_BASE", classLoader))
+                .withArgument("power", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("POW_POWER", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("POW", StaticDomainFunctionTypeResolvers.returning(BaseContributor.NUMERIC_TYPE_NAME));
     }
@@ -66,7 +66,7 @@ public class PowFunction implements FunctionInvoker, Serializable {
             return null;
         }
 
-        return new BigDecimal(Math.pow(((Number) base).doubleValue(), ((Number) power).doubleValue()));
+        return BigDecimal.valueOf(Math.pow(((Number) base).doubleValue(), ((Number) power).doubleValue()));
     }
 
 }

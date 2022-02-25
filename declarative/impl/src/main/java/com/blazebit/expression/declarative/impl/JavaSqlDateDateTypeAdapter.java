@@ -22,32 +22,33 @@ import com.blazebit.expression.spi.TypeAdapter;
 
 import java.io.Serializable;
 import java.sql.Date;
-import java.time.Instant;
+import java.time.LocalDate;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class JavaSqlDateTimestampTypeAdapter implements TypeAdapter<Date, Instant>, Serializable {
+public class JavaSqlDateDateTypeAdapter implements TypeAdapter<Date, LocalDate>, Serializable {
 
-    public static final JavaSqlDateTimestampTypeAdapter INSTANCE = new JavaSqlDateTimestampTypeAdapter();
+    public static final JavaSqlDateDateTypeAdapter INSTANCE = new JavaSqlDateDateTypeAdapter();
 
-    private JavaSqlDateTimestampTypeAdapter() {
+    private JavaSqlDateDateTypeAdapter() {
     }
 
     @Override
-    public Instant toInternalType(ExpressionInterpreter.Context context, Date value, DomainType domainType) {
+    public LocalDate toInternalType(ExpressionInterpreter.Context context, Date value, DomainType domainType) {
         if (value == null) {
             return null;
         }
-        return Instant.ofEpochMilli(value.getTime());
+        return LocalDate.ofEpochDay(TimeUnit.MILLISECONDS.toDays(value.getTime()));
     }
 
     @Override
-    public Date toModelType(ExpressionInterpreter.Context context, Instant value, DomainType domainType) {
+    public Date toModelType(ExpressionInterpreter.Context context, LocalDate value, DomainType domainType) {
         if (value == null) {
             return null;
         }
-        return new Date(value.toEpochMilli());
+        return new Date(TimeUnit.DAYS.toMillis(value.toEpochDay()));
     }
 }

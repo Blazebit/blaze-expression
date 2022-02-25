@@ -26,6 +26,7 @@ import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
@@ -48,6 +49,7 @@ public final class TypeAdapterRegistry implements TypeResolver {
     private static final Class<Instant> TIMESTAMP = Instant.class;
     private static final Class<LocalTime> TIME = LocalTime.class;
     private static final Class<String> STRING = String.class;
+    private static final Class<LocalDate> DATE = LocalDate.class;
 
     private static final Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> TYPE_ADAPTERS;
 
@@ -70,7 +72,7 @@ public final class TypeAdapterRegistry implements TypeResolver {
         typeAdapters.put(Double.class, new TypeAdapterMetadataDefinition<>(DoubleTypeAdapter.INSTANCE, NUMERIC));
         typeAdapters.put(Calendar.class, new TypeAdapterMetadataDefinition<>(CalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         typeAdapters.put(GregorianCalendar.class, new TypeAdapterMetadataDefinition<>(GregorianCalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(java.sql.Date.class, new TypeAdapterMetadataDefinition<>(JavaSqlDateTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        typeAdapters.put(java.sql.Date.class, new TypeAdapterMetadataDefinition<>(JavaSqlDateDateTypeAdapter.INSTANCE, DATE));
         typeAdapters.put(java.sql.Timestamp.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimestampTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         typeAdapters.put(java.util.Date.class, new TypeAdapterMetadataDefinition<>(JavaUtilDateTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         typeAdapters.put(LocalDateTime.class, new TypeAdapterMetadataDefinition<>(LocalDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
