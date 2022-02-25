@@ -30,10 +30,13 @@ import com.blazebit.expression.spi.ExpressionServiceSerializer;
 import com.blazebit.expression.spi.NumericLiteralResolver;
 import com.blazebit.expression.spi.StringLiteralResolver;
 import com.blazebit.expression.spi.TemporalLiteralResolver;
+import com.blazebit.expression.spi.TypeConverter;
+import com.blazebit.reflection.ReflectionUtils;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -72,6 +75,7 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
     private EnumLiteralResolver enumLiteralResolver;
     private EntityLiteralResolver entityLiteralResolver;
     private CollectionLiteralResolver collectionLiteralResolver;
+    private Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> converters;
 
     public ExpressionServiceBuilderImpl(DomainModel domainModel) {
         this.baseExpressionService = null;
@@ -182,6 +186,11 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
         return collectionLiteralResolver;
     }
 
+    @Override
+    public Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> getConverters() {
+        return converters;
+    }
+
     public ExpressionServiceBuilder withContributors() {
         Providers providers = getProviders();
         for (ExpressionServiceContributor expressionServiceContributor : providers.expressionServiceContributors) {
@@ -208,6 +217,9 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
                 }
             }
             expressionSerializers.putAll(providers.expressionSerializerFactories);
+        }
+        for (TypeConverter<?, ?> typeConverter : providers.typeConverters) {
+            withConverter(typeConverter);
         }
         return this;
     }
@@ -240,11 +252,33 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
     }
 
     @Override
+    public ExpressionServiceBuilder withConverter(TypeConverter<?, ?> converter) {
+        TypeVariable<Class<TypeConverter>>[] typeParameters = TypeConverter.class.getTypeParameters();
+        //noinspection unchecked
+        return withConverter(
+            ReflectionUtils.resolveTypeVariable(converter.getClass(), typeParameters[0]),
+            ReflectionUtils.resolveTypeVariable(converter.getClass(), typeParameters[1]),
+            (TypeConverter) converter
+        );
+    }
+
+    @Override
+    public <X, Y> ExpressionServiceBuilder withConverter(Class<X> sourceType, Class<Y> targetType, TypeConverter<X, Y> converter) {
+        if (converters == null) {
+            converters = new HashMap<>();
+        }
+        converters.computeIfAbsent(targetType, k -> new HashMap<>())
+            .put(sourceType, converter);
+        return this;
+    }
+
+    @Override
     public ExpressionService build() {
         return new ExpressionServiceImpl(
             this,
             getImmutableSerializerFactories(),
-            getImmutableExpressionServiceSerializers()
+            getImmutableExpressionServiceSerializers(),
+            getImmutableTypeConverters()
         );
     }
 
@@ -270,6 +304,20 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
             return baseExpressionService.getExpressionServiceSerializers();
         }
         return Collections.unmodifiableList(new ArrayList<>(expressionServiceSerializers));
+    }
+
+    private Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> getImmutableTypeConverters() {
+        if (converters == null) {
+            if (baseExpressionService == null) {
+                return Collections.emptyMap();
+            }
+            return baseExpressionService.getConverters();
+        }
+        Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> converters = new HashMap<>(this.converters.size());
+        for (Map.Entry<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> entry : this.converters.entrySet()) {
+            converters.put(entry.getKey(), Collections.unmodifiableMap(new HashMap<>(entry.getValue())));
+        }
+        return Collections.unmodifiableMap(converters);
     }
 
     private static Providers getProviders() {
@@ -322,6 +370,7 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
         private final Iterable<ExpressionServiceContributor> expressionServiceContributors;
         private final Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializerFactories;
         private final Iterable<ExpressionServiceSerializer<?>> expressionServiceSerializers;
+        private final Iterable<TypeConverter<?, ?>> typeConverters;
 
         public Providers() {
             this.expressionServiceContributors = StreamSupport.stream(ServiceLoader.load(ExpressionServiceContributor.class).spliterator(), false)
@@ -347,6 +396,7 @@ public class ExpressionServiceBuilderImpl implements ExpressionServiceBuilder {
             }
             this.expressionSerializerFactories = expressionSerializers;
             this.expressionServiceSerializers = load(ExpressionServiceSerializer.class);
+            this.typeConverters = load(TypeConverter.class);
         }
 
         @SuppressWarnings("unchecked")

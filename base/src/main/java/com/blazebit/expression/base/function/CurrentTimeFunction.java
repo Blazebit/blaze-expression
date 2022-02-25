@@ -36,7 +36,7 @@ import java.time.LocalTime;
 public class CurrentTimeFunction implements FunctionInvoker, Serializable {
 
     private static final CurrentTimeFunction INSTANCE = new CurrentTimeFunction();
-    private static final int SECONDS_PER_DAY = 86400;
+    private static final long SECONDS_PER_DAY = 86400;
 
     private CurrentTimeFunction() {
     }

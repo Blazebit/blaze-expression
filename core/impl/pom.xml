@@ -31,6 +31,12 @@
             <version>${version.blaze-domain}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>blaze-common-utils</artifactId>
+            <version>${version.blaze-utils}</version>
+            <scope>compile</scope>
+        </dependency>
 
 
         <!-- Test dependencies -->

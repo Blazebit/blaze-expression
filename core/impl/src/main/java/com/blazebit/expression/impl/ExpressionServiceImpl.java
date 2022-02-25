@@ -32,6 +32,7 @@ import com.blazebit.expression.spi.ExpressionServiceSerializer;
 import com.blazebit.expression.spi.NumericLiteralResolver;
 import com.blazebit.expression.spi.StringLiteralResolver;
 import com.blazebit.expression.spi.TemporalLiteralResolver;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -53,8 +54,9 @@ public class ExpressionServiceImpl implements ExpressionService {
     private final LiteralFactory literalFactory;
     private final Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers;
     private final List<ExpressionServiceSerializer<?>> expressionServiceSerializers;
+    private final Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> converters;
 
-    public ExpressionServiceImpl(ExpressionServiceBuilder builder, Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers, List<ExpressionServiceSerializer<?>> expressionServiceSerializers) {
+    public ExpressionServiceImpl(ExpressionServiceBuilder builder, Map<Class<?>, Map<String, ExpressionSerializerFactory<?>>> expressionSerializers, List<ExpressionServiceSerializer<?>> expressionServiceSerializers, Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> converters) {
         this.domainModel = builder.getDomainModel();
         this.numericLiteralResolver = builder.getNumericLiteralResolver();
         this.booleanLiteralResolver = builder.getBooleanLiteralResolver();
@@ -65,6 +67,7 @@ public class ExpressionServiceImpl implements ExpressionService {
         this.collectionLiteralResolver = builder.getCollectionLiteralResolver();
         this.expressionSerializers = expressionSerializers;
         this.expressionServiceSerializers = expressionServiceSerializers;
+        this.converters = converters;
         this.literalFactory = new LiteralFactory(this);
     }
 
@@ -79,6 +82,7 @@ public class ExpressionServiceImpl implements ExpressionService {
         this.collectionLiteralResolver = parent.getCollectionLiteralResolver();
         this.expressionSerializers = parent.getExpressionSerializerFactories();
         this.expressionServiceSerializers = parent.getExpressionServiceSerializers();
+        this.converters = parent.getConverters();
         this.literalFactory = new LiteralFactory(this);
     }
 
@@ -149,6 +153,11 @@ public class ExpressionServiceImpl implements ExpressionService {
     @Override
     public CollectionLiteralResolver getCollectionLiteralResolver() {
         return collectionLiteralResolver;
+    }
+
+    @Override
+    public Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> getConverters() {
+        return converters;
     }
 
     @Override

@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class ExpressionInterpreterTest {
 
-    private static final int SECONDS_PER_DAY = 86400;
+    private static final long SECONDS_PER_DAY = 86400;
     private final DomainModel domainModel;
     private final ExpressionService expressionService;
     private Instant instant;
@@ -223,6 +223,12 @@ public class ExpressionInterpreterTest {
             compiler.createExpression(expr, compiler.createContext(testTypes)),
             createInterpreterContext());
     }
+    private <T> T testExpressionAs(String expr, Class<T> clazz) {
+        return interpreter.evaluateAs(
+            compiler.createExpression(expr, compiler.createContext(testTypes)),
+            createInterpreterContext(),
+            clazz);
+    }
 
     @Test
     public void testBasic() {
@@ -384,5 +390,10 @@ public class ExpressionInterpreterTest {
     public void testFunctionWithUnionType() {
         Assert.assertEquals(BigInteger.ONE, testExpression("abs(1)"));
         Assert.assertEquals(new BigDecimal("1.0"), testExpression("abs(1.0)"));
+    }
+
+    @Test
+    public void testTypeConverter() {
+        Assert.assertEquals(BigDecimal.ONE, testExpressionAs("abs(1)", BigDecimal.class));
     }
 }

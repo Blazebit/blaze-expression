@@ -47,6 +47,18 @@ public interface ExpressionInterpreter {
     }
 
     /**
+     * Evaluates the given expression to the given type, converting the result if necessary, with an empty interpreter context.
+     *
+     * @param expression The expression to evaluate
+     * @param resultClass The requested result class
+     * @param <T> The result type
+     * @return The evaluation result
+     */
+    public default <T> T evaluateAs(Expression expression, Class<T> resultClass) {
+        return evaluateAs(expression, null, resultClass);
+    }
+
+    /**
      * Evaluates the given expression to the call site defined type based on the given interpreter context.
      *
      * @param expression The expression to evaluate
@@ -65,6 +77,17 @@ public interface ExpressionInterpreter {
      * @return The evaluation result
      */
     public <T> T evaluateAsModelType(Expression expression, Context interpreterContext);
+
+    /**
+     * Evaluates the given expression to the given type, converting the result if necessary, based on the given interpreter context.
+     *
+     * @param expression The expression to evaluate
+     * @param interpreterContext The interpreter context to evaluate the expression against
+     * @param resultClass The requested result class
+     * @param <T> The result type
+     * @return The evaluation result
+     */
+    public <T> T evaluateAs(Expression expression, Context interpreterContext, Class<T> resultClass);
 
     /**
      * Evaluates the given predicate with an empty interpreter context.

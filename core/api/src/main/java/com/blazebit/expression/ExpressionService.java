@@ -26,6 +26,7 @@ import com.blazebit.expression.spi.ExpressionServiceSerializer;
 import com.blazebit.expression.spi.NumericLiteralResolver;
 import com.blazebit.expression.spi.StringLiteralResolver;
 import com.blazebit.expression.spi.TemporalLiteralResolver;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -164,6 +165,13 @@ public interface ExpressionService {
      * @return the collection literal resolver
      */
     public CollectionLiteralResolver getCollectionLiteralResolver();
+
+    /**
+     * Returns the registered converters, mapped from target type to a map of source type to converter mapping.
+     *
+     * @return the registered converters
+     */
+    public Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> getConverters();
 
     /**
      * Serializes the expression service to the given target type with the given format.

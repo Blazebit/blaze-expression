@@ -26,6 +26,9 @@ import com.blazebit.expression.spi.ExpressionServiceSerializer;
 import com.blazebit.expression.spi.NumericLiteralResolver;
 import com.blazebit.expression.spi.StringLiteralResolver;
 import com.blazebit.expression.spi.TemporalLiteralResolver;
+import com.blazebit.expression.spi.TypeConverter;
+
+import java.util.Map;
 
 /**
  * A builder for an expression service based on a domain model.
@@ -162,6 +165,13 @@ public interface ExpressionServiceBuilder {
     public CollectionLiteralResolver getCollectionLiteralResolver();
 
     /**
+     * Returns the registered converters.
+     *
+     * @return the registered converters
+     */
+    public Map<Class<?>, Map<Class<?>, TypeConverter<?, ?>>> getConverters();
+
+    /**
      * Adds the given expression serializer factory.
      *
      * @param serializer The expression serializer factory serializer
@@ -176,6 +186,26 @@ public interface ExpressionServiceBuilder {
      * @return this for chaining
      */
     public ExpressionServiceBuilder withSerializer(ExpressionServiceSerializer<?> serializer);
+
+    /**
+     * Adds the given converter.
+     *
+     * @param converter The converter
+     * @return this for chaining
+     */
+    public ExpressionServiceBuilder withConverter(TypeConverter<?, ?> converter);
+
+    /**
+     * Adds the given converter.
+     *
+     * @param sourceType The source type
+     * @param targetType The target type
+     * @param converter The converter
+     * @param <X> The source type
+     * @param <Y> The target type
+     * @return this for chaining
+     */
+    public <X, Y> ExpressionServiceBuilder withConverter(Class<X> sourceType, Class<Y> targetType, TypeConverter<X, Y> converter);
 
     /**
      * Builds and validates the expression service factory as defined via this builder.

@@ -50,6 +50,7 @@ import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.spi.TypeAdapter;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,6 +85,36 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                 value = typeAdapter.toModelType(context, value, expression.getType());
             }
             return (T) value;
+        } finally {
+            context = oldContext;
+            typeAdapter = null;
+        }
+    }
+
+    @Override
+    public <T> T evaluateAs(Expression expression, Context interpreterContext, Class<T> resultClass) {
+        Context oldContext = context;
+        if (interpreterContext == null) {
+            context = ExpressionInterpreterContext.create(expressionService);
+        } else {
+            context = interpreterContext;
+        }
+        try {
+            Object value = expression.accept(this);
+            if (value == null || resultClass.isInstance(value)) {
+                //noinspection unchecked
+                return (T) value;
+            }
+            Map<Class<?>, TypeConverter<?, ?>> converterMap = expressionService.getConverters().get(resultClass);
+            TypeConverter<Object, T> converter = null;
+            if (converterMap != null) {
+                //noinspection unchecked
+                converter = (TypeConverter<Object, T>) converterMap.get(value.getClass());
+            }
+            if (converter == null) {
+                throw new IllegalArgumentException("No converter found for converting " + value.getClass().getName() + " to " + resultClass.getName() );
+            }
+            return converter.convert(context, value, expression.getType());
         } finally {
             context = oldContext;
             typeAdapter = null;
