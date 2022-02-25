@@ -31,14 +31,8 @@ import java.util.Map;
  */
 public enum ArithmeticOperatorType {
 
-    /**
-     * The + operator.
-     */
-    PLUS("+", DomainOperator.PLUS),
-    /**
-     * The - operator.
-     */
-    MINUS("-", DomainOperator.MINUS),
+    // Note that the operators are ordered by precedence
+
     /**
      * The * operator.
      */
@@ -50,7 +44,15 @@ public enum ArithmeticOperatorType {
     /**
      * The % operator.
      */
-    MODULO("%", DomainOperator.MODULO);
+    MODULO("%", DomainOperator.MODULO),
+    /**
+     * The + operator.
+     */
+    PLUS("+", DomainOperator.PLUS),
+    /**
+     * The - operator.
+     */
+    MINUS("-", DomainOperator.MINUS);
 
     private static final Map<String, ArithmeticOperatorType> OPERATOR_MAP;
 
@@ -102,5 +104,15 @@ public enum ArithmeticOperatorType {
         } else {
             return operatorType;
         }
+    }
+
+    /**
+     * Returns whether this operator has precedence over the given one.
+     *
+     * @param operatorType The other operator
+     * @return whether this operator has precedence over the given one
+     */
+    public boolean hasPrecedenceOver(ArithmeticOperatorType operatorType) {
+        return ordinal() <= operatorType.ordinal();
     }
 }

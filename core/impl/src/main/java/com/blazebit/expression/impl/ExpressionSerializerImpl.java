@@ -273,11 +273,33 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             }
             renderTemplateConcat(e);
         } else {
+            boolean leftParenthesis = false;
+            if (e.getLeft() instanceof ChainingArithmeticExpression) {
+                ChainingArithmeticExpression expr = (ChainingArithmeticExpression) e.getLeft();
+                leftParenthesis = e.getOperator().hasPrecedenceOver(expr.getOperator());
+            }
+            if (leftParenthesis) {
+                sb.append('(');
+            }
             e.getLeft().accept(this);
+            if (leftParenthesis) {
+                sb.append(')');
+            }
             sb.append(' ');
             sb.append(e.getOperator().getOperator());
             sb.append(' ');
+            boolean rightParenthesis = false;
+            if (e.getRight() instanceof ChainingArithmeticExpression) {
+                ChainingArithmeticExpression expr = (ChainingArithmeticExpression) e.getRight();
+                rightParenthesis = e.getOperator().hasPrecedenceOver(expr.getOperator());
+            }
+            if (rightParenthesis) {
+                sb.append('(');
+            }
             e.getRight().accept(this);
+            if (rightParenthesis) {
+                sb.append(')');
+            }
         }
     }
 
@@ -357,24 +379,26 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
         }
         List<Predicate> predicates = e.getPredicates();
         int size = predicates.size();
-        Predicate predicate = predicates.get(0);
-        if (predicate instanceof CompoundPredicate && e.isConjunction() != ((CompoundPredicate) predicate).isConjunction()) {
-            sb.append('(');
-            predicate.accept(this);
-            sb.append(')');
+        if (e.isConjunction()) {
+            String connector = "";
+            for (int i = 0; i < size; i++) {
+                Predicate predicate = predicates.get(i);
+                sb.append(connector);
+                if (predicate instanceof CompoundPredicate && !predicate.isNegated() && !((CompoundPredicate) predicate).isConjunction()) {
+                    sb.append('(');
+                    predicate.accept(this);
+                    sb.append(')');
+                } else {
+                    predicate.accept(this);
+                }
+                connector = " AND ";
+            }
         } else {
-            predicate.accept(this);
-        }
-        String connector = e.isConjunction() ? " AND " : " OR ";
-        for (int i = 1; i < size; i++) {
-            predicate = predicates.get(i);
-            sb.append(connector);
-            if (predicate instanceof CompoundPredicate && !predicate.isNegated() && e.isConjunction() != ((CompoundPredicate) predicate).isConjunction()) {
-                sb.append('(');
-                predicate.accept(this);
-                sb.append(')');
-            } else {
-                predicate.accept(this);
+            String connector = "";
+            for (int i = 0; i < size; i++) {
+                sb.append(connector);
+                predicates.get(i).accept(this);
+                connector = " OR ";
             }
         }
         if (negated) {

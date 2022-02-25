@@ -191,6 +191,12 @@ public abstract class AbstractExpressionCompilerTest {
         return expression;
     }
 
+    protected String serializeExpression(Expression expression) {
+        StringBuilder sb = new StringBuilder();
+        expressionSerializer.serializeTo(expression, sb);
+        return sb.toString();
+    }
+
     protected Expression parseTemplateExpression(String input) {
         Expression templateExpression = expressionCompiler.createTemplateExpression(input, context);
         StringBuilder sb = new StringBuilder();

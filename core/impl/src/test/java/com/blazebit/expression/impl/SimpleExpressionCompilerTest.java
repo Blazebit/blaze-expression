@@ -184,7 +184,7 @@ public class SimpleExpressionCompilerTest extends AbstractExpressionCompilerTest
 
     @Test
     public void testBooleanExpression() {
-        Predicate predicate = parsePredicate("(1 < 2 AND 2 >= 4) OR ('test' = user.email AND 'A' != 'B')");
+        Predicate predicate = parsePredicateOnly("(1 < 2 AND 2 >= 4) OR ('test' = user.email AND 'A' != 'B')");
         assertEquals(
                 or(
                         and(
