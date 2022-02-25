@@ -16,7 +16,6 @@
 
 package com.blazebit.expression.impl;
 
-import com.blazebit.domain.runtime.model.CollectionDomainType;
 import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainFunctionArgument;
 import com.blazebit.domain.runtime.model.DomainOperator;
@@ -124,7 +123,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     @Override
     public Object visit(ExpressionPredicate e) {
         try {
-            Boolean result = (Boolean)e.getExpression().accept(this);
+            Boolean result = (Boolean) e.getExpression().accept(this);
             if (result == null) {
                 return null;
             }
@@ -319,7 +318,8 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         if (attributes.isEmpty()) {
             typeAdapter = null;
         } else {
-            for (int i = 0; i < attributes.size(); i++) {
+            int size = attributes.size();
+            for (int i = 0; i < size; i++) {
                 if (value == null) {
                     return null;
                 }
@@ -329,12 +329,11 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                     throw new IllegalArgumentException("No attribute accessor available for attribute: " + attribute);
                 }
                 value = attributeAccessor.getAttribute(context, value, attribute);
-                TypeAdapter<Object, Object> adapter = attribute.getMetadata(TypeAdapter.class);
-                if (adapter != null) {
-                    value = adapter.toInternalType(context, value, attribute.getType());
+                typeAdapter = attribute.getMetadata(TypeAdapter.class);
+                if (typeAdapter != null) {
+                    value = typeAdapter.toInternalType(context, value, attribute.getType());
                 }
             }
-            typeAdapter = attributes.get(attributes.size() - 1).getMetadata(TypeAdapter.class);
         }
         return value;
     }
@@ -360,9 +359,6 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
                 DomainFunctionArgument domainFunctionArgument = entry.getKey();
                 Expression expression = entry.getValue();
                 Object argumentValue = expression.accept(this);
-                if (typeAdapter != null) {
-                    argumentValue = typeAdapter.toInternalType(context, argumentValue, domainFunctionArgument.getType());
-                }
                 TypeAdapter argumentAdapter = domainFunctionArgument.getMetadata(TypeAdapter.class);
                 if (argumentAdapter != null) {
                     argumentValue = argumentAdapter.toModelType(context, argumentValue, domainFunctionArgument.getType());
@@ -374,26 +370,24 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         }
 
         typeAdapter = domainFunction.getMetadata(TypeAdapter.class);
-        return functionInvoker.invoke(context, domainFunction, argumentValues);
+        Object result = functionInvoker.invoke(context, domainFunction, argumentValues);
+        if (typeAdapter != null) {
+            return typeAdapter.toInternalType(context, result, domainFunction.getResultType());
+        }
+        return result;
     }
 
     @Override
     public Object visit(Literal e) {
         typeAdapter = null;
         if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
-            DomainType elementType = ((CollectionDomainType) e.getType()).getElementType();
             Collection<Expression> collection = (Collection<Expression>) e.getValue();
             if (collection.isEmpty()) {
                 return Collections.emptyList();
             }
             List<Object> resolved = new ArrayList<>(collection.size());
             for (Expression expression : collection) {
-                Object value = expression.accept(this);
-                if (typeAdapter != null) {
-                    value = typeAdapter.toInternalType(context, value, elementType);
-                    typeAdapter = null;
-                }
-                resolved.add(value);
+                resolved.add(expression.accept(this));
             }
             typeAdapter = e.getType().getMetadata(TypeAdapter.class);
             return resolved;

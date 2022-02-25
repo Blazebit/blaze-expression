@@ -4,6 +4,7 @@ import com.blazebit.domain.Domain;
 import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
+import com.blazebit.domain.runtime.model.DomainFunction;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.DomainTypeResolverException;
@@ -18,7 +19,10 @@ import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.base.function.CurrentTimestampFunction;
+import com.blazebit.expression.base.function.FunctionInvokerMetadataDefinition;
 import com.blazebit.expression.spi.AttributeAccessor;
+import com.blazebit.expression.spi.DomainFunctionArguments;
+import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.spi.TypeAdapter;
 import org.junit.Assert;
 import org.junit.Test;
@@ -175,6 +179,11 @@ public class ExpressionInterpreterTest {
             .build();
         StringlyTypeUtils.registerStringlyType(domainBuilder, "Language", Locale::new);
         StringlyTypeUtils.registerStringlyType(domainBuilder, "Currency", Currency::getInstance);
+        domainBuilder.createFunction("is_true")
+            .withMetadata(new FunctionInvokerMetadataDefinition((context, function, arguments) -> arguments.getValue(0)))
+            .withArgument("value", BaseContributor.BOOLEAN_TYPE_NAME)
+            .withResultType(BaseContributor.BOOLEAN_TYPE_NAME)
+            .build();
         domainBuilder.createEntityType("user")
                 .addAttribute("status", BaseContributor.BOOLEAN_TYPE_NAME, statusAttributeMetadata)
                 .addAttribute("language", "Language", languageAttributeMetadata)
@@ -363,5 +372,10 @@ public class ExpressionInterpreterTest {
     public void testStringly12() {
         Assert.assertEquals(Currency.getInstance("EUR"), testExpressionModelType("Currency.EUR"));
         Assert.assertEquals(Currency.getInstance("EUR"), testExpressionModelType("user.currency"));
+    }
+
+    @Test
+    public void testTypeAdapterForFunction() {
+        Assert.assertEquals(true, testExpressionModelType("is_true(user.status)"));
     }
 }
