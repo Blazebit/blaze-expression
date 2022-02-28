@@ -2,7 +2,7 @@ var MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
   target: 'node', // webpack should compile node compatible code
-  devtool: "inline-cheap-module-source-map",
+  devtool: 'inline-cheap-module-source-map',
   output: {
     globalObject: 'this',
     devtoolModuleFilenameTemplate: '[absolute-resource-path]',
@@ -26,17 +26,6 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ]
   },
   mode: 'development',
-  node: {
-    fs: 'empty',
-    global: true,
-    crypto: 'empty',
-    tls: 'empty',
-    net: 'empty',
-    process: true,
-    module: false,
-    clearImmediate: false,
-    setImmediate: false
-  },
   plugins: [
     new MonacoWebpackPlugin({ languages: [] })
   ]

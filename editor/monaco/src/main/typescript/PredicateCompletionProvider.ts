@@ -15,7 +15,7 @@
  */
 
 import {PathResolvingProvider} from "./PathResolvingProvider";
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {CollectionDomainType, EntityDomainType, EnumDomainType} from "blaze-domain";
 import {symbolTables} from "./EditorFactory";
 import {SymbolTable} from "./SymbolTable";

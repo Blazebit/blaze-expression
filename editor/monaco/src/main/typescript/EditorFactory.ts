@@ -20,12 +20,13 @@ import {PredicateHoverProvider} from "./PredicateHoverProvider";
 import {PredicateSignatureHelpProvider} from "./PredicateSignatureHelpProvider";
 import {PredicateCompletionProvider} from "./PredicateCompletionProvider";
 import {SymbolTable} from "./SymbolTable";
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {ErrorEntry} from "./ErrorEntry";
 import {CollectorErrorListener} from "./CollectorErrorListener";
 import {BlazeExpressionErrorStrategy} from "./BlazeExpressionErrorStrategy";
 import {DomainType} from "blaze-domain";
 import {ExpressionException} from "./ExpressionException";
+import {PredicateInlayHintsProvider} from "./PredicateInlayHintsProvider";
 
 export let symbolTables: StringMap<SymbolTable> = {};
 
@@ -193,9 +194,11 @@ function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConst
         monaco.languages.registerHoverProvider('predicate', new PredicateHoverProvider(false));
         monaco.languages.registerSignatureHelpProvider('predicate', new PredicateSignatureHelpProvider(false));
         monaco.languages.registerCompletionItemProvider('predicate', new PredicateCompletionProvider(false, predicateLiteralClass));
+        monaco.languages.registerInlayHintsProvider('predicate', new PredicateInlayHintsProvider(false));
         monaco.languages.registerHoverProvider('template', new PredicateHoverProvider(true));
         monaco.languages.registerSignatureHelpProvider('template', new PredicateSignatureHelpProvider(true));
         monaco.languages.registerCompletionItemProvider('template', new PredicateCompletionProvider(true, templateLiteralClass));
+        monaco.languages.registerInlayHintsProvider('template', new PredicateInlayHintsProvider(true));
     }
 
     let symbolTable;
@@ -224,7 +227,8 @@ function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConst
         folding: false,
         scrollBeyondLastColumn: 0,
         scrollbar: { horizontal: 'hidden', vertical: 'hidden' },
-        find: { addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false },
+        find: { addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: 'never' },
+        inlayHints: { enabled: true },
         minimap: { enabled: false },
         suggest: { showWords: false }
     };
@@ -242,7 +246,8 @@ function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConst
         folding: false,
         scrollBeyondLastColumn: 0,
         scrollbar: {horizontal: 'hidden', vertical: 'hidden'},
-        find: {addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: false},
+        find: {addExtraSpaceOnTop: false, autoFindInSelection: 'never', seedSearchStringFromSelection: 'never'},
+        inlayHints: { enabled: true },
         minimap: {enabled: false},
         suggest: {showWords: false},
     };

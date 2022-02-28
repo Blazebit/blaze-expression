@@ -26,6 +26,10 @@ export enum LiteralKind {
      */
     BOOLEAN,
     /**
+     * Integer literal.
+     */
+    INTEGER,
+    /**
      * Numeric literal.
      */
     NUMERIC,

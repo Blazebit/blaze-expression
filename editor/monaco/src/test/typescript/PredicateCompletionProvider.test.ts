@@ -30,7 +30,7 @@ let assertSuggestsLabels = (completionProvider: PredicateCompletionProvider, sym
             if (typeof item.label === 'string') {
                 return labels.indexOf(item.label) != -1;
             }
-            return labels.indexOf(item.label.name) != -1;
+            return labels.indexOf(item.label.label) != -1;
         });
     }
     expect(filteredCompletionItems).to.length(labels.length);
@@ -67,6 +67,9 @@ describe('Test completion', function() {
     it('Quoted expression attribute completion', function() {
         assertSuggestsLabels(expressionCompleter, symbolTable, "`the user`.", "name");
     });
+    // it('Quoted expression in predicate attribute completion', function() {
+    //     assertSuggestsLabels(expressionCompleter, symbolTable, "1=1 and `the user`.", "name");
+    // });
     it('Expression empty completion', function() {
         assertSuggestsLabels(expressionCompleter, symbolTable, "", "u");
     });

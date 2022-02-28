@@ -15,26 +15,74 @@ module.exports = {
       use: ['style-loader', 'css-loader']
     }, {
       test: /\.ttf$/,
-      use: ['file-loader']
+      type: 'asset/resource'
     }]
   },
   resolve: {
     modules: ['node_modules'],
-    extensions: [ '.tsx', '.ts', '.js' ]
+    extensions: [ '.tsx', '.ts', '.js' ],
+    fallback: {
+      "util": require.resolve("util/"),
+      "assert": require.resolve("assert/")
+    }
   },
   mode: 'none',
-  node: {
-    fs: 'empty',
-    global: true,
-    crypto: 'empty',
-    tls: 'empty',
-    net: 'empty',
-    process: true,
-    module: false,
-    clearImmediate: false,
-    setImmediate: false
-  },
   plugins: [
-    new MonacoWebpackPlugin({ languages: [] })
+    new MonacoWebpackPlugin({
+      languages: [],
+      features: [
+        // 'accessibilityHelp',
+        // 'anchorSelect',
+        'bracketMatching',
+        // 'caretOperations',
+        // 'clipboard',
+        // 'codeAction',
+        // 'codelens',
+        // 'colorPicker',
+        // 'comment',
+        // 'contextmenu',
+        // 'coreCommands',
+        // 'cursorUndo',
+        // 'dnd',
+        // 'documentSymbols',
+        // 'find',
+        // 'folding',
+        // 'fontZoom',
+        // 'format',
+        // 'gotoError',
+        // 'gotoLine',
+        // 'gotoSymbol',
+        'hover',
+        'iPadShowKeyboard',
+        // 'inPlaceReplace',
+        // 'indentation',
+        'inlayHints',
+        'inlineCompletions',
+        // 'inspectTokens',
+        // 'lineSelection',
+        // 'linesOperations',
+        // 'linkedEditing',
+        // 'links',
+        // 'multicursor',
+        'parameterHints',
+        // 'quickCommand',
+        // 'quickHelp',
+        // 'quickOutline',
+        // 'referenceSearch',
+        // 'rename',
+        // 'smartSelect',
+        // 'snippet',
+        'suggest',
+        // 'toggleHighContrast',
+        // 'toggleTabFocusMode',
+        // 'tokenization',
+        // 'unicodeHighlighter',
+        // 'unusualLineTerminators',
+        // 'viewportSemanticTokens',
+        'wordHighlighter',
+        // 'wordOperations',
+        // 'wordPartOperations',
+      ]
+    })
   ]
 }

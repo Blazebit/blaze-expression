@@ -774,6 +774,8 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             case BlazeExpressionLexer.TRUE:
             case BlazeExpressionLexer.FALSE:
                 return this.symbolTable.model.booleanLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.BOOLEAN, node.text);
+            case BlazeExpressionLexer.INTEGER_LITERAL:
+                return this.symbolTable.model.numericLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.INTEGER, node.text);
             case BlazeExpressionLexer.NUMERIC_LITERAL:
                 return this.symbolTable.model.numericLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.NUMERIC, node.text);
             default:

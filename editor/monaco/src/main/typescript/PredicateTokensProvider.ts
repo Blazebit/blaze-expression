@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {PredicateState} from "./PredicateState";
 import {PredicateLineTokens} from "./PredicateLineTokens";
 import {PredicateToken} from "./PredicateToken";

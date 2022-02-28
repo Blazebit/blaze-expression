@@ -144,15 +144,19 @@ export class ExpressionService {
         return this.inTemplateExpressionContextChecker(input);
     }
 
-    parseTree(input: string): ParserRuleContext {
-        const lexer = this.lexerFactory(input);
+    parseTree(input: string, templateMode: boolean = false): ParserRuleContext {
+        const lexer = templateMode ? this.createTemplateLexer(input) : this.createLexer(input);
         lexer.removeErrorListeners();
         lexer.addErrorListener(new ConsoleErrorListener());
 
         const parser = this.parserFactory(lexer);
         parser.removeErrorListeners();
         parser.errorHandler = new BlazeExpressionErrorStrategy();
-        return this.parseRuleInvoker(parser);
+        if (templateMode) {
+            return this.parseTemplateRuleInvoker(parser);
+        } else {
+            return this.parseRuleInvoker(parser);
+        }
     }
 
     resolveType(input: string, symbolTable: SymbolTable) : DomainType {
@@ -239,8 +243,8 @@ export class ExpressionService {
         });
         registerIfAbsent("NumericLiteralResolver", function(): LiteralResolver {
             return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                    if (isNaN(parseInt(value as string))) {
-                        return domainModel.types['Numeric'];
+                    if (kind == LiteralKind.NUMERIC) {
+                        return domainModel.getType('Numeric');
                     } else {
                         return domainModel.getType('Integer');
                     }

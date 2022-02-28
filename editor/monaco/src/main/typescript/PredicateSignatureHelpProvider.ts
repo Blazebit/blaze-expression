@@ -15,8 +15,7 @@
  */
 
 import {PathResolvingProvider} from "./PathResolvingProvider";
-import * as monaco from "monaco-editor";
-import {IMarkdownString} from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {symbolTables} from "./EditorFactory";
 
 /**
@@ -38,7 +37,7 @@ export class PredicateSignatureHelpProvider extends PathResolvingProvider implem
         let originalPosition = position;
         let ranges: monaco.Range[] = null;
         do {
-            ranges = (model as any).findEnclosingBrackets(position);
+            ranges = (model as any).bracketPairs.findEnclosingBrackets(position);
             if (ranges == null || ranges.length == 0) {
                 break;
             }
@@ -156,13 +155,13 @@ export class PredicateSignatureHelpProvider extends PathResolvingProvider implem
                             if (domainFunction.minArgumentCount != -1 && i >= domainFunction.minArgumentCount) {
                                 label += "?";
                             }
-                            let doc: string | IMarkdownString = "";
+                            let doc: string | monaco.IMarkdownString = "";
                             if (p.documentation != null) {
                                 doc = { value: p.documentation, isTrusted: true };
                             }
                             params.push({ label: label, documentation: doc });
                         }
-                        let doc: string | IMarkdownString = "";
+                        let doc: string | monaco.IMarkdownString = "";
                         if (domainFunction.documentation != null) {
                             doc = { value: domainFunction.documentation, isTrusted: true };
                         }

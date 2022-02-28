@@ -15,9 +15,8 @@
  */
 
 import {PathResolvingProvider} from "./PathResolvingProvider";
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {CollectionDomainType, EntityDomainType, EnumDomainType} from "blaze-domain";
-import {IMarkdownString} from "monaco-editor";
 import {symbolTables} from "./EditorFactory";
 
 /**
@@ -83,7 +82,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
         }
         if (completionItem != null) {
             let docVal = "";
-            let doc: string | IMarkdownString = completionItem.documentation;
+            let doc: string | monaco.IMarkdownString = completionItem.documentation;
             if (doc != null) {
                 if (typeof doc === 'string' || doc instanceof String) {
                     docVal = "\n\n" + doc;

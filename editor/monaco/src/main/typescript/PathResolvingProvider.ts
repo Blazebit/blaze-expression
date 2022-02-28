@@ -15,7 +15,7 @@
  */
 
 import {PathResult} from "./PathResult";
-import * as monaco from "monaco-editor";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import {Symbol} from "./Symbol";
 import {
     DomainFunction,
