@@ -49,6 +49,9 @@ public class TypeAdapterDeclarativeFunctionMetadataProcessor implements Declarat
         if (typeAdapter != null || collection) {
             return typeAdapter;
         }
+        if (typeName == null) {
+            return null;
+        }
         DomainBuilder domainBuilder = serviceProvider.getService(DomainBuilder.class);
         DomainTypeDefinition type = domainBuilder.getType(typeName);
         if (type == null) {

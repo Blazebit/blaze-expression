@@ -52,7 +52,7 @@ public class AbsFunction implements FunctionInvoker, Serializable {
                 .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
                 .withMetadata(DocumentationMetadataDefinition.localized("ABS", classLoader))
                 .withExactArgumentCount(1)
-                .withArgument("number", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized("ABS_ARG", classLoader))
+                .withArgument("number", BaseContributor.INTEGER_OR_NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ABS_ARG", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("ABS", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
     }

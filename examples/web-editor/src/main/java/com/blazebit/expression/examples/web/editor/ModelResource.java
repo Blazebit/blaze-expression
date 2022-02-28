@@ -47,7 +47,8 @@ public class ModelResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getModel() {
         Locale locale = headers.getLanguage();
-        return Response.ok(expressionService.serialize(String.class, "json", Collections.singletonMap(DocumentationMetadataDefinition.LOCALE_PROPERTY, locale))).build();
+        String json = expressionService.serialize(String.class, "json", Collections.singletonMap(DocumentationMetadataDefinition.LOCALE_PROPERTY, locale));
+        return Response.ok(json).build();
     }
 
 }

@@ -124,7 +124,7 @@ public abstract class NumericFunction implements FunctionInvoker, Serializable {
                     .withMetadata(new FunctionInvokerMetadataDefinition(f))
                     .withMetadata(DocumentationMetadataDefinition.localized(f.name, classLoader))
                     .withExactArgumentCount(1)
-                    .withArgument("number", BaseContributor.NUMERIC_OR_INTEGER_TYPE_NAME, DocumentationMetadataDefinition.localized(f.name + "_ARG", classLoader))
+                    .withArgument("number", BaseContributor.INTEGER_OR_NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized(f.name + "_ARG", classLoader))
                     .build();
             domainBuilder.withFunctionTypeResolver(f.name, StaticDomainFunctionTypeResolvers.returning(BaseContributor.NUMERIC_TYPE_NAME));
         }

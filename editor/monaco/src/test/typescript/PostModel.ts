@@ -99,6 +99,7 @@ export class PostModel {
                 funcs: [
                     {
                         name: "indexOf",
+                        volatility: "S",
                         argCount: -1,
                         minArgCount: 2,
                         type: "Integer",
@@ -131,6 +132,7 @@ export class PostModel {
                     },
                     {
                         name: "substring",
+                        volatility: "S",
                         argCount: -1,
                         minArgCount: 2,
                         type: "String",
@@ -163,6 +165,7 @@ export class PostModel {
                     },
                     {
                         name: "startsWith",
+                        volatility: "S",
                         argCount: 2,
                         minArgCount: 2,
                         type: "Boolean",

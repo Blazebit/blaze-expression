@@ -537,7 +537,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         if (literalList.isEmpty()) {
             collectionDomainType = domainModel.getCollectionType(null);
         } else {
-            collectionDomainType = domainModel.getCollectionType(literalList.get(0).getType());
+            collectionDomainType = domainModel.getCollectionType(literalList.get(0).getType().getName());
         }
 
         return new CollectionLiteral(literalList, literalFactory.ofCollectionValues(compileContext, collectionDomainType, literalList));

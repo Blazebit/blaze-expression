@@ -103,8 +103,9 @@ export class ExpressionService {
         this.inTemplateExpressionContextChecker = inTemplateExpressionContextChecker;
         this.identifierRenderer = identifierRenderer;
         this.typeResolver = typeResolver;
-        for (let name in domainModel.types) {
-            let type = domainModel.types[name];
+        let types = domainModel.getTypes();
+        for (let name in types) {
+            let type = types[name];
             (type as any).identifier = identifierRenderer(type.name);
             if (type instanceof EnumDomainType) {
                 for (let valueName in type.enumValues) {
@@ -118,8 +119,9 @@ export class ExpressionService {
                 }
             }
         }
-        for (let name in domainModel.functions) {
-            let f = domainModel.functions[name];
+        let funcs = domainModel.getFunctions();
+        for (let name in funcs) {
+            let f = funcs[name];
             (f as any).identifier = identifierRenderer(f.name);
             if (f.arguments.length != 0) {
                 for (var i = 0; i < f.arguments.length; i++) {
@@ -232,7 +234,7 @@ export class ExpressionService {
         };
         registerIfAbsent("BooleanLiteralResolver", function(): LiteralResolver {
             return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                    return domainModel.types['Boolean'];
+                    return domainModel.getType('Boolean');
                 }};
         });
         registerIfAbsent("NumericLiteralResolver", function(): LiteralResolver {
@@ -240,21 +242,21 @@ export class ExpressionService {
                     if (isNaN(parseInt(value as string))) {
                         return domainModel.types['Numeric'];
                     } else {
-                        return domainModel.types['Integer'];
+                        return domainModel.getType('Integer');
                     }
                 }};
         });
         registerIfAbsent("StringLiteralResolver", function(): LiteralResolver {
             return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                    return domainModel.types['String'];
+                    return domainModel.getType('String');
                 }};
         });
         registerIfAbsent("TemporalLiteralResolver", function(): LiteralResolver {
             return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
                     if (kind == LiteralKind.INTERVAL) {
-                        return domainModel.types['Interval'];
+                        return domainModel.getType('Interval');
                     } else {
-                        return domainModel.types['Timestamp'];
+                        return domainModel.getType('Timestamp');
                     }
                 }};
         });

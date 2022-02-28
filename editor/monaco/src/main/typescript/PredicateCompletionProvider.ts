@@ -104,20 +104,20 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
                 for (let v in symbolTable.variables) {
                     suggestions.push(this.varSuggestion(symbolTable.variables[v], range));
                 }
-                let types = symbolTable.model.domainModel.types;
+                let types = symbolTable.model.domainModel.getTypes();
                 for (let t in types) {
                     let item = this.typeSuggestion(types[t], range);
                     if (item != null) {
                         suggestions.push(item);
                     }
                 }
-                let funcs = symbolTable.model.domainModel.functions;
+                let funcs = symbolTable.model.domainModel.getFunctions();
                 for (let f in funcs) {
                     suggestions.push(this.functionSuggestion(funcs[f], range));
                 }
             } else {
                 if (parts.length == 2) {
-                    let type = symbolTable.model.domainModel.types[parts[0].trim()];
+                    let type = symbolTable.model.domainModel.getType(parts[0].trim());
                     if (type instanceof EnumDomainType) {
                         for (let enumValue in type.enumValues) {
                             suggestions.push(this.enumSuggestion(type, type.enumValues[enumValue], range));
@@ -156,14 +156,14 @@ export class PredicateCompletionProvider extends PathResolvingProvider implement
             for (let v in symbolTable.variables) {
                 suggestions.push(this.varSuggestion(symbolTable.variables[v], range));
             }
-            let types = symbolTable.model.domainModel.types;
+            let types = symbolTable.model.domainModel.getTypes();
             for (let t in types) {
                 let item = this.typeSuggestion(types[t], range);
                 if (item != null) {
                     suggestions.push(item);
                 }
             }
-            let funcs = symbolTable.model.domainModel.functions;
+            let funcs = symbolTable.model.domainModel.getFunctions();
             for (let f in funcs) {
                 suggestions.push(this.functionSuggestion(funcs[f], range));
             }

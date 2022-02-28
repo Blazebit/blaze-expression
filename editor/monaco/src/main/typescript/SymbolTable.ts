@@ -53,7 +53,7 @@ export class SymbolTable {
         let vars: StringMap<Symbol> = {};
         for (let name in symbols) {
             let s = symbols[name];
-            vars[name] = new Symbol(name, expressionService.identifierRenderer(name), model.types[s['type']], s['doc']);
+            vars[name] = new Symbol(name, expressionService.identifierRenderer(name), model.getType(s['type']), s['doc']);
         }
         return vars;
     }

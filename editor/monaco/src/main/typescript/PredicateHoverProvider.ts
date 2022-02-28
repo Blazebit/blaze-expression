@@ -40,7 +40,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
             let parts = path.split(this.pathOperators);
             if (parts.length == 1) {
                 if (pathResult.offendingChar == "(") {
-                    let domainFunction = symbolTable.model.domainModel.functions[path];
+                    let domainFunction = symbolTable.model.domainModel.getFunction(path);
                     if (domainFunction != null) {
                         completionItem = this.functionSuggestion(domainFunction);
                     }
@@ -49,7 +49,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                     if (variable != null) {
                         completionItem = this.varSuggestion(variable);
                     } else {
-                        let type = symbolTable.model.domainModel.types[path];
+                        let type = symbolTable.model.domainModel.getType(path);
                         if (type != null) {
                             completionItem = this.typeSuggestion(type);
                         }
@@ -59,7 +59,7 @@ export class PredicateHoverProvider extends PathResolvingProvider implements mon
                 let lastIdx = parts.length - 1;
                 let basePath = path.substring(0, path.length - parts[lastIdx].length - 1);
                 if (parts.length == 2) {
-                    let type = symbolTable.model.domainModel.types[basePath.trim()];
+                    let type = symbolTable.model.domainModel.getType(basePath.trim());
                     if (type instanceof EnumDomainType) {
                         let enumValue = type.enumValues[parts[lastIdx]];
                         if (enumValue != null) {

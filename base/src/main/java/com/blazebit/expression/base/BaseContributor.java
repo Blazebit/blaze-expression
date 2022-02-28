@@ -111,7 +111,7 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
     public static final String DATE_TYPE_NAME = "Date";
     public static final Class<?> DATE = LocalDate.class;
 
-    public static final String NUMERIC_OR_INTEGER_TYPE_NAME = NUMERIC_TYPE_NAME + "|" + INTEGER_TYPE_NAME;
+    public static final String INTEGER_OR_NUMERIC_TYPE_NAME = INTEGER_TYPE_NAME + "|" + NUMERIC_TYPE_NAME;
 
     public static final BooleanLiteralResolver BOOLEAN_LITERAL_TYPE_RESOLVER = new BooleanLiteralResolverImpl();
     public static final NumericLiteralResolver NUMERIC_LITERAL_TYPE_RESOLVER = new NumericLiteralResolverImpl();

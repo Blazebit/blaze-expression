@@ -99,7 +99,7 @@ export class PredicateSignatureHelpProvider extends PathResolvingProvider implem
             if (path.length != 0 && path.charAt(0).match(this.identifierStart)) {
                 let parts = path.split(this.pathOperators);
                 if (parts.length == 1) {
-                    let domainFunction = symbolTable.model.domainModel.functions[path];
+                    let domainFunction = symbolTable.model.domainModel.getFunction(path);
                     if (domainFunction != null) {
                         let maxArgumentCount = Math.max(domainFunction.argumentCount, domainFunction.arguments.length);
                         let activeParameter = 0;

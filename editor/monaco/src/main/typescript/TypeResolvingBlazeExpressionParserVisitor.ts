@@ -185,8 +185,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitIsNullPredicate(ctx: IsNullPredicateContext): DomainType {
         let left = ctx.expression().accept(this);
-        let predicateTypeResolvers = this.symbolTable.model.domainModel.predicateTypeResolvers[left.name];
-        let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.NULLNESS]];
+        let predicateTypeResolver = this.symbolTable.model.domainModel.getPredicateTypeResolver(left.name, DomainPredicate.NULLNESS);
 
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left.getType(), [1, 2, 3]);
@@ -210,26 +209,10 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitIsEmptyPredicate(ctx: IsEmptyPredicateContext): DomainType {
         let left = ctx.expression().accept(this);
-        let predicateTypeResolvers = this.symbolTable.model.domainModel.predicateTypeResolvers[left.name];
-        let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.COLLECTION]];
-
-        if (predicateTypeResolver == null) {
-            throw this.missingPredicateTypeResolver(ctx, left, [1, 2, 3]);
+        if (left instanceof CollectionDomainType) {
+            return this.booleanDomainType;
         } else {
-            try {
-                let domainType = predicateTypeResolver.resolveType(this.symbolTable.model.domainModel, [left]);
-                if (domainType == null) {
-                    throw this.cannotResolvePredicateType(ctx, DomainPredicate.COLLECTION, [left]);
-                } else {
-                    return this.booleanDomainType;
-                }
-            } catch (e) {
-                if (e instanceof DomainTypeResolverException) {
-                    throw new TypeErrorException(e.message, ctx, -1, -1, -1, -1)
-                } else {
-                    throw e;
-                }
-            }
+            throw this.missingPredicateTypeResolver(ctx, left, [1, 2, 3]);
         }
     }
 
@@ -292,8 +275,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             throw this.incompleteExpression(ctx);
         }
         let operandTypes = [left, right];
-        let predicateTypeResolvers = this.symbolTable.model.domainModel.predicateTypeResolvers[left.name];
-        let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[domainPredicate]];
+        let predicateTypeResolver = this.symbolTable.model.domainModel.getPredicateTypeResolver(left.name, domainPredicate);
 
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
@@ -318,8 +300,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
     visitInPredicate(ctx: InPredicateContext): DomainType {
         let left: DomainType = ctx.expression().accept(this);
         let operandTypes: DomainType[] = this.getExpressionList(ctx.inList().expression());
-        let predicateTypeResolvers = this.symbolTable.model.domainModel.predicateTypeResolvers[left.name];
-        let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.EQUALITY]];
+        let predicateTypeResolver = this.symbolTable.model.domainModel.getPredicateTypeResolver(left.name, DomainPredicate.EQUALITY);
 
         if (operandTypes.length == 0) {
             throw this.incompleteExpression(ctx);
@@ -358,8 +339,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             throw this.incompleteExpression(ctx);
         }
 
-        let predicateTypeResolvers = this.symbolTable.model.domainModel.predicateTypeResolvers[left.name];
-        let predicateTypeResolver = predicateTypeResolvers == null ? null : predicateTypeResolvers[DomainPredicate[DomainPredicate.RELATIONAL]];
+        let predicateTypeResolver = this.symbolTable.model.domainModel.getPredicateTypeResolver(left.name, DomainPredicate.RELATIONAL);
 
         if (predicateTypeResolver == null) {
             throw this.missingPredicateTypeResolver(ctx, left, [1]);
@@ -451,8 +431,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
         }
 
         let operandTypes = [left, right];
-        let operationTypeResolvers = this.symbolTable.model.domainModel.operationTypeResolvers[left.name];
-        let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[operator]];
+        let operationTypeResolver = this.symbolTable.model.domainModel.getOperationTypeResolver(left.name, operator);
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 1);
         } else {
@@ -479,8 +458,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             throw this.incompleteExpression(ctx);
         }
         let operandTypes = [left];
-        let operationTypeResolvers = this.symbolTable.model.domainModel.operationTypeResolvers[left.name];
-        let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[DomainOperator.UNARY_MINUS]];
+        let operationTypeResolver = this.symbolTable.model.domainModel.getOperationTypeResolver(left.name, DomainOperator.UNARY_MINUS);
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 0);
         } else {
@@ -507,8 +485,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             throw this.incompleteExpression(ctx);
         }
         let operandTypes = [left];
-        let operationTypeResolvers = this.symbolTable.model.domainModel.operationTypeResolvers[left.name];
-        let operationTypeResolver = operationTypeResolvers == null ? null : operationTypeResolvers[DomainOperator[DomainOperator.UNARY_PLUS]];
+        let operationTypeResolver = this.symbolTable.model.domainModel.getOperationTypeResolver(left.name, DomainOperator.UNARY_PLUS);
         if (operationTypeResolver == null) {
             throw this.missingOperationTypeResolver(ctx, left, 0);
         } else {
@@ -557,8 +534,9 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitCollectionLiteral(ctx: CollectionLiteralContext): DomainType {
         let literalList = this.getExpressionList(ctx.literal());
+        let typeName = literalList.length == 0 ? 'Collection' : 'Collection[' + literalList[0].name + ']';
         let literal: CollectionLiteral = {
-            type: this.symbolTable.model.domainModel.types['Collection[' + literalList[0].name + ']'] as CollectionDomainType,
+            type: this.symbolTable.model.domainModel.getType(typeName) as CollectionDomainType,
             values: []
         };
         return this.symbolTable.model.collectionLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.COLLECTION, literal);
@@ -587,7 +565,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
             if (symbol == null) {
                 let identifiers: IdentifierContext[];
                 if (pathAttributesContext != null && (identifiers = pathAttributesContext.identifier()).length == 1) {
-                    let type = this.symbolTable.model.domainModel.types[alias];
+                    let type = this.symbolTable.model.domainModel.getType(alias);
                     if (type instanceof EnumDomainType) {
                         let key = identifiers[0].text;
                         let value = type.enumValues[key];
@@ -636,7 +614,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitIndexedFunctionInvocation(ctx: IndexedFunctionInvocationContext): DomainType {
         let functionName = ctx._name.text;
-        let func = this.symbolTable.model.domainModel.functions[functionName];
+        let func = this.symbolTable.model.domainModel.getFunction(functionName);
         if (func == null) {
             throw this.unknownFunction(ctx, functionName);
         } else {
@@ -691,7 +669,7 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitEntityLiteral(ctx: EntityLiteralContext): DomainType {
         let entityOrFunctionName = ctx._name.text;
-        let type = this.symbolTable.model.domainModel.types[entityOrFunctionName];
+        let type = this.symbolTable.model.domainModel.getType(entityOrFunctionName);
         if (type instanceof EntityDomainType) {
             let argNames: IdentifierContext[] = ctx.identifier();
             argNames.shift()
@@ -727,9 +705,9 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitNamedInvocation(ctx: NamedInvocationContext): DomainType {
         let entityOrFunctionName = ctx._name.text;
-        let func = this.symbolTable.model.domainModel.functions[entityOrFunctionName];
+        let func = this.symbolTable.model.domainModel.getFunction(entityOrFunctionName);
         if (func == null) {
-            let type = this.symbolTable.model.domainModel.types[entityOrFunctionName];
+            let type = this.symbolTable.model.domainModel.getType(entityOrFunctionName);
             if (type instanceof EntityDomainType) {
                 let argNames: IdentifierContext[] = ctx.identifier();
                 argNames.shift()
