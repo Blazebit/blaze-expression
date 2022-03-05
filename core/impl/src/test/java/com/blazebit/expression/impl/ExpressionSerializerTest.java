@@ -49,6 +49,41 @@ public class ExpressionSerializerTest extends AbstractExpressionCompilerTest {
     }
 
     @Test
+    public void arithmeticOperatorPrecedenceTest4() {
+        Expression expr = parseArithmeticExpressionOnly("1 + 2 + 3");
+        String serializedExpression = serializeExpression(expr);
+        assertEquals("1 + 2 + 3", serializedExpression);
+    }
+
+    @Test
+    public void arithmeticOperatorPrecedenceTest5() {
+        Expression expr = parseArithmeticExpressionOnly("1 + 2 + 3 + 4");
+        String serializedExpression = serializeExpression(expr);
+        assertEquals("1 + 2 + 3 + 4", serializedExpression);
+    }
+
+    @Test
+    public void arithmeticOperatorPrecedenceTest6() {
+        Expression expr = parseArithmeticExpressionOnly("1 + 2 + 3 * 4");
+        String serializedExpression = serializeExpression(expr);
+        assertEquals("1 + 2 + 3 * 4", serializedExpression);
+    }
+
+    @Test
+    public void arithmeticOperatorPrecedenceTest7() {
+        Expression expr = parseArithmeticExpressionOnly("1 + 2 + 3 * 4 + 5");
+        String serializedExpression = serializeExpression(expr);
+        assertEquals("1 + 2 + 3 * 4 + 5", serializedExpression);
+    }
+
+    @Test
+    public void arithmeticOperatorPrecedenceTest8() {
+        Expression expr = parseArithmeticExpressionOnly("1 + 2 + (3 * 4) / 5");
+        String serializedExpression = serializeExpression(expr);
+        assertEquals("1 + 2 + 3 * 4 / 5", serializedExpression);
+    }
+
+    @Test
     public void booleanOperatorPrecedenceTest1() {
         Expression expr = parsePredicateOnly("(1 = 1 AND 1 = 1) OR 1 = 1");
         String serializedExpression = serializeExpression(expr);

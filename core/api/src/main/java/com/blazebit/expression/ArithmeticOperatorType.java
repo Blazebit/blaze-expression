@@ -113,6 +113,6 @@ public enum ArithmeticOperatorType {
      * @return whether this operator has precedence over the given one
      */
     public boolean hasPrecedenceOver(ArithmeticOperatorType operatorType) {
-        return ordinal() <= operatorType.ordinal();
+        return ordinal() < operatorType.ordinal();
     }
 }
