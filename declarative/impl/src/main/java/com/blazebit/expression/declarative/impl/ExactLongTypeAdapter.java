@@ -27,15 +27,15 @@ import java.math.BigInteger;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ByteTypeAdapter implements TypeAdapter<Byte, BigInteger>, Serializable {
+public class ExactLongTypeAdapter implements TypeAdapter<Long, BigInteger>, Serializable {
 
-    public static final ByteTypeAdapter INSTANCE = new ByteTypeAdapter();
+    public static final ExactLongTypeAdapter INSTANCE = new ExactLongTypeAdapter();
 
-    private ByteTypeAdapter() {
+    private ExactLongTypeAdapter() {
     }
 
     @Override
-    public BigInteger toInternalType(ExpressionInterpreter.Context context, Byte value, DomainType domainType) {
+    public BigInteger toInternalType(ExpressionInterpreter.Context context, Long value, DomainType domainType) {
         if (value == null) {
             return null;
         }
@@ -43,10 +43,10 @@ public class ByteTypeAdapter implements TypeAdapter<Byte, BigInteger>, Serializa
     }
 
     @Override
-    public Byte toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
+    public Long toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
         if (value == null) {
             return null;
         }
-        return value.byteValue();
+        return value.longValue();
     }
 }

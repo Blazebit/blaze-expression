@@ -25,18 +25,16 @@ import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class NumericOperatorInterpreter implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
+public class ApproximateNumericOperatorInterpreter implements ComparisonOperatorInterpreter, DomainOperatorInterpreter, Serializable {
 
-    public static final NumericOperatorInterpreter INSTANCE = new NumericOperatorInterpreter();
+    public static final ApproximateNumericOperatorInterpreter INSTANCE = new ApproximateNumericOperatorInterpreter();
 
-    private NumericOperatorInterpreter() {
+    private ApproximateNumericOperatorInterpreter() {
     }
 
     @Override
@@ -46,11 +44,11 @@ public class NumericOperatorInterpreter implements ComparisonOperatorInterpreter
         }
         Comparable l;
         Comparable r;
-        if (leftValue instanceof BigDecimal && rightValue instanceof BigInteger) {
+        if (leftValue instanceof Double && rightValue instanceof Long) {
             l = (Comparable) leftValue;
-            r = new BigDecimal((BigInteger) rightValue);
-        } else if (leftValue instanceof BigInteger && rightValue instanceof BigDecimal) {
-            l = new BigDecimal((BigInteger) leftValue);
+            r = ((Long) rightValue).doubleValue();
+        } else if (leftValue instanceof Long && rightValue instanceof Double) {
+            l = ((Long) leftValue).doubleValue();
             r = (Comparable) rightValue;
         } else {
             l = (Comparable) leftValue;
@@ -84,10 +82,10 @@ public class NumericOperatorInterpreter implements ComparisonOperatorInterpreter
                 return null;
             }
             if (operator == DomainOperator.UNARY_MINUS) {
-                if (leftValue instanceof BigDecimal) {
-                    return ((BigDecimal) leftValue).negate();
-                } else if (leftValue instanceof BigInteger) {
-                    return ((BigInteger) leftValue).negate();
+                if (leftValue instanceof Double) {
+                    return -((Double) leftValue);
+                } else if (leftValue instanceof Long) {
+                    return -((Long) leftValue);
                 }
             }
         } else {
@@ -97,51 +95,51 @@ public class NumericOperatorInterpreter implements ComparisonOperatorInterpreter
 
             if (rightValue instanceof String) {
                 return leftValue + rightValue.toString();
-            } else if (leftValue instanceof BigInteger && rightValue instanceof BigInteger) {
-                BigInteger l = (BigInteger) leftValue;
-                BigInteger r = (BigInteger) rightValue;
+            } else if (leftValue instanceof Long && rightValue instanceof Long) {
+                long l = (Long) leftValue;
+                long r = (Long) rightValue;
 
                 switch (operator) {
                     case PLUS:
-                        return l.add(r);
+                        return l + r;
                     case MINUS:
-                        return l.subtract(r);
+                        return l - r;
                     case MULTIPLICATION:
-                        return l.multiply(r);
+                        return l * r;
                     case DIVISION:
-                        return l.divide(r);
+                        return l / r;
                     case MODULO:
-                        return l.remainder(r);
+                        return l % r;
                     default:
                         break;
                 }
             } else {
-                BigDecimal l;
-                BigDecimal r;
-                if (leftValue instanceof BigDecimal && rightValue instanceof BigInteger) {
-                    l = (BigDecimal) leftValue;
-                    r = new BigDecimal((BigInteger) rightValue);
-                } else if (leftValue instanceof BigInteger && rightValue instanceof BigDecimal) {
-                    l = new BigDecimal((BigInteger) leftValue);
-                    r = (BigDecimal) rightValue;
-                } else if (leftValue instanceof BigDecimal && rightValue instanceof BigDecimal) {
-                    l = (BigDecimal) leftValue;
-                    r = (BigDecimal) rightValue;
+                double l;
+                double r;
+                if (leftValue instanceof Double && rightValue instanceof Long) {
+                    l = (Double) leftValue;
+                    r = ((Long) rightValue).doubleValue();
+                } else if (leftValue instanceof Long && rightValue instanceof Double) {
+                    l = ((Long) leftValue).doubleValue();
+                    r = (Double) rightValue;
+                } else if (leftValue instanceof Double && rightValue instanceof Double) {
+                    l = (Double) leftValue;
+                    r = (Double) rightValue;
                 } else {
                     throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");
                 }
 
                 switch (operator) {
                     case PLUS:
-                        return l.add(r);
+                        return l + r;
                     case MINUS:
-                        return l.subtract(r);
+                        return l - r;
                     case MULTIPLICATION:
-                        return l.multiply(r);
+                        return l * r;
                     case DIVISION:
-                        return l.divide(r);
+                        return l / r;
                     case MODULO:
-                        return l.remainder(r);
+                        return l % r;
                     default:
                         break;
                 }

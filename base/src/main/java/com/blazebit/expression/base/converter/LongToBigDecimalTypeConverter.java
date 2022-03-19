@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.declarative.impl;
+package com.blazebit.expression.base.converter;
 
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.spi.TypeAdapter;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -27,26 +27,9 @@ import java.math.BigDecimal;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class FloatTypeAdapter implements TypeAdapter<Float, BigDecimal>, Serializable {
-
-    public static final FloatTypeAdapter INSTANCE = new FloatTypeAdapter();
-
-    private FloatTypeAdapter() {
-    }
-
+public class LongToBigDecimalTypeConverter implements TypeConverter<Long, BigDecimal>, Serializable {
     @Override
-    public BigDecimal toInternalType(ExpressionInterpreter.Context context, Float value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return BigDecimal.valueOf(value);
-    }
-
-    @Override
-    public Float toModelType(ExpressionInterpreter.Context context, BigDecimal value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return value.floatValue();
+    public BigDecimal convert(ExpressionInterpreter.Context context, Long value, DomainType domainType) {
+        return new BigDecimal(value);
     }
 }

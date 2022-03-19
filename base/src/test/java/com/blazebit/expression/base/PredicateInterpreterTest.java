@@ -12,6 +12,8 @@ import com.blazebit.expression.Predicate;
 import com.blazebit.expression.base.function.CurrentTimestampFunction;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -22,13 +24,17 @@ import java.util.Locale;
  * @author Christian Beikov
  * @since 1.0.0
  */
+@RunWith(Parameterized.class)
 public class PredicateInterpreterTest {
 
     private final ExpressionService expressionService;
+    private final boolean exact;
     private Instant instant;
 
-    public PredicateInterpreterTest() {
-        DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
+    public PredicateInterpreterTest(boolean exact) {
+        DomainBuilder domainBuilder = Domain.getDefaultProvider().createEmptyBuilder();
+        domainBuilder.setProperty(BaseContributor.CONFIGURATION_NUMERIC_EXACT, exact);
+        domainBuilder.withDefaults();
         domainBuilder.createBasicType("Language");
         domainBuilder.createEnumType("Currency")
             .withValue("EUR")
@@ -37,7 +43,13 @@ public class PredicateInterpreterTest {
         StringlyTypeUtils.registerStringlyType(domainBuilder, "Language", Locale::new);
         StringlyTypeUtils.registerStringlyType(domainBuilder, "Currency", Currency::getInstance);
         DomainModel domainModel = domainBuilder.build();
+        this.exact = exact;
         this.expressionService = Expressions.forModel(domainModel);
+    }
+
+    @Parameterized.Parameters
+    public static Object[] parameters() {
+        return new Object[]{ true, false };
     }
 
     private Boolean testPredicate(String expr) {

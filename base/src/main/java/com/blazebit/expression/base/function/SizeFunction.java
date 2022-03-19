@@ -31,6 +31,7 @@ import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
@@ -41,9 +42,10 @@ import java.util.Map;
  */
 public class SizeFunction implements FunctionInvoker, DomainFunctionTypeResolver, Serializable {
 
-    private static final SizeFunction INSTANCE = new SizeFunction();
+    private final boolean exact;
 
-    private SizeFunction() {
+    private SizeFunction(boolean exact) {
+        this.exact = exact;
     }
 
     /**
@@ -53,14 +55,15 @@ public class SizeFunction implements FunctionInvoker, DomainFunctionTypeResolver
      * @param classLoader The class loader for resource bundle resolving
      */
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
+        SizeFunction sizeFunction = new SizeFunction(domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class);
         domainBuilder.createFunction("SIZE")
-                .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(new FunctionInvokerMetadataDefinition(sizeFunction))
                 .withMetadata(DocumentationMetadataDefinition.localized("SIZE", classLoader))
                 .withExactArgumentCount(1)
                 .withCollectionArgument("collection", DocumentationMetadataDefinition.localized("SIZE_ARG", classLoader))
                 .withResultType(BaseContributor.INTEGER_TYPE_NAME)
                 .build();
-        domainBuilder.withFunctionTypeResolver("SIZE", INSTANCE);
+        domainBuilder.withFunctionTypeResolver("SIZE", sizeFunction);
     }
 
     @Override
@@ -80,7 +83,12 @@ public class SizeFunction implements FunctionInvoker, DomainFunctionTypeResolver
         }
 
         if (argument instanceof Collection<?>) {
-            return BigInteger.valueOf(((Collection<?>) argument).size());
+            int size = ((Collection<?>) argument).size();
+            if (exact) {
+                return BigInteger.valueOf(size);
+            } else {
+                return (long) size;
+            }
         } else {
             throw new DomainModelException("Illegal argument for SIZE function: " + argument);
         }

@@ -27,7 +27,9 @@ import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 /**
  * @author Christian Beikov
@@ -63,8 +65,12 @@ public class CeilFunction implements FunctionInvoker, Serializable {
             return null;
         }
 
-        if (argument instanceof Number) {
-            return BigInteger.valueOf((long) Math.ceil(((Number) argument).doubleValue()));
+        if (argument instanceof BigInteger || argument instanceof Long) {
+            return argument;
+        } else if (argument instanceof BigDecimal) {
+            return ((BigDecimal) argument).setScale(0, RoundingMode.CEILING).toBigInteger();
+        } else if (argument instanceof Double) {
+            return Math.ceil((Double) argument);
         } else {
             throw new DomainModelException("Illegal argument for CEIL function: " + argument);
         }

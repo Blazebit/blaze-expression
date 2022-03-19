@@ -14,39 +14,21 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.declarative.impl;
+package com.blazebit.expression.base.converter;
 
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.spi.TypeAdapter;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class ShortTypeAdapter implements TypeAdapter<Short, BigInteger>, Serializable {
-
-    public static final ShortTypeAdapter INSTANCE = new ShortTypeAdapter();
-
-    private ShortTypeAdapter() {
-    }
-
+public class DoubleToStringTypeConverter implements TypeConverter<Double, String>, Serializable {
     @Override
-    public BigInteger toInternalType(ExpressionInterpreter.Context context, Short value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return BigInteger.valueOf(value);
-    }
-
-    @Override
-    public Short toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return value.shortValue();
+    public String convert(ExpressionInterpreter.Context context, Double value, DomainType domainType) {
+        return value.toString();
     }
 }

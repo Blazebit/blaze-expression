@@ -16,6 +16,7 @@
 
 package com.blazebit.expression.declarative.impl;
 
+import com.blazebit.domain.boot.model.DomainBuilder;
 import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.declarative.spi.TypeResolver;
 import com.blazebit.expression.spi.TypeAdapter;
@@ -44,48 +45,72 @@ public final class TypeAdapterRegistry implements TypeResolver {
 
     // Copy from BaseContributor. Keep in sync
     private static final Class<Boolean> BOOLEAN = Boolean.class;
-    private static final Class<BigInteger> INTEGER = BigInteger.class;
-    private static final Class<BigDecimal> NUMERIC = BigDecimal.class;
+    private static final Class<BigInteger> EXACT_INTEGER = BigInteger.class;
+    private static final Class<BigDecimal> EXACT_NUMERIC = BigDecimal.class;
+    private static final Class<Long> APPROXIMATE_INTEGER = Long.class;
+    private static final Class<Double> APPROXIMATE_NUMERIC = Double.class;
     private static final Class<Instant> TIMESTAMP = Instant.class;
     private static final Class<LocalTime> TIME = LocalTime.class;
     private static final Class<String> STRING = String.class;
     private static final Class<LocalDate> DATE = LocalDate.class;
 
-    private static final Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> TYPE_ADAPTERS;
+    private static final Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> EXACT_TYPE_ADAPTERS;
+    private static final Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> APPROXIMATE_TYPE_ADAPTERS;
 
     static {
-        Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> typeAdapters = new HashMap<>();
-        typeAdapters.put(boolean.class, new TypeAdapterMetadataDefinition<>(BooleanTypeAdapter.INSTANCE, BOOLEAN));
-        typeAdapters.put(char.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
-        typeAdapters.put(Character.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
-        typeAdapters.put(byte.class, new TypeAdapterMetadataDefinition<>(ByteTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(Byte.class, new TypeAdapterMetadataDefinition<>(ByteTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(short.class, new TypeAdapterMetadataDefinition<>(ShortTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(Short.class, new TypeAdapterMetadataDefinition<>(ShortTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(int.class, new TypeAdapterMetadataDefinition<>(IntegerTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(Integer.class, new TypeAdapterMetadataDefinition<>(IntegerTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(long.class, new TypeAdapterMetadataDefinition<>(LongTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(Long.class, new TypeAdapterMetadataDefinition<>(LongTypeAdapter.INSTANCE, INTEGER));
-        typeAdapters.put(float.class, new TypeAdapterMetadataDefinition<>(FloatTypeAdapter.INSTANCE, NUMERIC));
-        typeAdapters.put(Float.class, new TypeAdapterMetadataDefinition<>(FloatTypeAdapter.INSTANCE, NUMERIC));
-        typeAdapters.put(double.class, new TypeAdapterMetadataDefinition<>(DoubleTypeAdapter.INSTANCE, NUMERIC));
-        typeAdapters.put(Double.class, new TypeAdapterMetadataDefinition<>(DoubleTypeAdapter.INSTANCE, NUMERIC));
-        typeAdapters.put(Calendar.class, new TypeAdapterMetadataDefinition<>(CalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(GregorianCalendar.class, new TypeAdapterMetadataDefinition<>(GregorianCalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(java.sql.Date.class, new TypeAdapterMetadataDefinition<>(JavaSqlDateDateTypeAdapter.INSTANCE, DATE));
-        typeAdapters.put(java.sql.Timestamp.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimestampTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(java.util.Date.class, new TypeAdapterMetadataDefinition<>(JavaUtilDateTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(LocalDateTime.class, new TypeAdapterMetadataDefinition<>(LocalDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(ZonedDateTime.class, new TypeAdapterMetadataDefinition<>(ZonedDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
-        typeAdapters.put(java.sql.Time.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimeTimeTypeAdapter.INSTANCE, TIME));
+        Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> exactTypeAdapters = new HashMap<>();
+        Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> approximateTypeAdapters = new HashMap<>();
+        put(exactTypeAdapters, approximateTypeAdapters, boolean.class, new TypeAdapterMetadataDefinition<>(BooleanTypeAdapter.INSTANCE, BOOLEAN));
+        put(exactTypeAdapters, approximateTypeAdapters, char.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
+        put(exactTypeAdapters, approximateTypeAdapters, Character.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
+        put(exactTypeAdapters, approximateTypeAdapters, Calendar.class, new TypeAdapterMetadataDefinition<>(CalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, GregorianCalendar.class, new TypeAdapterMetadataDefinition<>(GregorianCalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, java.sql.Date.class, new TypeAdapterMetadataDefinition<>(JavaSqlDateDateTypeAdapter.INSTANCE, DATE));
+        put(exactTypeAdapters, approximateTypeAdapters, java.sql.Timestamp.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimestampTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, java.util.Date.class, new TypeAdapterMetadataDefinition<>(JavaUtilDateTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, LocalDateTime.class, new TypeAdapterMetadataDefinition<>(LocalDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, ZonedDateTime.class, new TypeAdapterMetadataDefinition<>(ZonedDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, java.sql.Time.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimeTimeTypeAdapter.INSTANCE, TIME));
+
+        exactTypeAdapters.put(byte.class, new TypeAdapterMetadataDefinition<>(ExactByteTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(Byte.class, new TypeAdapterMetadataDefinition<>(ExactByteTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(short.class, new TypeAdapterMetadataDefinition<>(ExactShortTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(Short.class, new TypeAdapterMetadataDefinition<>(ExactShortTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(int.class, new TypeAdapterMetadataDefinition<>(ExactIntegerTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(Integer.class, new TypeAdapterMetadataDefinition<>(ExactIntegerTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(long.class, new TypeAdapterMetadataDefinition<>(ExactLongTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(Long.class, new TypeAdapterMetadataDefinition<>(ExactLongTypeAdapter.INSTANCE, EXACT_INTEGER));
+        exactTypeAdapters.put(float.class, new TypeAdapterMetadataDefinition<>(ExactFloatTypeAdapter.INSTANCE, EXACT_NUMERIC));
+        exactTypeAdapters.put(Float.class, new TypeAdapterMetadataDefinition<>(ExactFloatTypeAdapter.INSTANCE, EXACT_NUMERIC));
+        exactTypeAdapters.put(double.class, new TypeAdapterMetadataDefinition<>(ExactDoubleTypeAdapter.INSTANCE, EXACT_NUMERIC));
+        exactTypeAdapters.put(Double.class, new TypeAdapterMetadataDefinition<>(ExactDoubleTypeAdapter.INSTANCE, EXACT_NUMERIC));
+
+        approximateTypeAdapters.put(byte.class, new TypeAdapterMetadataDefinition<>(ApproximateByteTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(Byte.class, new TypeAdapterMetadataDefinition<>(ApproximateByteTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(short.class, new TypeAdapterMetadataDefinition<>(ApproximateShortTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(Short.class, new TypeAdapterMetadataDefinition<>(ApproximateShortTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(int.class, new TypeAdapterMetadataDefinition<>(ApproximateIntegerTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(Integer.class, new TypeAdapterMetadataDefinition<>(ApproximateIntegerTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
+        approximateTypeAdapters.put(float.class, new TypeAdapterMetadataDefinition<>(ApproximateFloatTypeAdapter.INSTANCE, APPROXIMATE_NUMERIC));
+        approximateTypeAdapters.put(Float.class, new TypeAdapterMetadataDefinition<>(ApproximateFloatTypeAdapter.INSTANCE, APPROXIMATE_NUMERIC));
+        approximateTypeAdapters.put(BigDecimal.class, new TypeAdapterMetadataDefinition<>(ApproximateBigDecimalTypeAdapter.INSTANCE, APPROXIMATE_NUMERIC));
+        approximateTypeAdapters.put(BigInteger.class, new TypeAdapterMetadataDefinition<>(ApproximateBigIntegerTypeAdapter.INSTANCE, APPROXIMATE_INTEGER));
         for (TypeAdapter<?, ?> typeAdapter : ServiceLoader.load(TypeAdapter.class)) {
             TypeVariable<Class<TypeAdapter>>[] typeParameters = TypeAdapter.class.getTypeParameters();
             Class<?> modelClass = ReflectionUtils.resolveTypeVariable(typeAdapter.getClass(), typeParameters[0]);
             Class<?> internalClass = ReflectionUtils.resolveTypeVariable(typeAdapter.getClass(), typeParameters[1]);
-            typeAdapters.put(modelClass, new TypeAdapterMetadataDefinition(typeAdapter, internalClass));
+            if (internalClass == BigDecimal.class || internalClass == BigInteger.class) {
+                exactTypeAdapters.put(modelClass, new TypeAdapterMetadataDefinition(typeAdapter, internalClass));
+            } else if (internalClass == Double.class || internalClass == Long.class) {
+                approximateTypeAdapters.put(modelClass, new TypeAdapterMetadataDefinition(typeAdapter, internalClass));
+            } else {
+                exactTypeAdapters.put(modelClass, new TypeAdapterMetadataDefinition(typeAdapter, internalClass));
+                approximateTypeAdapters.put(modelClass, new TypeAdapterMetadataDefinition(typeAdapter, internalClass));
+            }
         }
 
-        TYPE_ADAPTERS = typeAdapters;
+        EXACT_TYPE_ADAPTERS = exactTypeAdapters;
+        APPROXIMATE_TYPE_ADAPTERS = approximateTypeAdapters;
     }
 
     private final TypeResolver delegate;
@@ -94,15 +119,26 @@ public final class TypeAdapterRegistry implements TypeResolver {
         this.delegate = delegate;
     }
 
+    private static void put(Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> exactTypeAdapters, Map<Class<?>, TypeAdapterMetadataDefinition<?, ?>> approximateTypeAdapters, Class<?> modelClass, TypeAdapterMetadataDefinition<?, ?> typeAdapterMetadataDefinition) {
+        exactTypeAdapters.put(modelClass, typeAdapterMetadataDefinition);
+        approximateTypeAdapters.put(modelClass, typeAdapterMetadataDefinition);
+    }
+
     public static MetadataDefinition<?> getTypeAdapter(Class<?> clazz) {
-        return TYPE_ADAPTERS.get(clazz);
+        return EXACT_TYPE_ADAPTERS.get(clazz);
     }
 
     @Override
-    public Object resolve(Class<?> contextClass, Type type) {
-        TypeAdapterMetadataDefinition<?, ?> metadataDefinition = TYPE_ADAPTERS.get(type);
+    public Object resolve(Class<?> contextClass, Type type, DomainBuilder domainBuilder) {
+        boolean exact = domainBuilder.getType("Numeric").getJavaType() == BigDecimal.class;
+        TypeAdapterMetadataDefinition<?, ?> metadataDefinition;
+        if (exact) {
+            metadataDefinition = EXACT_TYPE_ADAPTERS.get(type);
+        } else {
+            metadataDefinition = APPROXIMATE_TYPE_ADAPTERS.get(type);
+        }
         if (metadataDefinition == null) {
-            return delegate.resolve(contextClass, type);
+            return delegate.resolve(contextClass, type, domainBuilder);
         }
         return metadataDefinition.getInternalType();
     }

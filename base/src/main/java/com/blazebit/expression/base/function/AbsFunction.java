@@ -68,6 +68,10 @@ public class AbsFunction implements FunctionInvoker, Serializable {
             return ((BigDecimal) argument).abs();
         } else if (argument instanceof BigInteger) {
             return ((BigInteger) argument).abs();
+        } else if (argument instanceof Double) {
+            return Math.abs((Double) argument);
+        } else if (argument instanceof Long) {
+            return Math.abs((Long) argument);
         } else {
             throw new DomainModelException("Illegal argument for ABS function: " + argument);
         }

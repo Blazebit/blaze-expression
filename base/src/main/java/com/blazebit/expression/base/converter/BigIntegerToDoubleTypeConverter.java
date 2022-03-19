@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.declarative.impl;
+package com.blazebit.expression.base.converter;
 
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.ExpressionInterpreter;
-import com.blazebit.expression.spi.TypeAdapter;
+import com.blazebit.expression.spi.TypeConverter;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -27,26 +27,9 @@ import java.math.BigInteger;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class IntegerTypeAdapter implements TypeAdapter<Integer, BigInteger>, Serializable {
-
-    public static final IntegerTypeAdapter INSTANCE = new IntegerTypeAdapter();
-
-    private IntegerTypeAdapter() {
-    }
-
+public class BigIntegerToDoubleTypeConverter implements TypeConverter<BigInteger, Double>, Serializable {
     @Override
-    public BigInteger toInternalType(ExpressionInterpreter.Context context, Integer value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return BigInteger.valueOf(value);
-    }
-
-    @Override
-    public Integer toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return value.intValue();
+    public Double convert(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
+        return value.doubleValue();
     }
 }

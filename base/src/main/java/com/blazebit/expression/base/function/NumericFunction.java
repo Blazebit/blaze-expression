@@ -37,75 +37,6 @@ import java.util.List;
  */
 public abstract class NumericFunction implements FunctionInvoker, Serializable {
 
-    private static final List<NumericFunction> FUNCTIONS = Arrays.asList(
-            new NumericFunction("SQRT") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.sqrt(value));
-                }
-            },
-            new NumericFunction("SIN") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.sin(value));
-                }
-            },
-            new NumericFunction("COS") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.cos(value));
-                }
-            },
-            new NumericFunction("TAN") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.tan(value));
-                }
-            },
-            new NumericFunction("ASIN") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.asin(value));
-                }
-            },
-            new NumericFunction("ACOS") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.acos(value));
-                }
-            },
-            new NumericFunction("ATAN") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.atan(value));
-                }
-            },
-            new NumericFunction("LOG") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.log(value));
-                }
-            },
-            new NumericFunction("EXP") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.exp(value));
-                }
-            },
-            new NumericFunction("RADIANS") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.toRadians(value));
-                }
-            },
-            new NumericFunction("DEGREES") {
-                @Override
-                protected Object invoke(double value) {
-                    return new BigDecimal(Math.toDegrees(value));
-                }
-            }
-    );
-
     private final String name;
 
     private NumericFunction(String name) {
@@ -119,7 +50,148 @@ public abstract class NumericFunction implements FunctionInvoker, Serializable {
      * @param classLoader The class loader for resource bundle resolving
      */
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
-        for (NumericFunction f : FUNCTIONS) {
+        boolean exact = domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class;
+        List<NumericFunction> functions;
+        if (exact) {
+            functions = Arrays.asList(
+                new NumericFunction("SQRT") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.sqrt(value));
+                    }
+                },
+                new NumericFunction("SIN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.sin(value));
+                    }
+                },
+                new NumericFunction("COS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.cos(value));
+                    }
+                },
+                new NumericFunction("TAN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.tan(value));
+                    }
+                },
+                new NumericFunction("ASIN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.asin(value));
+                    }
+                },
+                new NumericFunction("ACOS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.acos(value));
+                    }
+                },
+                new NumericFunction("ATAN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.atan(value));
+                    }
+                },
+                new NumericFunction("LOG") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.log(value));
+                    }
+                },
+                new NumericFunction("EXP") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.exp(value));
+                    }
+                },
+                new NumericFunction("RADIANS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.toRadians(value));
+                    }
+                },
+                new NumericFunction("DEGREES") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return BigDecimal.valueOf(Math.toDegrees(value));
+                    }
+                }
+            );
+        } else {
+            functions = Arrays.asList(
+                new NumericFunction("SQRT") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.sqrt(value);
+                    }
+                },
+                new NumericFunction("SIN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.sin(value);
+                    }
+                },
+                new NumericFunction("COS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.cos(value);
+                    }
+                },
+                new NumericFunction("TAN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.tan(value);
+                    }
+                },
+                new NumericFunction("ASIN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.asin(value);
+                    }
+                },
+                new NumericFunction("ACOS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.acos(value);
+                    }
+                },
+                new NumericFunction("ATAN") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.atan(value);
+                    }
+                },
+                new NumericFunction("LOG") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.log(value);
+                    }
+                },
+                new NumericFunction("EXP") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.exp(value);
+                    }
+                },
+                new NumericFunction("RADIANS") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.toRadians(value);
+                    }
+                },
+                new NumericFunction("DEGREES") {
+                    @Override
+                    protected Object invoke(double value) {
+                        return Math.toDegrees(value);
+                    }
+                }
+            );
+        }
+        for (NumericFunction f : functions) {
             domainBuilder.createFunction(f.name)
                     .withMetadata(new FunctionInvokerMetadataDefinition(f))
                     .withMetadata(DocumentationMetadataDefinition.localized(f.name, classLoader))

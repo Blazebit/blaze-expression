@@ -26,6 +26,8 @@ import com.blazebit.expression.spi.FunctionInvoker;
 import com.blazebit.expression.spi.TypeAdapter;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -41,9 +43,11 @@ import java.util.Map;
  * @author Christian Beikov
  * @since 1.0.0
  */
+@RunWith(Parameterized.class)
 public class ExpressionInterpreterTest {
 
     private static final long SECONDS_PER_DAY = 86400;
+    private final boolean exact;
     private final DomainModel domainModel;
     private final ExpressionService expressionService;
     private Instant instant;
@@ -150,7 +154,7 @@ public class ExpressionInterpreterTest {
         }
     }
 
-    public ExpressionInterpreterTest() {
+    public ExpressionInterpreterTest(boolean exact) {
         MetadataDefinition[] languageAttributeMetadata = new MetadataDefinition[1];
         languageAttributeMetadata[0] = new UserLanguageAttributeAccessor();
         MetadataDefinition[] currencyAttributeMetadata = new MetadataDefinition[2];
@@ -171,7 +175,9 @@ public class ExpressionInterpreterTest {
         statusAttributeMetadata[0] = new UserStatusAttributeAccessor();
         statusAttributeMetadata[1] = new TypeAdapterMetadataDefinition(BooleanTypeAdapter.INSTANCE);
 
-        DomainBuilder domainBuilder = Domain.getDefaultProvider().createDefaultBuilder();
+        DomainBuilder domainBuilder = Domain.getDefaultProvider().createEmptyBuilder();
+        domainBuilder.setProperty(BaseContributor.CONFIGURATION_NUMERIC_EXACT, exact);
+        domainBuilder.withDefaults();
         domainBuilder.createBasicType("Language");
         domainBuilder.createEnumType("Currency")
             .withValue("EUR")
@@ -189,12 +195,18 @@ public class ExpressionInterpreterTest {
                 .addAttribute("language", "Language", languageAttributeMetadata)
                 .addAttribute("currency", "Currency", currencyAttributeMetadata)
                 .build();
+        this.exact = exact;
         this.domainModel = domainBuilder.build();
         this.expressionService = Expressions.forModel(domainModel);
         this.compiler = expressionService.createCompiler();
         this.interpreter = expressionService.createInterpreter();
         this.testTypes.put("user", domainModel.getType("user"));
         this.testData.put("user", new User(true, new Locale("de"), Currency.getInstance("EUR")));
+    }
+
+    @Parameterized.Parameters
+    public static Object[] parameters() {
+        return new Object[]{ true, false };
     }
 
     private ExpressionInterpreter.Context createInterpreterContext() {
@@ -232,12 +244,20 @@ public class ExpressionInterpreterTest {
 
     @Test
     public void testBasic() {
-        Assert.assertEquals(BigInteger.valueOf(3), testExpression("1 + 2"));
+        if (exact) {
+            Assert.assertEquals(BigInteger.valueOf(3), testExpression("1 + 2"));
+        } else {
+            Assert.assertEquals(3L, testExpression("1 + 2"));
+        }
     }
 
     @Test
     public void testBasic2() {
-        Assert.assertEquals(new BigDecimal("3.0"), testExpression("1 + 2.0"));
+        if (exact) {
+            Assert.assertEquals(new BigDecimal("3.0"), testExpression("1 + 2.0"));
+        } else {
+            Assert.assertEquals(3.0, testExpression("1 + 2.0"));
+        }
     }
 
     @Test
@@ -273,6 +293,15 @@ public class ExpressionInterpreterTest {
             testExpression("CURRENT_TIMESTAMP() + CURRENT_TIMESTAMP()");
         } catch (DomainTypeResolverException ex) {
             Assert.assertTrue(ex.getMessage().contains("[Interval]"));
+        }
+    }
+
+    @Test
+    public void testBasic8() {
+        if (exact) {
+            Assert.assertEquals(new BigDecimal("0.33333"), testExpression("1.0 / 3.0"));
+        } else {
+            Assert.assertEquals(1.0 / 3.0, testExpression("1.0 / 3.0"));
         }
     }
 
@@ -388,12 +417,21 @@ public class ExpressionInterpreterTest {
 
     @Test
     public void testFunctionWithUnionType() {
-        Assert.assertEquals(BigInteger.ONE, testExpression("abs(1)"));
-        Assert.assertEquals(new BigDecimal("1.0"), testExpression("abs(1.0)"));
+        if (exact) {
+            Assert.assertEquals(BigInteger.ONE, testExpression("abs(1)"));
+            Assert.assertEquals(new BigDecimal("1.0"), testExpression("abs(1.0)"));
+        } else {
+            Assert.assertEquals(1L, testExpression("abs(1)"));
+            Assert.assertEquals(1.0D, testExpression("abs(1.0)"));
+        }
     }
 
     @Test
     public void testTypeConverter() {
-        Assert.assertEquals(BigDecimal.ONE, testExpressionAs("abs(1)", BigDecimal.class));
+        if (exact) {
+            Assert.assertEquals(BigDecimal.ONE, testExpressionAs("abs(1)", BigDecimal.class));
+        } else {
+            Assert.assertEquals(1.0D, testExpressionAs("abs(1)", Double.class), 0.0);
+        }
     }
 }

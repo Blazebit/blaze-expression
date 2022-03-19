@@ -35,11 +35,11 @@ public class DeclarativeTest {
         StringlyTypeUtils.registerStringlyType(domainBuilder, "Currency", Currency::getInstance);
         DeclarativeDomainConfiguration configuration = DeclarativeDomain.getDefaultProvider().createDefaultConfiguration(domainBuilder);
         configuration.withTypeResolverDecorator(typeResolver -> {
-            return (contextClass, type) -> {
+            return (contextClass, type, builder) -> {
                 if (Currency.class == type) {
                     return "Currency";
                 }
-                return typeResolver.resolve(contextClass, type);
+                return typeResolver.resolve(contextClass, type, builder);
             };
         });
         configuration.addDomainType(TestEntity.class);

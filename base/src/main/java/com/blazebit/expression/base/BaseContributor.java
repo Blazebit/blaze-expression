@@ -77,6 +77,7 @@ import com.blazebit.expression.spi.TemporalLiteralResolver;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -93,23 +94,22 @@ import java.util.Set;
  */
 public class BaseContributor implements DomainContributor, ExpressionServiceContributor {
 
+    public static final String CONFIGURATION_NUMERIC_EXACT = "numeric.exact";
+    public static final String CONFIGURATION_NUMERIC_SCALE = "numeric.scale";
+    public static final int DEFAULT_NUMERIC_SCALE = 5;
+    public static final String CONFIGURATION_NUMERIC_ROUNDING = "numeric.rounding";
+    public static final RoundingMode DEFAULT_NUMERIC_ROUNDING = RoundingMode.HALF_UP;
+
     // NOTE: Copied to TypeAdapterRegistry. Keep in sync
-    public static final Class<?> BOOLEAN = Boolean.class;
     public static final String BOOLEAN_TYPE_NAME = "Boolean";
-    public static final Class<?> INTEGER = BigInteger.class;
     public static final String INTEGER_TYPE_NAME = "Integer";
-    public static final Class<?> NUMERIC = BigDecimal.class;
     public static final String NUMERIC_TYPE_NAME = "Numeric";
-    public static final Class<?> TIMESTAMP = Instant.class;
     public static final String TIMESTAMP_TYPE_NAME = "Timestamp";
     public static final Class<?> TIME = LocalTime.class;
     public static final String TIME_TYPE_NAME = "Time";
-    public static final Class<?> INTERVAL = TemporalInterval.class;
     public static final String INTERVAL_TYPE_NAME = "Interval";
-    public static final Class<?> STRING = String.class;
     public static final String STRING_TYPE_NAME = "String";
     public static final String DATE_TYPE_NAME = "Date";
-    public static final Class<?> DATE = LocalDate.class;
 
     public static final String INTEGER_OR_NUMERIC_TYPE_NAME = INTEGER_TYPE_NAME + "|" + NUMERIC_TYPE_NAME;
 
@@ -130,14 +130,20 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        createBasicType(domainBuilder, INTEGER, INTEGER_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorInterpreter.INSTANCE, "INTEGER"));
-        createBasicType(domainBuilder, NUMERIC, NUMERIC_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(NumericOperatorInterpreter.INSTANCE, "NUMERIC"));
-        createBasicType(domainBuilder, STRING, STRING_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorInterpreter.INSTANCE, "STRING"));
-        createBasicType(domainBuilder, TIMESTAMP, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorInterpreter.INSTANCE, "TIMESTAMP"));
-        createBasicType(domainBuilder, TIME, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorInterpreter.INSTANCE, "TIME"));
-        createBasicType(domainBuilder, DATE, DATE_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(DateOperatorInterpreter.INSTANCE, "DATE"));
-        createBasicType(domainBuilder, INTERVAL, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorInterpreter.INSTANCE, "INTERVAL"));
-        createBasicType(domainBuilder, BOOLEAN, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorInterpreter.INSTANCE, "BOOLEAN"));
+        Object numericExact = domainBuilder.getProperty(CONFIGURATION_NUMERIC_EXACT);
+        if (numericExact == null || (boolean) numericExact) {
+            createBasicType(domainBuilder, BigInteger.class, INTEGER_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(ExactNumericOperatorInterpreter.INSTANCE, "INTEGER"));
+            createBasicType(domainBuilder, BigDecimal.class, NUMERIC_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(ExactNumericOperatorInterpreter.INSTANCE, "NUMERIC"));
+        } else {
+            createBasicType(domainBuilder, Long.class, INTEGER_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(ApproximateNumericOperatorInterpreter.INSTANCE, "INTEGER"));
+            createBasicType(domainBuilder, Double.class, NUMERIC_TYPE_NAME, DomainOperator.arithmetic(), DomainPredicate.comparable(), handlersFor(ApproximateNumericOperatorInterpreter.INSTANCE, "NUMERIC"));
+        }
+        createBasicType(domainBuilder, String.class, STRING_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS }, DomainPredicate.comparable(), handlersFor(StringOperatorInterpreter.INSTANCE, "STRING"));
+        createBasicType(domainBuilder, Instant.class, TIMESTAMP_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimestampOperatorInterpreter.INSTANCE, "TIMESTAMP"));
+        createBasicType(domainBuilder, LocalTime.class, TIME_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(TimeOperatorInterpreter.INSTANCE, "TIME"));
+        createBasicType(domainBuilder, LocalDate.class, DATE_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(DateOperatorInterpreter.INSTANCE, "DATE"));
+        createBasicType(domainBuilder, TemporalInterval.class, INTERVAL_TYPE_NAME, new DomainOperator[]{ DomainOperator.PLUS, DomainOperator.MINUS }, DomainPredicate.comparable(), handlersFor(IntervalOperatorInterpreter.INSTANCE, "INTERVAL"));
+        createBasicType(domainBuilder, Boolean.class, BOOLEAN_TYPE_NAME, new DomainOperator[]{ DomainOperator.NOT }, DomainPredicate.distinguishable(), handlersFor(BooleanOperatorInterpreter.INSTANCE, "BOOLEAN"));
 
         for (String type : Arrays.asList(INTEGER_TYPE_NAME, NUMERIC_TYPE_NAME)) {
             domainBuilder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.widest(NUMERIC_TYPE_NAME, INTEGER_TYPE_NAME));
@@ -270,12 +276,10 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
 
         @Override
         public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, Number value) {
-            if (value instanceof BigDecimal) {
+            if (value instanceof BigDecimal || value instanceof Double) {
                 return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(NUMERIC_TYPE_NAME), value);
-            } else if (value instanceof BigInteger) {
-                return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), value);
             }
-            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), BigInteger.valueOf(value.longValue()));
+            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(INTEGER_TYPE_NAME), value);
         }
     }
 

@@ -29,7 +29,7 @@ import java.math.BigDecimal;
 public class DefaultNumericLiteralResolver implements NumericLiteralResolver {
     @Override
     public ResolvedLiteral resolveLiteral(ExpressionCompiler.Context context, Number value) {
-        if (value instanceof BigDecimal) {
+        if (value instanceof BigDecimal || value instanceof Double) {
             return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.BIGDECIMAL), value);
         }
         return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(AbstractExpressionCompilerTest.INTEGER), value.intValue());

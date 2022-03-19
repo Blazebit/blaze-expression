@@ -25,6 +25,7 @@ import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
@@ -33,9 +34,10 @@ import java.math.BigInteger;
  */
 public class LengthFunction implements FunctionInvoker, Serializable {
 
-    private static final LengthFunction INSTANCE = new LengthFunction();
+    private final boolean exact;
 
-    private LengthFunction() {
+    private LengthFunction(boolean exact) {
+        this.exact = exact;
     }
 
     /**
@@ -46,7 +48,7 @@ public class LengthFunction implements FunctionInvoker, Serializable {
      */
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LENGTH")
-                .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(new FunctionInvokerMetadataDefinition(new LengthFunction(domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class)))
                 .withMetadata(DocumentationMetadataDefinition.localized("LENGTH", classLoader))
                 .withExactArgumentCount(1)
                 .withResultType(BaseContributor.INTEGER_TYPE_NAME)
@@ -61,8 +63,12 @@ public class LengthFunction implements FunctionInvoker, Serializable {
             return null;
         }
 
-        String s = string.toString();
-        return BigInteger.valueOf(s.length());
+        int length = string.toString().length();
+        if (exact) {
+            return BigInteger.valueOf(length);
+        } else {
+            return (long) length;
+        }
     }
 
 }

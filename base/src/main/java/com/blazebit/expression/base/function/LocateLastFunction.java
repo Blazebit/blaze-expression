@@ -25,6 +25,7 @@ import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.FunctionInvoker;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
@@ -33,9 +34,10 @@ import java.math.BigInteger;
  */
 public class LocateLastFunction implements FunctionInvoker, Serializable {
 
-    private static final LocateLastFunction INSTANCE = new LocateLastFunction();
+    private final boolean exact;
 
-    private LocateLastFunction() {
+    private LocateLastFunction(boolean exact) {
+        this.exact = exact;
     }
 
     /**
@@ -46,7 +48,7 @@ public class LocateLastFunction implements FunctionInvoker, Serializable {
      */
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("LOCATE_LAST")
-                .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(new FunctionInvokerMetadataDefinition(new LocateLastFunction(domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class)))
                 .withMetadata(DocumentationMetadataDefinition.localized("LOCATE_LAST", classLoader))
                 .withMinArgumentCount(2)
                 .withResultType(BaseContributor.INTEGER_TYPE_NAME)
@@ -78,7 +80,12 @@ public class LocateLastFunction implements FunctionInvoker, Serializable {
         String needle = substring.toString();
         String s = string.toString();
         int startIndex = ((Number) start).intValue();
-        return BigInteger.valueOf(s.lastIndexOf(needle, startIndex));
+        int index = s.lastIndexOf(needle, startIndex);
+        if (exact) {
+            return BigInteger.valueOf(index);
+        } else {
+            return (long) index;
+        }
     }
 
 }

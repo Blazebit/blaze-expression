@@ -36,9 +36,10 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class RandomFunction implements FunctionInvoker, Serializable {
 
-    private static final RandomFunction INSTANCE = new RandomFunction();
+    private final boolean exact;
 
-    private RandomFunction() {
+    private RandomFunction(boolean exact) {
+        this.exact = exact;
     }
 
     /**
@@ -50,7 +51,7 @@ public class RandomFunction implements FunctionInvoker, Serializable {
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("RANDOM")
                 .withVolatility(DomainFunctionVolatility.VOLATILE)
-                .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(new FunctionInvokerMetadataDefinition(new RandomFunction(domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class)))
                 .withMetadata(DocumentationMetadataDefinition.localized("RANDOM", classLoader))
                 .build();
         domainBuilder.withFunctionTypeResolver("RANDOM", StaticDomainFunctionTypeResolvers.returning(BaseContributor.NUMERIC_TYPE_NAME));
@@ -58,7 +59,12 @@ public class RandomFunction implements FunctionInvoker, Serializable {
 
     @Override
     public Object invoke(ExpressionInterpreter.Context context, DomainFunction function, DomainFunctionArguments arguments) {
-        return new BigDecimal(ThreadLocalRandom.current().nextDouble());
+        double value = ThreadLocalRandom.current().nextDouble();
+        if (exact) {
+            return BigDecimal.valueOf(value);
+        } else {
+            return value;
+        }
     }
 
 }

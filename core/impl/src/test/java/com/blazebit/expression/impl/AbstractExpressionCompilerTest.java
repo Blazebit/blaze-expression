@@ -239,11 +239,11 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Literal number(long value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofBigInteger(context, BigInteger.valueOf(value)));
+        return new Literal(expressionCompiler.getLiteralFactory().ofIntegerString(context, Long.toString(value)));
     }
 
     protected Literal number(BigDecimal value) {
-        return new Literal(expressionCompiler.getLiteralFactory().ofBigDecimal(context, value));
+        return new Literal(expressionCompiler.getLiteralFactory().ofNumericString(context, value.toString()));
     }
 
     protected Literal number(String value) {

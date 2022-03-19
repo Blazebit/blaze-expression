@@ -16,6 +16,7 @@
 package com.blazebit.expression.impl;
 
 import com.blazebit.domain.runtime.model.CollectionDomainType;
+import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.domain.runtime.model.EntityDomainType;
 import com.blazebit.domain.runtime.model.EntityDomainTypeAttribute;
 import com.blazebit.domain.runtime.model.EnumDomainType;
@@ -66,9 +67,12 @@ public class LiteralFactory {
     private static final String TEMPORAL_INTERVAL_SECONDS_FIELD = "seconds";
 
     private final ExpressionService expressionService;
+    private final boolean exact;
 
     public LiteralFactory(ExpressionService expressionService) {
         this.expressionService = expressionService;
+        DomainType numericType = expressionService.getDomainModel().getType("Numeric");
+        this.exact = numericType == null || numericType.getJavaType() == BigDecimal.class;
     }
 
     public static String unescapeString(String s) {
@@ -365,34 +369,38 @@ public class LiteralFactory {
 
     public ResolvedLiteral ofNumericString(ExpressionCompiler.Context context, String numericString) {
         try {
-            return ofBigDecimal(context, new BigDecimal(numericString));
+            Number numeric;
+            if (exact) {
+                numeric = new BigDecimal(numericString);
+            } else {
+                numeric = Double.parseDouble(numericString);
+            }
+            NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
+            if (numericLiteralResolver == null) {
+                throw new DomainModelException("No literal resolver for numeric literals defined");
+            }
+            return numericLiteralResolver.resolveLiteral(context, numeric);
         } catch (NumberFormatException e) {
             throw new SyntaxErrorException(e);
         }
-    }
-
-    public ResolvedLiteral ofBigDecimal(ExpressionCompiler.Context context, BigDecimal bigDecimal) {
-        NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
-        if (numericLiteralResolver == null) {
-            throw new DomainModelException("No literal resolver for numeric literals defined");
-        }
-        return numericLiteralResolver.resolveLiteral(context, bigDecimal);
     }
 
     public ResolvedLiteral ofIntegerString(ExpressionCompiler.Context context, String integerString) {
         try {
-            return ofBigInteger(context, new BigInteger(integerString));
+            Number integer;
+            if (exact) {
+                integer = new BigInteger(integerString);
+            } else {
+                integer = Long.parseLong(integerString);
+            }
+            NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
+            if (numericLiteralResolver == null) {
+                throw new DomainModelException("No literal resolver for numeric literals defined");
+            }
+            return numericLiteralResolver.resolveLiteral(context, integer);
         } catch (NumberFormatException e) {
             throw new SyntaxErrorException(e);
         }
-    }
-
-    public ResolvedLiteral ofBigInteger(ExpressionCompiler.Context context, BigInteger bigInteger) {
-        NumericLiteralResolver numericLiteralResolver = expressionService.getNumericLiteralResolver();
-        if (numericLiteralResolver == null) {
-            throw new DomainModelException("No literal resolver for numeric literals defined");
-        }
-        return numericLiteralResolver.resolveLiteral(context, bigInteger);
     }
 
     public void appendNumeric(StringBuilder sb, Number value) {

@@ -34,9 +34,10 @@ import java.math.BigDecimal;
  */
 public class Atan2Function implements FunctionInvoker, Serializable {
 
-    private static final Atan2Function INSTANCE = new Atan2Function();
+    private final boolean exact;
 
-    private Atan2Function() {
+    private Atan2Function(boolean exact) {
+        this.exact = exact;
     }
 
     /**
@@ -47,7 +48,7 @@ public class Atan2Function implements FunctionInvoker, Serializable {
      */
     public static void addFunction(DomainBuilder domainBuilder, ClassLoader classLoader) {
         domainBuilder.createFunction("ATAN2")
-                .withMetadata(new FunctionInvokerMetadataDefinition(INSTANCE))
+                .withMetadata(new FunctionInvokerMetadataDefinition(new Atan2Function(domainBuilder.getType(BaseContributor.NUMERIC_TYPE_NAME).getJavaType() == BigDecimal.class)))
                 .withMetadata(DocumentationMetadataDefinition.localized("ATAN2", classLoader))
                 .withArgument("y", BaseContributor.INTEGER_OR_NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_Y", classLoader))
                 .withArgument("x", BaseContributor.INTEGER_OR_NUMERIC_TYPE_NAME, DocumentationMetadataDefinition.localized("ATAN2_X", classLoader))
@@ -66,6 +67,11 @@ public class Atan2Function implements FunctionInvoker, Serializable {
             return null;
         }
 
-        return BigDecimal.valueOf(Math.atan2(((Number) y).doubleValue(), ((Number) x).doubleValue()));
+        double result = Math.atan2(((Number) y).doubleValue(), ((Number) x).doubleValue());
+        if (exact) {
+            return BigDecimal.valueOf(result);
+        } else {
+            return result;
+        }
     }
 }

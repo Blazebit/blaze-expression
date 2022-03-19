@@ -21,32 +21,31 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.spi.TypeAdapter;
 
 import java.io.Serializable;
-import java.math.BigInteger;
 
 /**
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class LongTypeAdapter implements TypeAdapter<Long, BigInteger>, Serializable {
+public class ApproximateByteTypeAdapter implements TypeAdapter<Byte, Long>, Serializable {
 
-    public static final LongTypeAdapter INSTANCE = new LongTypeAdapter();
+    public static final ApproximateByteTypeAdapter INSTANCE = new ApproximateByteTypeAdapter();
 
-    private LongTypeAdapter() {
+    private ApproximateByteTypeAdapter() {
     }
 
     @Override
-    public BigInteger toInternalType(ExpressionInterpreter.Context context, Long value, DomainType domainType) {
-        if (value == null) {
-            return null;
-        }
-        return BigInteger.valueOf(value);
-    }
-
-    @Override
-    public Long toModelType(ExpressionInterpreter.Context context, BigInteger value, DomainType domainType) {
+    public Long toInternalType(ExpressionInterpreter.Context context, Byte value, DomainType domainType) {
         if (value == null) {
             return null;
         }
         return value.longValue();
+    }
+
+    @Override
+    public Byte toModelType(ExpressionInterpreter.Context context, Long value, DomainType domainType) {
+        if (value == null) {
+            return null;
+        }
+        return value.byteValue();
     }
 }
