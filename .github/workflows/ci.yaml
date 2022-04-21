@@ -6,44 +6,40 @@ jobs:
   build:
     name: Test
     runs-on: ubuntu-latest
-    # We want to know the test results of all matrix entries
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-# When GitHub Actions supports it: https://github.com/actions/toolkit/issues/399
-# We will use the experimental flag as indicator whether a failure should cause a workflow failure
         include:
           - jdk: 8
           - jdk: 11
-          - jdk: 14
-          - jdk: 15
-          - jdk: 16
-          - jdk: 11
-            build-jdk: 11
-          - jdk: 15
-            build-jdk: 15
-          - jdk: 16
-            build-jdk: 16
+          - jdk: 17
+          - jdk: 18
+          - jdk: 19
+          - jdk: 17
+            build-jdk: 17
+          - jdk: 18
+            build-jdk: 18
+          - jdk: 19
+            build-jdk: 19
     steps:
       - uses: actions/checkout@v2
       - name: Set up Java 8
-        uses: AdoptOpenJDK/install-jdk@v1
+        uses: actions/setup-java@v3
         with:
-          version: 8
-          targets: JDK8_HOME;JAVA_HOME
-      - name: Download Requested JDK
-        uses: sormuras/download-jdk@1.1
-        id: jdk
-        if: ${{ matrix.jdk != 8 }}
-        with:
-          feature: ${{ matrix.jdk }}
+          java-version: '8'
+          distribution: 'temurin'
+      - name: Set env
+        run: echo "JDK8_HOME=$(echo $JAVA_HOME)" >> $GITHUB_ENV
       - name: Set up Requested JDK
-        uses: actions/setup-java@v1.4.3
-        if: ${{ matrix.jdk != 8 }}
+        uses: actions/setup-java@v3
         with:
-          java-version: ${{ matrix.jdk }}
-          jdkFile: ${{ env.JDK_FILE }}
+          java-version: ${{ matrix.jdk == 19 && '19-ea' || matrix.jdk }}
+          distribution: 'temurin'
+      - name: Setup CA certificates
+        if: ${{ matrix.jdk != 8 }}
+        run: |
+          rm $JAVA_HOME/lib/security/cacerts
+          cp $JDK8_HOME/jre/lib/security/cacerts $JAVA_HOME/lib/security/cacerts
 
       - name: Get year/month for cache key
         id: get-date
