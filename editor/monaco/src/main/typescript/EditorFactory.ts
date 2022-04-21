@@ -208,7 +208,7 @@ function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConst
         symbolTable = SymbolTable.parse(input, extensions);
     }
     let textArea = domElement.getElementsByTagName('textarea')[0];
-    let textModel = monaco.editor.createModel(textArea.innerText, templateMode ? 'template' : 'predicate');
+    let textModel = monaco.editor.createModel(textArea.value, templateMode ? 'template' : 'predicate');
     symbolTables[textModel.id] = symbolTable;
     textModel.onWillDispose(function() {
         symbolTables[textModel.id] = null;
@@ -311,7 +311,7 @@ function _createEditor(monaco, templateMode: boolean, opts: BlazeExpressionConst
     }
     editor.onDidChangeModelContent(function (event) {
         var code = editor.getValue();
-        textArea.innerText = code;
+        textArea.value = code;
         var model = editor.getModel();
         let symbolTable = symbolTables[model.id];
         var syntaxErrors = validate(code, symbolTable, templateMode, expectedResultTypes, wrongResultTypeErrorMessage);
