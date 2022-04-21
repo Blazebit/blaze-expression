@@ -20,13 +20,12 @@ import {
 } from "blaze-domain";
 import {ErrorNode, ParseTree} from "antlr4ts/tree";
 import {
-    AdditionExpressionContext,
+    AdditiveExpressionContext,
     AndPredicateContext,
     BetweenPredicateContext,
     BooleanFunctionContext,
     CollectionLiteralContext,
     DatePartContext,
-    DivisionExpressionContext,
     EntityLiteralContext,
     EqualityPredicateContext,
     ExpressionContext,
@@ -46,9 +45,7 @@ import {
     LessThanOrEqualPredicateContext,
     LessThanPredicateContext,
     LiteralContext,
-    LiteralExpressionContext,
-    ModuloExpressionContext,
-    MultiplicationExpressionContext,
+    LiteralExpressionContext, MultiplicativeExpressionContext,
     NamedInvocationContext,
     NegatedPredicateContext,
     OrPredicateContext,
@@ -63,7 +60,6 @@ import {
     PredicateContext,
     PredicateOrExpressionContext,
     StringLiteralContext,
-    SubtractionExpressionContext,
     TemplateContext,
     TemporalIntervalLiteralContext,
     TimePartContext,
@@ -197,27 +193,12 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
         ctx.expression().accept(this);
     }
 
-    visitAdditionExpression(ctx: AdditionExpressionContext): void {
+    visitAdditiveExpression(ctx: AdditiveExpressionContext): void {
         ctx._lhs.accept(this);
         ctx._rhs.accept(this);
     }
 
-    visitSubtractionExpression(ctx: SubtractionExpressionContext): void {
-        ctx._lhs.accept(this);
-        ctx._rhs.accept(this);
-    }
-
-    visitDivisionExpression(ctx: DivisionExpressionContext): void {
-        ctx._lhs.accept(this);
-        ctx._rhs.accept(this);
-    }
-
-    visitMultiplicationExpression(ctx: MultiplicationExpressionContext): void {
-        ctx._lhs.accept(this);
-        ctx._rhs.accept(this);
-    }
-
-    visitModuloExpression(ctx: ModuloExpressionContext): void {
+    visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): void {
         ctx._lhs.accept(this);
         ctx._rhs.accept(this);
     }

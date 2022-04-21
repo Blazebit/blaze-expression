@@ -36,16 +36,13 @@ template
 
 expression
     : LP expression RP                                                                          # GroupedExpression
-    | lhs=expression ASTERISK rhs=expression                                                    # MultiplicationExpression
-    | lhs=expression SLASH rhs=expression                                                       # DivisionExpression
-    | lhs=expression PERCENT rhs=expression                                                     # ModuloExpression
-    | lhs=expression PLUS rhs=expression                                                        # AdditionExpression
-    | lhs=expression MINUS rhs=expression                                                       # SubtractionExpression
-    | MINUS expression                                                                          # UnaryMinusExpression
-    | PLUS expression                                                                           # UnaryPlusExpression
     | literal                                                                                   # LiteralExpression
     | path                                                                                      # PathExpression
     | functionInvocation                                                                        # FunctionExpression
+    | MINUS expression                                                                          # UnaryMinusExpression
+    | PLUS expression                                                                           # UnaryPlusExpression
+    | lhs=expression op=(ASTERISK|SLASH|PERCENT) rhs=expression                                 # MultiplicativeExpression
+    | lhs=expression op=(PLUS|MINUS) rhs=expression                                             # AdditiveExpression
     ;
 
 predicate

@@ -44,4 +44,10 @@ public class ArithmeticExpressionCompilerTest extends AbstractExpressionCompiler
         Expression expr = parsePredicate("1.1 = 2");
         assertEquals(eq(pos(number("1.1")), pos(number(2))), expr);
     }
+
+    @Test
+    public void arithmeticOperatorPrecedence() {
+        Expression expr = parseArithmeticExpressionOnly("1 / 1 * 1");
+        assertEquals(mul(div(pos(number(1)), pos(number(1))), pos(number(1))), expr);
+    }
 }

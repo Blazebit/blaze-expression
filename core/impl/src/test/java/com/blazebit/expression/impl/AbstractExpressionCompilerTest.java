@@ -351,6 +351,18 @@ public abstract class AbstractExpressionCompilerTest {
         return new ChainingArithmeticExpression(left.getType(), left, right, ArithmeticOperatorType.MINUS);
     }
 
+    protected static ArithmeticExpression mul(ArithmeticExpression left, ArithmeticExpression right) {
+        return new ChainingArithmeticExpression(left.getType(), left, right, ArithmeticOperatorType.MULTIPLY);
+    }
+
+    protected ArithmeticExpression div(ArithmeticExpression left, ArithmeticExpression right) {
+        return new ChainingArithmeticExpression(domainModel.getType(BIGDECIMAL), left, right, ArithmeticOperatorType.DIVIDE);
+    }
+
+    protected static ArithmeticExpression mod(ArithmeticExpression left, ArithmeticExpression right) {
+        return new ChainingArithmeticExpression(left.getType(), left, right, ArithmeticOperatorType.MODULO);
+    }
+
     protected BetweenPredicate between(ArithmeticExpression left, ArithmeticExpression lower, ArithmeticExpression upper) {
         return new BetweenPredicate(booleanDomainType(), left, upper, lower);
     }

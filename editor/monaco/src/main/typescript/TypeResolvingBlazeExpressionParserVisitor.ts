@@ -27,13 +27,12 @@ import {
 } from "blaze-domain";
 import {ErrorNode, ParseTree} from "antlr4ts/tree";
 import {
-    AdditionExpressionContext,
+    AdditiveExpressionContext,
     AndPredicateContext,
-    BetweenPredicateContext,
+    BetweenPredicateContext, BlazeExpressionParser,
     BooleanFunctionContext,
     CollectionLiteralContext,
     DatePartContext,
-    DivisionExpressionContext,
     EntityLiteralContext,
     EqualityPredicateContext,
     ExpressionContext,
@@ -54,8 +53,7 @@ import {
     LessThanPredicateContext,
     LiteralContext,
     LiteralExpressionContext,
-    ModuloExpressionContext,
-    MultiplicationExpressionContext,
+    MultiplicativeExpressionContext,
     NamedInvocationContext,
     NegatedPredicateContext,
     OrPredicateContext,
@@ -70,7 +68,6 @@ import {
     PredicateContext,
     PredicateOrExpressionContext,
     StringLiteralContext,
-    SubtractionExpressionContext,
     TemplateContext,
     TemporalIntervalLiteralContext,
     TimePartContext,
@@ -375,54 +372,32 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
         return ctx.expression().accept(this);
     }
 
-    visitAdditionExpression(ctx: AdditionExpressionContext): DomainType {
-        return this.createArithmeticExpression(
-            ctx,
-            ctx._rhs,
-            ctx._lhs.accept(this),
-            ctx._rhs.accept(this),
-            DomainOperator.PLUS
-        );
+    visitAdditiveExpression(ctx: AdditiveExpressionContext): DomainType {
+        var lhs = ctx._lhs.accept(this);
+        var rhs = ctx._rhs.accept(this);
+        switch (ctx._op.type) {
+            case BlazeExpressionParser.PLUS:
+                return this.createArithmeticExpression(ctx, ctx._rhs, lhs, rhs, DomainOperator.PLUS);
+            case BlazeExpressionParser.MINUS:
+                return this.createArithmeticExpression(ctx, ctx._rhs, lhs, rhs, DomainOperator.MINUS);
+            default:
+                throw new SyntaxErrorException("Invalid additive operator: " + ctx._op.text, ctx, -1, -1, -1, -1);
+        }
     }
 
-    visitSubtractionExpression(ctx: SubtractionExpressionContext): DomainType {
-        return this.createArithmeticExpression(
-            ctx,
-            ctx._rhs,
-            ctx._lhs.accept(this),
-            ctx._rhs.accept(this),
-            DomainOperator.MINUS
-        );
-    }
-
-    visitDivisionExpression(ctx: DivisionExpressionContext): DomainType {
-        return this.createArithmeticExpression(
-            ctx,
-            ctx._rhs,
-            ctx._lhs.accept(this),
-            ctx._rhs.accept(this),
-            DomainOperator.DIVISION
-        );
-    }
-
-    visitMultiplicationExpression(ctx: MultiplicationExpressionContext): DomainType {
-        return this.createArithmeticExpression(
-            ctx,
-            ctx._rhs,
-            ctx._lhs.accept(this),
-            ctx._rhs.accept(this),
-            DomainOperator.MULTIPLICATION
-        );
-    }
-
-    visitModuloExpression(ctx: ModuloExpressionContext): DomainType {
-        return this.createArithmeticExpression(
-            ctx,
-            ctx._rhs,
-            ctx._lhs.accept(this),
-            ctx._rhs.accept(this),
-            DomainOperator.MODULO
-        );
+    visitMultiplicativeExpression(ctx: MultiplicativeExpressionContext): DomainType {
+        var lhs = ctx._lhs.accept(this);
+        var rhs = ctx._rhs.accept(this);
+        switch (ctx._op.type) {
+            case BlazeExpressionParser.SLASH:
+                return this.createArithmeticExpression(ctx, ctx._rhs, lhs, rhs, DomainOperator.DIVISION);
+            case BlazeExpressionParser.ASTERISK:
+                return this.createArithmeticExpression(ctx, ctx._rhs, lhs, rhs, DomainOperator.MULTIPLICATION);
+            case BlazeExpressionParser.PERCENT:
+                return this.createArithmeticExpression(ctx, ctx._rhs, lhs, rhs, DomainOperator.MODULO);
+            default:
+                throw new SyntaxErrorException("Invalid multiplicative operator: " + ctx._op.text, ctx, -1, -1, -1, -1);
+        }
     }
 
     createArithmeticExpression(ctx: ParserRuleContext, rhsCtx: ParserRuleContext, left: DomainType, right: DomainType, operator: DomainOperator): DomainType {

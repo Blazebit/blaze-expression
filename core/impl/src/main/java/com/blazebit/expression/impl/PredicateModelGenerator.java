@@ -378,48 +378,33 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @Override
-    public Expression visitAdditionExpression(PredicateParser.AdditionExpressionContext ctx) {
-        return createArithmeticExpression(
-                (ArithmeticExpression) ctx.lhs.accept(this),
-                (ArithmeticExpression) ctx.rhs.accept(this),
-                ArithmeticOperatorType.PLUS
-        );
+    public Expression visitMultiplicativeExpression(PredicateParser.MultiplicativeExpressionContext ctx) {
+        ArithmeticExpression lhs = (ArithmeticExpression) ctx.lhs.accept(this);
+        ArithmeticExpression rhs = (ArithmeticExpression) ctx.rhs.accept(this);
+        switch (ctx.op.getType()) {
+            case PredicateParser.SLASH:
+                return createArithmeticExpression(lhs, rhs, ArithmeticOperatorType.DIVIDE);
+            case PredicateParser.ASTERISK:
+                return createArithmeticExpression(lhs, rhs, ArithmeticOperatorType.MULTIPLY);
+            case PredicateParser.PERCENT:
+                return createArithmeticExpression(lhs, rhs, ArithmeticOperatorType.MODULO);
+            default:
+                throw new SyntaxErrorException("Invalid multiplicative operator: " + ctx.op.getText());
+        }
     }
 
     @Override
-    public Expression visitSubtractionExpression(PredicateParser.SubtractionExpressionContext ctx) {
-        return createArithmeticExpression(
-                (ArithmeticExpression) ctx.lhs.accept(this),
-                (ArithmeticExpression) ctx.rhs.accept(this),
-                ArithmeticOperatorType.MINUS
-        );
-    }
-
-    @Override
-    public Expression visitDivisionExpression(PredicateParser.DivisionExpressionContext ctx) {
-        return createArithmeticExpression(
-                (ArithmeticExpression) ctx.lhs.accept(this),
-                (ArithmeticExpression) ctx.rhs.accept(this),
-                ArithmeticOperatorType.DIVIDE
-        );
-    }
-
-    @Override
-    public Expression visitMultiplicationExpression(PredicateParser.MultiplicationExpressionContext ctx) {
-        return createArithmeticExpression(
-                (ArithmeticExpression) ctx.lhs.accept(this),
-                (ArithmeticExpression) ctx.rhs.accept(this),
-                ArithmeticOperatorType.MULTIPLY
-        );
-    }
-
-    @Override
-    public Expression visitModuloExpression(PredicateParser.ModuloExpressionContext ctx) {
-        return createArithmeticExpression(
-                (ArithmeticExpression) ctx.lhs.accept(this),
-                (ArithmeticExpression) ctx.rhs.accept(this),
-                ArithmeticOperatorType.MODULO
-        );
+    public Expression visitAdditiveExpression(PredicateParser.AdditiveExpressionContext ctx) {
+        ArithmeticExpression lhs = (ArithmeticExpression) ctx.lhs.accept(this);
+        ArithmeticExpression rhs = (ArithmeticExpression) ctx.rhs.accept(this);
+        switch (ctx.op.getType()) {
+            case PredicateParser.PLUS:
+                return createArithmeticExpression(lhs, rhs, ArithmeticOperatorType.PLUS);
+            case PredicateParser.MINUS:
+                return createArithmeticExpression(lhs, rhs, ArithmeticOperatorType.MINUS);
+            default:
+                throw new SyntaxErrorException("Invalid additive operator: " + ctx.op.getText());
+        }
     }
 
     protected ArithmeticExpression createArithmeticExpression(ArithmeticExpression left, ArithmeticExpression right, ArithmeticOperatorType operator) {
