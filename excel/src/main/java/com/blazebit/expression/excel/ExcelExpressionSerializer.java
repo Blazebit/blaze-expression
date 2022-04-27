@@ -174,12 +174,7 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
         try {
             Object value = interpreter.evaluateAsModelType(expression, interpreterContextForInlining);
             sb.setLength(startIndex);
-            if (value instanceof CharSequence) {
-                renderStringLiteral((CharSequence) value);
-            } else {
-                sb.append(value);
-            }
-            return Boolean.TRUE;
+            return visitLiteral(value, expression.getType());
         } catch (RuntimeException ex) {
             throw new IllegalArgumentException("Could not inline expression '" + expression + "'", ex);
         }
@@ -216,15 +211,18 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
 
     @Override
     public Boolean visit(Literal e) {
+        return visitLiteral(e.getValue(), e.getType());
+    }
+
+    private Boolean visitLiteral(Object value, DomainType type) {
         // TODO: implement some kind of SPI contract for literal rendering which can be replaced i.e. there should be a default impl that can be replaced
-        if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
+        if (type.getKind() == DomainType.DomainTypeKind.COLLECTION) {
             if (interpreterContextForInlining != null) {
                 // This could be a problem if the literal was the root expression, but we assume this is not the case
                 return Boolean.TRUE;
             }
             throw new UnsupportedOperationException("No support for collections in Excel");
         } else {
-            Object value = e.getValue();
             if (value instanceof CharSequence) {
                 renderStringLiteral((CharSequence) value);
             } else if (value instanceof Boolean) {

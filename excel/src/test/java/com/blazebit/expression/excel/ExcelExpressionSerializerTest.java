@@ -120,7 +120,7 @@ public class ExcelExpressionSerializerTest {
         rootDomainTypes.put("u", domainModel.getType("User"));
         rootDomainTypes.put("g", domainModel.getType("GlobalState"));
         ExpressionCompiler.Context compilerContext = compiler.createContext(rootDomainTypes);
-        Expression expression = compiler.createExpression(expressionString, compilerContext);
+        Expression expression = compiler.createExpressionOrPredicate(expressionString, compilerContext);
         ExpressionSerializer<StringBuilder> excelSerializer = expressionService.createSerializer(StringBuilder.class, "excel");
         ExpressionInterpreter.Context interpreterContext = ExpressionInterpreterContext.create(expressionService)
             .withRoot("g", new GlobalState("The root"));
@@ -151,5 +151,10 @@ public class ExcelExpressionSerializerTest {
     @Test
     public void testInlineGlobalExpression() {
         Assert.assertEquals("A1 & \"The\"", serialize("u.name + SUBSTRING(g.rootName, 1, 3)"));
+    }
+
+    @Test
+    public void testBooleanLiteral() {
+        Assert.assertEquals("E1 = TRUE()", serialize("u.active = true"));
     }
 }
