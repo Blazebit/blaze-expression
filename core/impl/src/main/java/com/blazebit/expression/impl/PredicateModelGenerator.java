@@ -470,6 +470,24 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 //    }
 
     @Override
+    public Expression visitDateLiteral(PredicateParser.DateLiteralContext ctx) {
+        return new Literal(literalFactory.ofDateString(compileContext, ctx.datePart().getText()));
+    }
+
+    @Override
+    public Expression visitTimeLiteral(PredicateParser.TimeLiteralContext ctx) {
+        StringBuilder sb = new StringBuilder(12);
+        PredicateParser.TimePartContext timePartContext = ctx.timePart();
+        sb.append(timePartContext.getText());
+
+        if (ctx.fraction != null) {
+            sb.append('.');
+            sb.append(ctx.fraction.getText());
+        }
+        return new Literal(literalFactory.ofTimeString(compileContext, sb.toString()));
+    }
+
+    @Override
     public Expression visitTimestampLiteral(PredicateParser.TimestampLiteralContext ctx) {
         StringBuilder sb = new StringBuilder(23);
         sb.append(ctx.datePart().getText());

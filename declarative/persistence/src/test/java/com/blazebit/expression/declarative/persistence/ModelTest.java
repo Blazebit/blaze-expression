@@ -20,6 +20,8 @@ import com.blazebit.domain.declarative.DeclarativeDomain;
 import com.blazebit.domain.declarative.DomainFunction;
 import com.blazebit.domain.declarative.DomainFunctionParam;
 import com.blazebit.domain.declarative.DomainFunctions;
+import com.blazebit.domain.declarative.Metadata;
+import com.blazebit.domain.declarative.MetadataType;
 import com.blazebit.domain.runtime.model.DomainModel;
 import com.blazebit.domain.runtime.model.DomainType;
 import com.blazebit.expression.Expression;
@@ -29,6 +31,8 @@ import com.blazebit.expression.ExpressionInterpreterContext;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
+import com.blazebit.expression.persistence.PersistenceExpressionRenderer;
+import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializerContext;
 import com.blazebit.persistence.BaseWhereBuilder;
 import com.blazebit.persistence.BetweenBuilder;
@@ -49,6 +53,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -121,6 +127,19 @@ public class ModelTest {
         }
     }
 
+    @Test
+    public void test5() {
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionCompiler.Context compilerContext = compiler.createContext(Collections.singletonMap("user", domainType));
+        Expression expression = compiler.createPredicate("user.registrationDate < TIMESTAMP(2020-01-01)", compilerContext);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService, null)
+            .withAlias("user", "u");
+        WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
+        serializer.serializeTo(serializerContext, expression, whereBuilderMock);
+        Assert.assertEquals("u.registrationDate < {ts '2020-01-01 00:00:00'}", whereBuilderMock.predicate);
+    }
+
     @DomainFunctions
     static class Functions {
         @DomainFunction("IS_OLD")
@@ -134,15 +153,19 @@ public class ModelTest {
     public static interface User {
         String getName();
         long getAge();
+        @Metadata(MyExpressionRenderer.class)
+        LocalDate getRegistrationDate();
     }
 
     static class UserImpl implements User {
         private final String name;
         private final long age;
+        private final LocalDate registrationDate;
 
         public UserImpl(String name, long age) {
             this.name = name;
             this.age = age;
+            this.registrationDate = LocalDate.of(1970, 1, 1);
         }
 
         @Override
@@ -153,6 +176,11 @@ public class ModelTest {
         @Override
         public long getAge() {
             return age;
+        }
+
+        @Override
+        public LocalDate getRegistrationDate() {
+            return registrationDate;
         }
     }
 
@@ -719,6 +747,14 @@ public class ModelTest {
         @Override
         public RestrictionBuilderExperimental nonPortable() {
             return null;
+        }
+    }
+
+    @MetadataType(PersistenceExpressionRenderer.class)
+    public static class MyExpressionRenderer implements PersistenceExpressionRenderer {
+        @Override
+        public void render(StringBuilder sb, PersistenceExpressionSerializer serializer) {
+            sb.append(".registrationDate");
         }
     }
 }

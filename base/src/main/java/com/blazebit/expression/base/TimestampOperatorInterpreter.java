@@ -27,6 +27,8 @@ import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 /**
  * @author Christian Beikov
@@ -41,27 +43,32 @@ public class TimestampOperatorInterpreter implements ComparisonOperatorInterpret
 
     @Override
     public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType, Object leftValue, Object rightValue, ComparisonOperator operator) {
-        if (leftValue instanceof Instant && rightValue instanceof Instant) {
+        if (leftValue instanceof Instant) {
             Instant l = (Instant) leftValue;
-            Instant r = (Instant) rightValue;
-            switch (operator) {
-                case EQUAL:
-                    return l.compareTo(r) == 0;
-                case NOT_EQUAL:
-                    return l.compareTo(r) != 0;
-                case GREATER_OR_EQUAL:
-                    return l.compareTo(r) > -1;
-                case GREATER:
-                    return l.compareTo(r) > 0;
-                case LOWER_OR_EQUAL:
-                    return l.compareTo(r) < 1;
-                case LOWER:
-                    return l.compareTo(r) < 0;
-                default:
-                    break;
+            Instant r = null;
+            if (rightValue instanceof Instant) {
+                r = (Instant) rightValue;
+            } else if (rightValue instanceof LocalDate) {
+                r = ((LocalDate) rightValue).atStartOfDay().toInstant(ZoneOffset.UTC);
             }
-        } else {
-            throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");
+            if (r != null) {
+                switch (operator) {
+                    case EQUAL:
+                        return l.compareTo(r) == 0;
+                    case NOT_EQUAL:
+                        return l.compareTo(r) != 0;
+                    case GREATER_OR_EQUAL:
+                        return l.compareTo(r) > -1;
+                    case GREATER:
+                        return l.compareTo(r) > 0;
+                    case LOWER_OR_EQUAL:
+                        return l.compareTo(r) < 1;
+                    case LOWER:
+                        return l.compareTo(r) < 0;
+                    default:
+                        break;
+                }
+            }
         }
 
         throw new DomainModelException("Can't handle the operator " + operator + " for the arguments [" + leftValue + ", " + rightValue + "]!");

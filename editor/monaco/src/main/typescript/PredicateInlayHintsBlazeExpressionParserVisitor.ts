@@ -63,6 +63,8 @@ import {
     TemplateContext,
     TemporalIntervalLiteralContext,
     TimePartContext,
+    DateLiteralContext,
+    TimeLiteralContext,
     TimestampLiteralContext,
     UnaryMinusExpressionContext,
     UnaryPlusExpressionContext
@@ -209,6 +211,12 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
 
     visitUnaryPlusExpression(ctx: UnaryPlusExpressionContext): void {
         ctx.expression().accept(this);
+    }
+
+    visitDateLiteral(ctx: DateLiteralContext): void {
+    }
+
+    visitTimeLiteral(ctx: TimeLiteralContext): void {
     }
 
     visitTimestampLiteral(ctx: TimestampLiteralContext): void {

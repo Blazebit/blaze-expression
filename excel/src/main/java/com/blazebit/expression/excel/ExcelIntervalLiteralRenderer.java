@@ -14,55 +14,25 @@
  * limitations under the License.
  */
 
+package com.blazebit.expression.excel;
+
+import com.blazebit.domain.runtime.model.DomainType;
+
+import java.io.Serializable;
+
 /**
- * The literal kind.
- *
  * @author Christian Beikov
  * @since 1.0.0
  */
-export enum LiteralKind {
-    /**
-     * Boolean literal.
-     */
-    BOOLEAN,
-    /**
-     * Integer literal.
-     */
-    INTEGER,
-    /**
-     * Numeric literal.
-     */
-    NUMERIC,
-    /**
-     * String literal.
-     */
-    STRING,
-    /**
-     * Date literal.
-     */
-    DATE,
-    /**
-     * Time literal.
-     */
-    TIME,
-    /**
-     * Timestamp literal.
-     */
-    TIMESTAMP,
-    /**
-     * Interval literal.
-     */
-    INTERVAL,
-    /**
-     * Entity literal.
-     */
-    ENTITY,
-    /**
-     * Enum literal.
-     */
-    ENUM,
-    /**
-     * Collection literal.
-     */
-    COLLECTION
+public class ExcelIntervalLiteralRenderer implements ExcelLiteralRenderer, Serializable {
+
+    public static final ExcelIntervalLiteralRenderer INSTANCE = new ExcelIntervalLiteralRenderer();
+
+    private ExcelIntervalLiteralRenderer() {
+    }
+
+    @Override
+    public void render(Object value, DomainType domainType, ExcelExpressionSerializer serializer) {
+        throw new UnsupportedOperationException("Not possible to render interval literals. Should be handled by operator renderers!");
+    }
 }

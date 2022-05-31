@@ -64,13 +64,14 @@ public class ExcelContributor implements DomainContributor {
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        domainBuilder.extendBasicType(BaseContributor.INTEGER_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelNumericOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.NUMERIC_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelNumericOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.STRING_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelStringOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelTimestampOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelTimeOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelIntervalOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelDomainOperatorRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.INTEGER_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelNumericOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelLiteralRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.NUMERIC_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelNumericOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelLiteralRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.STRING_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelStringOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelStringLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelTimestampOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelTimestampLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelTimeOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelTimeLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.DATE_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelDateOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelDateLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelIntervalOperatorRenderer.INSTANCE), new ExcelLiteralRendererMetadataDefinition(ExcelIntervalLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new ExcelDomainOperatorRendererMetadataDefinition(ExcelDomainOperatorRenderer.SIMPLE), new ExcelLiteralRendererMetadataDefinition(ExcelBooleanLiteralRenderer.INSTANCE));
 
         for (DomainFunctionDefinition functionDefinition : domainBuilder.getFunctions().values()) {
             Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = functionDefinition.getMetadataDefinitions();
@@ -149,6 +150,34 @@ public class ExcelContributor implements DomainContributor {
         @Override
         public ExcelDomainOperatorRenderer build(MetadataDefinitionHolder definitionHolder) {
             return excelDomainOperatorRenderer;
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    static class ExcelLiteralRendererMetadataDefinition implements MetadataDefinition<ExcelLiteralRenderer> {
+
+        private final ExcelLiteralRenderer excelLiteralRenderer;
+
+        /**
+         * Creates a metadata definition for the given {@link ExcelLiteralRenderer}.
+         *
+         * @param excelLiteralRenderer The literal renderer
+         */
+        public ExcelLiteralRendererMetadataDefinition(ExcelLiteralRenderer excelLiteralRenderer) {
+            this.excelLiteralRenderer = excelLiteralRenderer;
+        }
+
+        @Override
+        public Class<ExcelLiteralRenderer> getJavaType() {
+            return ExcelLiteralRenderer.class;
+        }
+
+        @Override
+        public ExcelLiteralRenderer build(MetadataDefinitionHolder definitionHolder) {
+            return excelLiteralRenderer;
         }
     }
 

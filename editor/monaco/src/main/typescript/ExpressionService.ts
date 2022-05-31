@@ -257,10 +257,15 @@ export class ExpressionService {
         });
         registerIfAbsent("TemporalLiteralResolver", function(): LiteralResolver {
             return { resolveLiteral(domainModel: DomainModel, kind: LiteralKind, value: boolean | string | EntityLiteral | EnumLiteral | CollectionLiteral): DomainType {
-                    if (kind == LiteralKind.INTERVAL) {
-                        return domainModel.getType('Interval');
-                    } else {
-                        return domainModel.getType('Timestamp');
+                    switch (kind) {
+                        case LiteralKind.INTERVAL:
+                            return domainModel.getType('Interval');
+                        case LiteralKind.DATE:
+                            return domainModel.getType('Date');
+                        case LiteralKind.TIME:
+                            return domainModel.getType('Time');
+                        default:
+                            return domainModel.getType('Timestamp');
                     }
                 }};
         });

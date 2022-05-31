@@ -89,6 +89,8 @@ literal
     | stringLiteral
     | TRUE
     | FALSE
+    | dateLiteral
+    | timeLiteral
     | timestampLiteral
     | temporalIntervalLiteral
     | collectionLiteral
@@ -111,6 +113,14 @@ entityLiteral
 functionInvocation
     : name=identifier LP ((identifier EQUAL predicateOrExpression COMMA)* identifier EQUAL predicateOrExpression)? RP    #NamedInvocation
     | name=identifier LP ((predicateOrExpression COMMA)* predicateOrExpression)? RP                                      #IndexedFunctionInvocation
+    ;
+
+dateLiteral
+    : DATE LP datePart RP
+    ;
+
+timeLiteral
+    : TIME LP timePart (DOT fraction=(INTEGER_LITERAL | LEADING_ZERO_INTEGER_LITERAL))? RP
     ;
 
 timestampLiteral
@@ -141,6 +151,7 @@ identifier
     | QUOTED_IDENTIFIER
     | AND
     | BETWEEN
+    | DATE
     | DAYS
     | HOURS
     | IN
@@ -150,6 +161,7 @@ identifier
     | NOT
     | OR
     | SECONDS
+    | TIME
     | TIMESTAMP
     | YEARS
     ;

@@ -71,6 +71,8 @@ import {
     TemplateContext,
     TemporalIntervalLiteralContext,
     TimePartContext,
+    DateLiteralContext,
+    TimeLiteralContext,
     TimestampLiteralContext,
     UnaryMinusExpressionContext,
     UnaryPlusExpressionContext
@@ -479,6 +481,14 @@ export class TypeResolvingBlazeExpressionParserVisitor implements BlazeExpressio
                 }
             }
         }
+    }
+
+    visitDateLiteral(ctx: DateLiteralContext): DomainType {
+        return this.symbolTable.model.temporalLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.DATE, ctx.text);
+    }
+
+    visitTimeLiteral(ctx: TimeLiteralContext): DomainType {
+        return this.symbolTable.model.temporalLiteralResolver.resolveLiteral(this.symbolTable.model.domainModel, LiteralKind.TIME, ctx.text);
     }
 
     visitTimestampLiteral(ctx: TimestampLiteralContext): DomainType {
