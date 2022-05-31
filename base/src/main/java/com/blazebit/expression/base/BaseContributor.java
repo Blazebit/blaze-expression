@@ -105,7 +105,6 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
     public static final String INTEGER_TYPE_NAME = "Integer";
     public static final String NUMERIC_TYPE_NAME = "Numeric";
     public static final String TIMESTAMP_TYPE_NAME = "Timestamp";
-    public static final Class<?> TIME = LocalTime.class;
     public static final String TIME_TYPE_NAME = "Time";
     public static final String INTERVAL_TYPE_NAME = "Interval";
     public static final String STRING_TYPE_NAME = "String";
@@ -170,7 +169,7 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
 
         domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, new String[][]{ { TIMESTAMP_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
         domainBuilder.withOperationTypeResolver(TIMESTAMP_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIMESTAMP_TYPE_NAME, new String[][]{ { TIMESTAMP_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        withPredicateTypeResolvers(domainBuilder, TIMESTAMP_TYPE_NAME, TIMESTAMP_TYPE_NAME);
+        withPredicateTypeResolvers(domainBuilder, TIMESTAMP_TYPE_NAME, TIMESTAMP_TYPE_NAME, DATE_TYPE_NAME);
 
         domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, new String[][]{ { TIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
         domainBuilder.withOperationTypeResolver(TIME_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(TIME_TYPE_NAME, new String[][]{ { TIME_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
@@ -178,7 +177,7 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
 
         domainBuilder.withOperationTypeResolver(DATE_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.returning(DATE_TYPE_NAME, new String[][]{ { DATE_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
         domainBuilder.withOperationTypeResolver(DATE_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.returning(DATE_TYPE_NAME, new String[][]{ { DATE_TYPE_NAME }, { INTERVAL_TYPE_NAME }}));
-        withPredicateTypeResolvers(domainBuilder, DATE_TYPE_NAME, DATE_TYPE_NAME);
+        withPredicateTypeResolvers(domainBuilder, DATE_TYPE_NAME, DATE_TYPE_NAME, TIMESTAMP_TYPE_NAME);
 
         domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.PLUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
         domainBuilder.withOperationTypeResolver(INTERVAL_TYPE_NAME, DomainOperator.MINUS, StaticDomainOperationTypeResolvers.widest(TIMESTAMP_TYPE_NAME, TIME_TYPE_NAME, INTERVAL_TYPE_NAME));
@@ -294,6 +293,16 @@ public class BaseContributor implements DomainContributor, ExpressionServiceCont
                 return null;
             }
             return (T) "\"TemporalLiteralResolver\"";
+        }
+
+        @Override
+        public ResolvedLiteral resolveDateLiteral(ExpressionCompiler.Context context, LocalDate value) {
+            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(DATE_TYPE_NAME), value);
+        }
+
+        @Override
+        public ResolvedLiteral resolveTimeLiteral(ExpressionCompiler.Context context, LocalTime value) {
+            return new DefaultResolvedLiteral(context.getExpressionService().getDomainModel().getType(TIME_TYPE_NAME), value);
         }
 
         @Override

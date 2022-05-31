@@ -104,4 +104,14 @@ public class PredicateInterpreterTest {
         Assert.assertEquals(true, testPredicate("'EUR' = Currency.EUR"));
     }
 
+    @Test
+    public void testTemporal1() {
+        Assert.assertEquals(true, testPredicate("TIMESTAMP(2020-01-01) = DATE(2020-01-01)"));
+    }
+
+    @Test
+    public void testTemporal2() {
+        Assert.assertEquals(true, testPredicate("DATE(2020-01-01) = TIMESTAMP(2020-01-01)"));
+    }
+
 }

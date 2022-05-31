@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.blazebit.expression.persistence;
+package com.blazebit.expression.excel;
 
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.TemporalInterval;
@@ -26,21 +26,20 @@ import com.blazebit.expression.Literal;
 import java.io.Serializable;
 
 /**
- * @author Yevhen Tucha
+ * @author Christian Beikov
  * @since 1.0.0
  */
-public class PersistenceLocalDateOperatorRenderer implements PersistenceDomainOperatorRenderer, Serializable {
+public class ExcelDateOperatorRenderer implements ExcelDomainOperatorRenderer, Serializable {
 
-    public static final PersistenceLocalDateOperatorRenderer INSTANCE = new PersistenceLocalDateOperatorRenderer();
+    public static final ExcelDateOperatorRenderer INSTANCE = new ExcelDateOperatorRenderer();
 
-    private PersistenceLocalDateOperatorRenderer() {
+    private ExcelDateOperatorRenderer() {
     }
 
     @Override
-    public boolean render(ChainingArithmeticExpression e, PersistenceExpressionSerializer serializer) {
+    public boolean render(ChainingArithmeticExpression e, ExcelExpressionSerializer serializer) {
         DomainOperator domainOperator = e.getOperator().getDomainOperator();
         if (domainOperator == DomainOperator.PLUS || domainOperator == DomainOperator.MINUS) {
-            int factor = domainOperator == DomainOperator.PLUS ? 1 : -1;
             Expression expression = null;
             TemporalInterval interval = null;
             StringBuilder sb = serializer.getStringBuilder();
@@ -55,33 +54,23 @@ public class PersistenceLocalDateOperatorRenderer implements PersistenceDomainOp
             }
 
             if (interval != null) {
-                if (interval.getYears() != 0) {
-                    sb.append("ADD_YEAR(");
-                }
-                if (interval.getMonths() != 0) {
-                    sb.append("ADD_MONTH(");
-                }
-                if (interval.getDays() != 0) {
-                    sb.append("ADD_DAY(");
-                }
                 boolean isConstant = expression.accept(serializer);
-                if (interval.getYears() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getYears() * factor).append(')');
+                String argumentSeparator = serializer.getArgumentSeparator();
+                if (domainOperator == DomainOperator.PLUS) {
+                    sb.append(" + ");
+                } else {
+                    sb.append(" - ");
                 }
-                if (interval.getMonths() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getMonths() * factor).append(')');
-                }
-                if (interval.getDays() != 0) {
-                    sb.append(", ");
-                    sb.append(interval.getDays() * factor).append(')');
-                }
+                sb.append("DATE(");
+                sb.append(interval.getYears());
+                sb.append(argumentSeparator).append(' ');
+                sb.append(interval.getMonths());
+                sb.append(argumentSeparator).append(' ');
+                sb.append(interval.getDays());
+                sb.append(")");
                 return isConstant;
             }
         }
-        throw new DomainModelException(
-                "Can't handle the operator " + domainOperator + " for the arguments [" + e.getLeft() + ", "
-                        + e.getRight() + "]!");
+        throw new DomainModelException("Can't handle the operator " + domainOperator + " for the arguments [" + e.getLeft() + ", " + e.getRight() + "]!");
     }
 }

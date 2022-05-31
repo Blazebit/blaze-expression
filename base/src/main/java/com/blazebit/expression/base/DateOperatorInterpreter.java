@@ -26,7 +26,10 @@ import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.Temporal;
 
 /**
  * @author Yevhen Tucha
@@ -41,26 +44,36 @@ public class DateOperatorInterpreter
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Boolean interpret(ExpressionInterpreter.Context context, DomainType leftType, DomainType rightType,
                              Object leftValue, Object rightValue, ComparisonOperator operator) {
-        if (leftValue instanceof LocalDate && rightValue instanceof LocalDate) {
-            LocalDate l = (LocalDate) leftValue;
-            LocalDate r = (LocalDate) rightValue;
-            switch (operator) {
-                case EQUAL:
-                    return l.compareTo(r) == 0;
-                case NOT_EQUAL:
-                    return l.compareTo(r) != 0;
-                case GREATER_OR_EQUAL:
-                    return l.compareTo(r) > -1;
-                case GREATER:
-                    return l.compareTo(r) > 0;
-                case LOWER_OR_EQUAL:
-                    return l.compareTo(r) < 1;
-                case LOWER:
-                    return l.compareTo(r) < 0;
-                default:
-                    break;
+        if (leftValue instanceof LocalDate) {
+            Comparable<Temporal> l = (Comparable<Temporal>) leftValue;
+            Temporal r = null;
+            if (rightValue instanceof LocalDate) {
+                r = (LocalDate) rightValue;
+            } else if (rightValue instanceof Instant) {
+                //noinspection rawtypes
+                l = (Comparable) ((LocalDate) leftValue).atStartOfDay().toInstant(ZoneOffset.UTC);
+                r = (Instant) rightValue;
+            }
+            if (r != null) {
+                switch (operator) {
+                    case EQUAL:
+                        return l.compareTo(r) == 0;
+                    case NOT_EQUAL:
+                        return l.compareTo(r) != 0;
+                    case GREATER_OR_EQUAL:
+                        return l.compareTo(r) > -1;
+                    case GREATER:
+                        return l.compareTo(r) > 0;
+                    case LOWER_OR_EQUAL:
+                        return l.compareTo(r) < 1;
+                    case LOWER:
+                        return l.compareTo(r) < 0;
+                    default:
+                        break;
+                }
             }
         } else {
             throw new DomainModelException("Illegal arguments [" + leftValue + ", " + rightValue + "]!");

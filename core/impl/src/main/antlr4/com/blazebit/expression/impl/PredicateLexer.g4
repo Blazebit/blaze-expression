@@ -47,6 +47,7 @@ LEADING_ZERO_INTEGER_LITERAL
 
 AND             : [aA] [nN] [dD];
 BETWEEN         : [bB] [eE] [tT] [wW] [eE] [eE] [nN];
+DATE            : [dD] [aA] [tT] [eE];
 DAYS            : [dD] [aA] [yY] [sS];
 EMPTY           : [eE] [mM] [pP] [tT] [yY];
 FALSE           : [fF] [aA] [lL] [sS] [eE];
@@ -60,6 +61,7 @@ NOT             : [nN] [oO] [tT];
 NULL            : [nN] [uU] [lL] [lL];
 OR              : [oO] [rR];
 SECONDS         : [sS] [eE] [cC] [oO] [nN] [dD] [sS];
+TIME            : [tT] [iI] [mM] [eE];
 TIMESTAMP       : [tT] [iI] [mM] [eE] [sS] [tT] [aA] [mM] [pP];
 TRUE            : [tT] [rR] [uU] [eE];
 YEARS           : [yY] [eE] [aA] [rR] [sS];

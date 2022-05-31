@@ -64,14 +64,14 @@ public class PersistenceContributor implements DomainContributor {
 
     @Override
     public void contribute(DomainBuilder domainBuilder) {
-        domainBuilder.extendBasicType(BaseContributor.INTEGER_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
-        domainBuilder.extendBasicType(BaseContributor.NUMERIC_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
-        domainBuilder.extendBasicType(BaseContributor.STRING_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceStringOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimestampOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimeOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.DATE_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceLocalDateOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceIntervalOperatorRenderer.INSTANCE));
-        domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.INTEGER_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE), new PersistenceLiteralRendererMetadataDefinition(PersistenceLiteralRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.NUMERIC_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE), new PersistenceLiteralRendererMetadataDefinition(PersistenceLiteralRenderer.SIMPLE));
+        domainBuilder.extendBasicType(BaseContributor.STRING_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceStringOperatorRenderer.INSTANCE), new PersistenceLiteralRendererMetadataDefinition(PersistenceStringLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIMESTAMP_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimestampOperatorRenderer.INSTANCE), new PersistenceLiteralRendererMetadataDefinition(PersistenceTimestampLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.TIME_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceTimeOperatorRenderer.INSTANCE), new PersistenceLiteralRendererMetadataDefinition(PersistenceTimeLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.DATE_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDateOperatorRenderer.INSTANCE), new PersistenceLiteralRendererMetadataDefinition(PersistenceDateLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.INTERVAL_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceIntervalOperatorRenderer.INSTANCE), new PersistenceLiteralRendererMetadataDefinition(PersistenceIntervalLiteralRenderer.INSTANCE));
+        domainBuilder.extendBasicType(BaseContributor.BOOLEAN_TYPE_NAME, new PersistenceDomainOperatorRendererMetadataDefinition(PersistenceDomainOperatorRenderer.SIMPLE), new PersistenceLiteralRendererMetadataDefinition(PersistenceLiteralRenderer.SIMPLE));
 
         for (DomainFunctionDefinition functionDefinition : domainBuilder.getFunctions().values()) {
             Map<Class<?>, MetadataDefinition<?>> metadataDefinitions = functionDefinition.getMetadataDefinitions();
@@ -150,6 +150,34 @@ public class PersistenceContributor implements DomainContributor {
         @Override
         public PersistenceDomainOperatorRenderer build(MetadataDefinitionHolder definitionHolder) {
             return persistenceDomainOperatorRenderer;
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    static class PersistenceLiteralRendererMetadataDefinition implements MetadataDefinition<PersistenceLiteralRenderer> {
+
+        private final PersistenceLiteralRenderer persistenceLiteralRenderer;
+
+        /**
+         * Creates a metadata definition for the given {@link PersistenceLiteralRenderer}.
+         *
+         * @param persistenceLiteralRenderer The literal renderer
+         */
+        public PersistenceLiteralRendererMetadataDefinition(PersistenceLiteralRenderer persistenceLiteralRenderer) {
+            this.persistenceLiteralRenderer = persistenceLiteralRenderer;
+        }
+
+        @Override
+        public Class<PersistenceLiteralRenderer> getJavaType() {
+            return PersistenceLiteralRenderer.class;
+        }
+
+        @Override
+        public PersistenceLiteralRenderer build(MetadataDefinitionHolder definitionHolder) {
+            return persistenceLiteralRenderer;
         }
     }
 

@@ -258,7 +258,6 @@ public class PersistenceExpressionSerializer implements Expression.ResultVisitor
 
     @Override
     public Boolean visit(Literal e) {
-        // TODO: implement some kind of SPI contract for literal rendering which can be replaced i.e. there should be a default impl that can be replaced
         if (e.getType().getKind() == DomainType.DomainTypeKind.COLLECTION) {
             @SuppressWarnings("unchecked")
             Collection<Expression> expressions = (Collection<Expression>) e.getValue();
@@ -271,17 +270,9 @@ public class PersistenceExpressionSerializer implements Expression.ResultVisitor
             }
         } else {
             Object value = e.getValue();
-            if (value instanceof CharSequence) {
-                sb.append('\'');
-                CharSequence charSequence = (CharSequence) value;
-                for (int i = 0; i < charSequence.length(); i++) {
-                    final char c = charSequence.charAt(i);
-                    if (c == '\'') {
-                        sb.append('\'');
-                    }
-                    sb.append(c);
-                }
-                sb.append('\'');
+            PersistenceLiteralRenderer literalRenderer = e.getType().getMetadata(PersistenceLiteralRenderer.class);
+            if (literalRenderer != null) {
+                literalRenderer.render(value, e.getType(), this);
             } else {
                 sb.append(value);
             }

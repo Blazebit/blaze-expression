@@ -40,6 +40,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -58,6 +60,8 @@ public class LiteralFactory {
     private static final DateTimeFormatter DATE_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter DATE_TIME_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter DATE_TIME_MILLISECONDS_LITERAL_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter TIME_LITERAL_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter TIME_MILLISECONDS_LITERAL_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(ZoneOffset.UTC);
 
     private static final String TEMPORAL_INTERVAL_YEARS_FIELD = "years";
     private static final String TEMPORAL_INTERVAL_MONTHS_FIELD = "months";
@@ -327,6 +331,30 @@ public class LiteralFactory {
         }
     }
 
+    public ResolvedLiteral ofDateString(ExpressionCompiler.Context context, String dateString) {
+        try {
+            return ofLocalDate(context, LocalDate.parse(dateString, DATE_LITERAL_FORMAT));
+        } catch (DateTimeParseException e) {
+            throw new SyntaxErrorException("Invalid datetime literal " + dateString, e);
+        }
+    }
+
+    public ResolvedLiteral ofTimeString(ExpressionCompiler.Context context, String timeString) {
+        boolean hasDot = timeString.indexOf('.') != -1;
+
+        try {
+            LocalTime localTime;
+            if (!hasDot) {
+                localTime = OffsetTime.parse(timeString, TIME_LITERAL_FORMAT).toLocalTime();
+            } else {
+                localTime = OffsetTime.parse(timeString, TIME_MILLISECONDS_LITERAL_FORMAT).toLocalTime();
+            }
+            return ofLocalTime(context, localTime);
+        } catch (DateTimeParseException e) {
+            throw new SyntaxErrorException("Invalid datetime literal " + timeString, e);
+        }
+    }
+
     public ResolvedLiteral ofDateTimeString(ExpressionCompiler.Context context, String dateTimeString) {
         boolean hasBlank = dateTimeString.indexOf(' ') != -1;
         boolean hasDot = dateTimeString.indexOf('.') != -1;
@@ -344,6 +372,22 @@ public class LiteralFactory {
         } catch (DateTimeParseException e) {
             throw new SyntaxErrorException("Invalid datetime literal " + dateTimeString, e);
         }
+    }
+
+    public ResolvedLiteral ofLocalDate(ExpressionCompiler.Context context, LocalDate localDate) {
+        TemporalLiteralResolver temporalLiteralResolver = expressionService.getTemporalLiteralResolver();
+        if (temporalLiteralResolver == null) {
+            throw new DomainModelException("No literal resolver for temporal literals defined");
+        }
+        return temporalLiteralResolver.resolveDateLiteral(context, localDate);
+    }
+
+    public ResolvedLiteral ofLocalTime(ExpressionCompiler.Context context, LocalTime localTime) {
+        TemporalLiteralResolver temporalLiteralResolver = expressionService.getTemporalLiteralResolver();
+        if (temporalLiteralResolver == null) {
+            throw new DomainModelException("No literal resolver for temporal literals defined");
+        }
+        return temporalLiteralResolver.resolveTimeLiteral(context, localTime);
     }
 
     public ResolvedLiteral ofInstant(ExpressionCompiler.Context context, Instant instant) {

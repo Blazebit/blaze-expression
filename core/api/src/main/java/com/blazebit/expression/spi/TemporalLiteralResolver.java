@@ -20,6 +20,8 @@ import com.blazebit.domain.runtime.model.TemporalInterval;
 import com.blazebit.expression.ExpressionCompiler;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * A literal resolver for temporal values.
@@ -28,6 +30,24 @@ import java.time.Instant;
  * @since 1.0.0
  */
 public interface TemporalLiteralResolver {
+
+    /**
+     * Resolves the given local date value to a resolved domain literal.
+     *
+     * @param context The compiler context
+     * @param value The local date value
+     * @return the resolved literal
+     */
+    ResolvedLiteral resolveDateLiteral(ExpressionCompiler.Context context, LocalDate value);
+
+    /**
+     * Resolves the given local time value to a resolved domain literal.
+     *
+     * @param context The compiler context
+     * @param value The local time value
+     * @return the resolved literal
+     */
+    ResolvedLiteral resolveTimeLiteral(ExpressionCompiler.Context context, LocalTime value);
 
     /**
      * Resolves the given instant value to a resolved domain literal.

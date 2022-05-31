@@ -215,7 +215,6 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
     }
 
     private Boolean visitLiteral(Object value, DomainType type) {
-        // TODO: implement some kind of SPI contract for literal rendering which can be replaced i.e. there should be a default impl that can be replaced
         if (type.getKind() == DomainType.DomainTypeKind.COLLECTION) {
             if (interpreterContextForInlining != null) {
                 // This could be a problem if the literal was the root expression, but we assume this is not the case
@@ -223,14 +222,9 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
             }
             throw new UnsupportedOperationException("No support for collections in Excel");
         } else {
-            if (value instanceof CharSequence) {
-                renderStringLiteral((CharSequence) value);
-            } else if (value instanceof Boolean) {
-                if ((boolean) value) {
-                    sb.append("TRUE()");
-                } else {
-                    sb.append("FALSE()");
-                }
+            ExcelLiteralRenderer literalRenderer = type.getMetadata(ExcelLiteralRenderer.class);
+            if (literalRenderer != null) {
+                literalRenderer.render(value, type, this);
             } else {
                 sb.append(value);
             }
