@@ -31,9 +31,12 @@ import com.blazebit.expression.ExpressionInterpreterContext;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
+import com.blazebit.expression.Literal;
+import com.blazebit.expression.persistence.PersistenceDomainFunctionArgumentRenderers;
 import com.blazebit.expression.persistence.PersistenceExpressionRenderer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
 import com.blazebit.expression.persistence.PersistenceExpressionSerializerContext;
+import com.blazebit.expression.persistence.PersistenceFunctionRenderer;
 import com.blazebit.persistence.BaseWhereBuilder;
 import com.blazebit.persistence.BetweenBuilder;
 import com.blazebit.persistence.CaseWhenStarterBuilder;
@@ -53,8 +56,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -70,6 +75,7 @@ public class ModelTest {
                 .createDefaultConfiguration()
                 .addDomainType(User.class)
                 .addDomainFunctions(Functions.class)
+                .addDomainFunctions(DateFunctions.class)
                 .createDomainModel();
         domainType = domainModel.getType(User.class.getSimpleName());
         this.expressionService = Expressions.forModel(domainModel);
@@ -140,12 +146,59 @@ public class ModelTest {
         Assert.assertEquals("u.registrationDate < {ts '2020-01-01 00:00:00'}", whereBuilderMock.predicate);
     }
 
+    @Test
+    public void test6() {
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionCompiler.Context compilerContext = compiler.createContext(
+                Collections.singletonMap("user", domainType));
+        Expression expression = compiler.createPredicate(
+                "user.registrationDate < ZONED_DATE_TIME('2021-12-08T14:12:13.585294800+08:00[Asia/Kuala_Lumpur]')",
+                compilerContext);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService,
+                null)
+                .withAlias("user", "u");
+        WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
+        serializer.serializeTo(serializerContext, expression, whereBuilderMock);
+        Assert.assertEquals("u.registrationDate < {ts '2021-12-08 14:12:13.5852948'}", whereBuilderMock.predicate);
+    }
+
+    @Test
+    public void test7() {
+        ExpressionCompiler compiler = expressionService.createCompiler();
+        ExpressionCompiler.Context compilerContext = compiler.createContext(
+                Collections.singletonMap("user", domainType));
+        Expression expression = compiler.createPredicate(
+                "user.registrationDate < ZONED_DATE_TIME('2021-12-08T14:12:13.585294800+08:00')",
+                compilerContext);
+        ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
+        ExpressionSerializer.Context serializerContext = new PersistenceExpressionSerializerContext<>(expressionService,
+                null)
+                .withAlias("user", "u");
+        WhereBuilderMock whereBuilderMock = new WhereBuilderMock();
+        serializer.serializeTo(serializerContext, expression, whereBuilderMock);
+        Assert.assertEquals("u.registrationDate < {ts '2021-12-08 14:12:13.5852948'}", whereBuilderMock.predicate);
+    }
+
     @DomainFunctions
     static class Functions {
         @DomainFunction("IS_OLD")
         @PersistenceFunction("?1.age > 18")
         static Boolean isOld(ExpressionInterpreter.Context context, @DomainFunctionParam("person") User user, String... args) {
             return user.getAge() > 18;
+        }
+    }
+
+    /**
+     * Function that accepts a String representation of {@link ZonedDateTime} ISO-8601 in and returns a {@link Timestamp} representation of the same date.
+     * Usage example: ZONED_DATE_TIME('2021-12-08T14:12:13.585294800+08:00') -> {ts '2021-12-08 14:12:13.5852948'}
+     */
+    @DomainFunctions
+    static class DateFunctions {
+        @DomainFunction("ZONED_DATE_TIME")
+        @Metadata(ZonedDateTimePersistenceFunctionRenderer.class)
+        Timestamp zonedDateTime(String zonedDateTime) {
+            return Timestamp.valueOf(zonedDateTime);
         }
     }
 
