@@ -20,10 +20,14 @@
         <version.blaze-utils>0.1.21</version.blaze-utils>
         <version.blaze-persistence>1.6.0</version.blaze-persistence>
         <version.blaze-domain>3.0.0-Alpha5</version.blaze-domain>
+        <version.jakarta-jpa-api>3.0.0</version.jakarta-jpa-api>
+        <version.weld-jakarta>4.0.3.Final</version.weld-jakarta>
         <version.weld>2.4.5.Final</version.weld>
         <version.junit>4.12</version.junit>
+        <version.bnd>6.4.1</version.bnd>
 
         <version.processor.plugin>3.3.2</version.processor.plugin>
+        <version.antrun.plugin>3.1.0</version.antrun.plugin>
     </properties>
 
     <dependencyManagement>
@@ -77,6 +81,10 @@
                     <groupId>org.bsc.maven</groupId>
                     <artifactId>maven-processor-plugin</artifactId>
                     <version>${version.processor.plugin}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>${version.antrun.plugin}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

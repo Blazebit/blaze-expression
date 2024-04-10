@@ -15,7 +15,9 @@
         <module>api</module>
         <module>impl</module>
         <module>persistence</module>
+        <module>persistence-jakarta</module>
         <module>entity-view</module>
+        <module>entity-view-jakarta</module>
         <module>excel</module>
     </modules>
 
