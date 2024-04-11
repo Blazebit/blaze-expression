@@ -36,6 +36,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.UUID;
 
 /**
  * @author Christian Beikov
@@ -71,6 +72,7 @@ public final class TypeAdapterRegistry implements TypeResolver {
         put(exactTypeAdapters, approximateTypeAdapters, LocalDateTime.class, new TypeAdapterMetadataDefinition<>(LocalDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, ZonedDateTime.class, new TypeAdapterMetadataDefinition<>(ZonedDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, java.sql.Time.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimeTimeTypeAdapter.INSTANCE, TIME));
+        put(exactTypeAdapters, approximateTypeAdapters, UUID.class, new TypeAdapterMetadataDefinition<>(UUIDStringTypeAdapter.INSTANCE, STRING));
 
         exactTypeAdapters.put(byte.class, new TypeAdapterMetadataDefinition<>(ExactByteTypeAdapter.INSTANCE, EXACT_INTEGER));
         exactTypeAdapters.put(Byte.class, new TypeAdapterMetadataDefinition<>(ExactByteTypeAdapter.INSTANCE, EXACT_INTEGER));
