@@ -167,7 +167,7 @@ interface CatModel {
 Assuming the domain model was already built, we could formulate a predicate:
 
 ```java
-ExpressionServiceFactory expressionService = Expressions.forModel(domain);
+ExpressionService expressionService = Expressions.forModel(domain);
 ExpressionCompiler compiler = expressionService.createCompiler();
 ExpressionCompiler.Context context = compiler.createContext(
     Collections.singletonMap("c", domain.getType("CatModel"))
@@ -190,7 +190,7 @@ This would yield `true` as the age of the cat in the example is 19. This could a
 ```java
 CriteriaBuilder<Cat> criteriaBuilder = criteriaBuilderFactory.create(entityManager, Cat.class, "cat");
 ExpressionSerializer<WhereBuilder> serializer = expressionService.createSerializer(WhereBuilder.class);
-ExpressionSerializer.Context context = serializer.createContext(
+ExpressionSerializer.Context context = new PersistenceExpressionSerializerContext(
     Collections.singletonMap("c", "cat")
 );
 serializer.serializeTo(context, predicate, criteriaBuilder);
