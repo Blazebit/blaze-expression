@@ -26,6 +26,8 @@
         <version.junit>4.12</version.junit>
         <version.bnd>6.4.1</version.bnd>
 
+        <asmVersion>9.5</asmVersion>
+
         <version.processor.plugin>3.3.2</version.processor.plugin>
         <version.antrun.plugin>3.1.0</version.antrun.plugin>
     </properties>
@@ -85,6 +87,22 @@
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>${version.antrun.plugin}</version>
+                </plugin>
+                <!-- This is necessary to allow building with Java 13 source -->
+                <plugin>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${asmVersion}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm-commons</artifactId>
+                            <version>${asmVersion}</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
             </plugins>
         </pluginManagement>
