@@ -26,16 +26,19 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.UUID;
 
 /**
  * @author Christian Beikov
@@ -63,6 +66,8 @@ public final class TypeAdapterRegistry implements TypeResolver {
         put(exactTypeAdapters, approximateTypeAdapters, boolean.class, new TypeAdapterMetadataDefinition<>(BooleanTypeAdapter.INSTANCE, BOOLEAN));
         put(exactTypeAdapters, approximateTypeAdapters, char.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
         put(exactTypeAdapters, approximateTypeAdapters, Character.class, new TypeAdapterMetadataDefinition<>(CharacterTypeAdapter.INSTANCE, STRING));
+        put(exactTypeAdapters, approximateTypeAdapters, UUID.class, new TypeAdapterMetadataDefinition<>(UUIDTypeAdapter.INSTANCE, STRING));
+        put(exactTypeAdapters, approximateTypeAdapters, URI.class, new TypeAdapterMetadataDefinition<>(URITypeAdapter.INSTANCE, STRING));
         put(exactTypeAdapters, approximateTypeAdapters, Calendar.class, new TypeAdapterMetadataDefinition<>(CalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, GregorianCalendar.class, new TypeAdapterMetadataDefinition<>(GregorianCalendarTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, java.sql.Date.class, new TypeAdapterMetadataDefinition<>(JavaSqlDateDateTypeAdapter.INSTANCE, DATE));
@@ -70,6 +75,7 @@ public final class TypeAdapterRegistry implements TypeResolver {
         put(exactTypeAdapters, approximateTypeAdapters, java.util.Date.class, new TypeAdapterMetadataDefinition<>(JavaUtilDateTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, LocalDateTime.class, new TypeAdapterMetadataDefinition<>(LocalDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, ZonedDateTime.class, new TypeAdapterMetadataDefinition<>(ZonedDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
+        put(exactTypeAdapters, approximateTypeAdapters, OffsetDateTime.class, new TypeAdapterMetadataDefinition<>(OffsetDateTimeTimestampTypeAdapter.INSTANCE, TIMESTAMP));
         put(exactTypeAdapters, approximateTypeAdapters, java.sql.Time.class, new TypeAdapterMetadataDefinition<>(JavaSqlTimeTimeTypeAdapter.INSTANCE, TIME));
 
         exactTypeAdapters.put(byte.class, new TypeAdapterMetadataDefinition<>(ExactByteTypeAdapter.INSTANCE, EXACT_INTEGER));
