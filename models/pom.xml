@@ -12,7 +12,19 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>azure</module>
+<!--        <module>azure</module>-->
     </modules>
+
+    <profiles>
+        <profile>
+            <id>jdk11+</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <modules>
+                <module>azure</module>
+            </modules>
+        </profile>
+    </profiles>
 
 </project>
