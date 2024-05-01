@@ -18,7 +18,7 @@
         <blaze-expression.codename>Enceladus</blaze-expression.codename>
 
         <version.blaze-utils>0.1.21</version.blaze-utils>
-        <version.blaze-persistence>1.6.0</version.blaze-persistence>
+        <version.blaze-persistence>1.6.10</version.blaze-persistence>
         <version.blaze-domain>3.0.0-Alpha5</version.blaze-domain>
         <version.jakarta-jpa-api>3.0.0</version.jakarta-jpa-api>
         <version.weld-jakarta>4.0.3.Final</version.weld-jakarta>

@@ -44,6 +44,7 @@ import com.blazebit.persistence.CommonQueryBuilder;
 import com.blazebit.persistence.FullQueryBuilder;
 import com.blazebit.persistence.LikeBuilder;
 import com.blazebit.persistence.MultipleSubqueryInitiator;
+import com.blazebit.persistence.PredicateBuilder;
 import com.blazebit.persistence.QuantifiableBinaryPredicateBuilder;
 import com.blazebit.persistence.RestrictionBuilder;
 import com.blazebit.persistence.SimpleCaseWhenStarterBuilder;
@@ -799,6 +800,11 @@ public class ModelTest {
 
         @Override
         public RestrictionBuilderExperimental nonPortable() {
+            return null;
+        }
+
+        @Override
+        public PredicateBuilder where() {
             return null;
         }
     }
