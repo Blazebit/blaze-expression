@@ -22,6 +22,7 @@ import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.SyntaxErrorException;
 import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -68,6 +69,12 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
         @Override
         public ParserRuleContext invokeRule(PredicateParser parser) {
             return parser.parseTemplate();
+        }
+    };
+    protected static final RuleInvoker QUERY_RULE_INVOKER = new RuleInvoker() {
+        @Override
+        public ParserRuleContext invokeRule(PredicateParser parser) {
+            return parser.parseQuery();
         }
     };
 
@@ -131,6 +138,11 @@ public class ExpressionCompilerImpl implements ExpressionCompiler {
     @Override
     public Expression createTemplateExpression(String templateString, Context compileContext) {
         return parse(templateString, true, TEMPLATE_RULE_INVOKER, compileContext);
+    }
+
+    @Override
+    public Query createQuery(String queryString, Context compileContext) {
+        return parse(queryString, false, QUERY_RULE_INVOKER, compileContext);
     }
 
     @SuppressWarnings("unchecked")

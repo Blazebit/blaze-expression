@@ -35,13 +35,16 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.FromItem;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
+import com.blazebit.expression.Join;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.spi.DefaultResolvedLiteral;
 import com.blazebit.persistence.CriteriaBuilder;
 import com.blazebit.persistence.MultipleSubqueryInitiator;
@@ -558,6 +561,21 @@ public class PersistenceExpressionSerializer implements Expression.ResultVisitor
         }
         sb.append("EMPTY");
         return inlineIfConstant(e, startIndex, isConstant);
+    }
+
+    @Override
+    public Boolean visit(Query e) {
+        throw new UnsupportedOperationException("No support for queries yet");
+    }
+
+    @Override
+    public Boolean visit(FromItem e) {
+        throw new UnsupportedOperationException("No support for queries yet");
+    }
+
+    @Override
+    public Boolean visit(Join e) {
+        throw new UnsupportedOperationException("No support for queries yet");
     }
 
     /**

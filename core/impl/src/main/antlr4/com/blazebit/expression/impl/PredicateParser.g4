@@ -30,6 +30,9 @@ parseExpressionOrPredicate
 parseTemplate
     : template? EOF;
 
+parseQuery
+    : query EOF;
+
 template
     : (TEXT | (EXPRESSION_START expression EXPRESSION_END))+
     ;
@@ -68,6 +71,46 @@ predicateOrExpression
     : expression
     | predicate
     ;
+
+query
+	: selectClause? fromClause whereClause?
+	;
+
+selectClause
+	: SELECT DISTINCT? expression (COMMA expression)*
+	;
+
+fromClause
+	: FROM fromItem (COMMA fromItem)*
+	;
+
+whereClause
+	: WHERE predicate
+	;
+
+fromItem
+	: fromRoot join*
+	;
+
+fromRoot
+	: domainTypeName variable
+	;
+
+join
+	: (LEFT|RIGHT|FULL)? JOIN joinTarget ON predicate
+	;
+
+joinTarget
+	: domainTypeName variable
+	;
+
+domainTypeName
+	: identifier
+	;
+
+variable
+	: AS? identifier
+	;
 
 inList
     : LP expression (COMMA expression)* RP
@@ -153,15 +196,24 @@ identifier
     | BETWEEN
     | DATE
     | DAYS
+    | DISTINCT
+    | FROM
+    | FULL
     | HOURS
     | IN
     | IS
+    | JOIN
+    | LEFT
     | MINUTES
     | MONTHS
     | NOT
+    | ON
     | OR
+    | RIGHT
     | SECONDS
+    | SELECT
     | TIME
     | TIMESTAMP
+    | WHERE
     | YEARS
     ;

@@ -35,13 +35,16 @@ import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.FromItem;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
+import com.blazebit.expression.Join;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.spi.LiteralRenderer;
 
 import java.time.Instant;
@@ -440,6 +443,97 @@ public class ExpressionSerializerImpl implements Expression.Visitor, ExpressionS
             sb.append("NOT ");
         }
         sb.append("EMPTY");
+    }
+
+    @Override
+    public void visit(Query e) {
+        List<Expression> selectItems = e.getSelectItems();
+        List<FromItem> fromItems = e.getFromItems();
+        if (e.isDistinct() || !isImplicitSelect(fromItems, selectItems)) {
+            sb.append( "SELECT " );
+            if (e.isDistinct()) {
+                sb.append( "DISTINCT " );
+            }
+            boolean first = true;
+            for ( Expression selectItem : selectItems ) {
+                if ( first ) {
+                    first = false;
+                } else {
+                    sb.append( ", " );
+                }
+                selectItem.accept( this );
+            }
+            sb.append( ' ' );
+        }
+        sb.append("FROM ");
+        boolean first = true;
+        for ( FromItem fromItem : e.getFromItems() ) {
+            if ( first ) {
+                first = false;
+            } else {
+                sb.append( ", " );
+            }
+            fromItem.accept( this );
+        }
+        Predicate wherePredicate = e.getWherePredicate();
+        if ( wherePredicate != null ) {
+            sb.append( " WHERE " );
+            wherePredicate.accept( this );
+        }
+    }
+
+    private boolean isImplicitSelect(List<FromItem> fromItems, List<Expression> selectItems) {
+        if (selectItems.size() != fromItems.size()) {
+            return false;
+        }
+        for (int i = 0; i < selectItems.size(); i++) {
+            FromItem fromItem = fromItems.get( i );
+            Expression expression = selectItems.get( i );
+            if (expression instanceof Path) {
+                Path path = (Path) expression;
+                if (path.getAlias() == null || !path.getAlias().equals( fromItem.getAlias() ) || !path.getAttributes().isEmpty()) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void visit(FromItem e) {
+        sb.append( e.getType().getName() );
+        sb.append( " " );
+        sb.append( e.getAlias() );
+        for ( Join join : e.getJoins() ) {
+            join.accept( this );
+        }
+    }
+
+    @Override
+    public void visit(Join e) {
+        switch ( e.getJoinType() ) {
+            case INNER:
+                sb.append( " JOIN " );
+                break;
+            case LEFT:
+                sb.append( " LEFT JOIN " );
+                break;
+            case RIGHT:
+                sb.append( " RIGHT JOIN " );
+                break;
+            case FULL:
+                sb.append( " FULL JOIN " );
+                break;
+            default:
+                throw new IllegalArgumentException( "Unknown join type: " + e.getJoinType() );
+        }
+        sb.append( e.getType().getName() );
+        sb.append( " " );
+        sb.append( e.getAlias() );
+        sb.append( " ON " );
+        e.getJoinPredicate().accept( this );
     }
 
     private void appendIdentifier(String identifier) {

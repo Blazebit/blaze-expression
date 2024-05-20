@@ -149,5 +149,12 @@ public interface ExpressionInterpreter {
          */
         public <X> X getRoot(String alias);
 
+        /**
+         * Returns the data fetcher data object.
+         *
+         * @return the data fetcher data object
+         */
+        public DataFetcherData getDataFetcherData();
+
     }
 }

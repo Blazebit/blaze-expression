@@ -3,14 +3,6 @@
 
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
-import { GroupedExpressionContext } from "./BlazeExpressionParser";
-import { LiteralExpressionContext } from "./BlazeExpressionParser";
-import { PathExpressionContext } from "./BlazeExpressionParser";
-import { FunctionExpressionContext } from "./BlazeExpressionParser";
-import { UnaryMinusExpressionContext } from "./BlazeExpressionParser";
-import { UnaryPlusExpressionContext } from "./BlazeExpressionParser";
-import { MultiplicativeExpressionContext } from "./BlazeExpressionParser";
-import { AdditiveExpressionContext } from "./BlazeExpressionParser";
 import { NamedInvocationContext } from "./BlazeExpressionParser";
 import { IndexedFunctionInvocationContext } from "./BlazeExpressionParser";
 import { GroupedPredicateContext } from "./BlazeExpressionParser";
@@ -29,14 +21,33 @@ import { InPredicateContext } from "./BlazeExpressionParser";
 import { BetweenPredicateContext } from "./BlazeExpressionParser";
 import { BooleanFunctionContext } from "./BlazeExpressionParser";
 import { PathPredicateContext } from "./BlazeExpressionParser";
+import { GroupedExpressionContext } from "./BlazeExpressionParser";
+import { LiteralExpressionContext } from "./BlazeExpressionParser";
+import { PathExpressionContext } from "./BlazeExpressionParser";
+import { FunctionExpressionContext } from "./BlazeExpressionParser";
+import { UnaryMinusExpressionContext } from "./BlazeExpressionParser";
+import { UnaryPlusExpressionContext } from "./BlazeExpressionParser";
+import { MultiplicativeExpressionContext } from "./BlazeExpressionParser";
+import { AdditiveExpressionContext } from "./BlazeExpressionParser";
 import { ParsePredicateContext } from "./BlazeExpressionParser";
 import { ParseExpressionContext } from "./BlazeExpressionParser";
 import { ParseExpressionOrPredicateContext } from "./BlazeExpressionParser";
 import { ParseTemplateContext } from "./BlazeExpressionParser";
+import { ParseQueryContext } from "./BlazeExpressionParser";
 import { TemplateContext } from "./BlazeExpressionParser";
 import { ExpressionContext } from "./BlazeExpressionParser";
 import { PredicateContext } from "./BlazeExpressionParser";
 import { PredicateOrExpressionContext } from "./BlazeExpressionParser";
+import { QueryContext } from "./BlazeExpressionParser";
+import { SelectClauseContext } from "./BlazeExpressionParser";
+import { FromClauseContext } from "./BlazeExpressionParser";
+import { WhereClauseContext } from "./BlazeExpressionParser";
+import { FromItemContext } from "./BlazeExpressionParser";
+import { FromRootContext } from "./BlazeExpressionParser";
+import { JoinContext } from "./BlazeExpressionParser";
+import { JoinTargetContext } from "./BlazeExpressionParser";
+import { DomainTypeNameContext } from "./BlazeExpressionParser";
+import { VariableContext } from "./BlazeExpressionParser";
 import { InListContext } from "./BlazeExpressionParser";
 import { PathContext } from "./BlazeExpressionParser";
 import { PathAttributesContext } from "./BlazeExpressionParser";
@@ -59,110 +70,6 @@ import { IdentifierContext } from "./BlazeExpressionParser";
  * `BlazeExpressionParser`.
  */
 export interface BlazeExpressionParserListener extends ParseTreeListener {
-	/**
-	 * Enter a parse tree produced by the `GroupedExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterGroupedExpression?: (ctx: GroupedExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `GroupedExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitGroupedExpression?: (ctx: GroupedExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `LiteralExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterLiteralExpression?: (ctx: LiteralExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `LiteralExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitLiteralExpression?: (ctx: LiteralExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `PathExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterPathExpression?: (ctx: PathExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `PathExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitPathExpression?: (ctx: PathExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `FunctionExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterFunctionExpression?: (ctx: FunctionExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `FunctionExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitFunctionExpression?: (ctx: FunctionExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `UnaryMinusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `UnaryMinusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `UnaryPlusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `UnaryPlusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `MultiplicativeExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `MultiplicativeExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => void;
-
-	/**
-	 * Enter a parse tree produced by the `AdditiveExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	enterAdditiveExpression?: (ctx: AdditiveExpressionContext) => void;
-	/**
-	 * Exit a parse tree produced by the `AdditiveExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 */
-	exitAdditiveExpression?: (ctx: AdditiveExpressionContext) => void;
-
 	/**
 	 * Enter a parse tree produced by the `NamedInvocation`
 	 * labeled alternative in `BlazeExpressionParser.functionInvocation`.
@@ -398,6 +305,110 @@ export interface BlazeExpressionParserListener extends ParseTreeListener {
 	exitPathPredicate?: (ctx: PathPredicateContext) => void;
 
 	/**
+	 * Enter a parse tree produced by the `GroupedExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterGroupedExpression?: (ctx: GroupedExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `GroupedExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitGroupedExpression?: (ctx: GroupedExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `LiteralExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterLiteralExpression?: (ctx: LiteralExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `LiteralExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitLiteralExpression?: (ctx: LiteralExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `PathExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterPathExpression?: (ctx: PathExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `PathExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitPathExpression?: (ctx: PathExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `FunctionExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterFunctionExpression?: (ctx: FunctionExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `FunctionExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitFunctionExpression?: (ctx: FunctionExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `UnaryMinusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `UnaryMinusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `UnaryPlusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `UnaryPlusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `MultiplicativeExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `MultiplicativeExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `AdditiveExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	enterAdditiveExpression?: (ctx: AdditiveExpressionContext) => void;
+	/**
+	 * Exit a parse tree produced by the `AdditiveExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 */
+	exitAdditiveExpression?: (ctx: AdditiveExpressionContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `BlazeExpressionParser.parsePredicate`.
 	 * @param ctx the parse tree
 	 */
@@ -442,6 +453,17 @@ export interface BlazeExpressionParserListener extends ParseTreeListener {
 	exitParseTemplate?: (ctx: ParseTemplateContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.parseQuery`.
+	 * @param ctx the parse tree
+	 */
+	enterParseQuery?: (ctx: ParseQueryContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.parseQuery`.
+	 * @param ctx the parse tree
+	 */
+	exitParseQuery?: (ctx: ParseQueryContext) => void;
+
+	/**
 	 * Enter a parse tree produced by `BlazeExpressionParser.template`.
 	 * @param ctx the parse tree
 	 */
@@ -484,6 +506,116 @@ export interface BlazeExpressionParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitPredicateOrExpression?: (ctx: PredicateOrExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.query`.
+	 * @param ctx the parse tree
+	 */
+	enterQuery?: (ctx: QueryContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.query`.
+	 * @param ctx the parse tree
+	 */
+	exitQuery?: (ctx: QueryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.selectClause`.
+	 * @param ctx the parse tree
+	 */
+	enterSelectClause?: (ctx: SelectClauseContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.selectClause`.
+	 * @param ctx the parse tree
+	 */
+	exitSelectClause?: (ctx: SelectClauseContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.fromClause`.
+	 * @param ctx the parse tree
+	 */
+	enterFromClause?: (ctx: FromClauseContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.fromClause`.
+	 * @param ctx the parse tree
+	 */
+	exitFromClause?: (ctx: FromClauseContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.whereClause`.
+	 * @param ctx the parse tree
+	 */
+	enterWhereClause?: (ctx: WhereClauseContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.whereClause`.
+	 * @param ctx the parse tree
+	 */
+	exitWhereClause?: (ctx: WhereClauseContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.fromItem`.
+	 * @param ctx the parse tree
+	 */
+	enterFromItem?: (ctx: FromItemContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.fromItem`.
+	 * @param ctx the parse tree
+	 */
+	exitFromItem?: (ctx: FromItemContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.fromRoot`.
+	 * @param ctx the parse tree
+	 */
+	enterFromRoot?: (ctx: FromRootContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.fromRoot`.
+	 * @param ctx the parse tree
+	 */
+	exitFromRoot?: (ctx: FromRootContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.join`.
+	 * @param ctx the parse tree
+	 */
+	enterJoin?: (ctx: JoinContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.join`.
+	 * @param ctx the parse tree
+	 */
+	exitJoin?: (ctx: JoinContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.joinTarget`.
+	 * @param ctx the parse tree
+	 */
+	enterJoinTarget?: (ctx: JoinTargetContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.joinTarget`.
+	 * @param ctx the parse tree
+	 */
+	exitJoinTarget?: (ctx: JoinTargetContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.domainTypeName`.
+	 * @param ctx the parse tree
+	 */
+	enterDomainTypeName?: (ctx: DomainTypeNameContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.domainTypeName`.
+	 * @param ctx the parse tree
+	 */
+	exitDomainTypeName?: (ctx: DomainTypeNameContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `BlazeExpressionParser.variable`.
+	 * @param ctx the parse tree
+	 */
+	enterVariable?: (ctx: VariableContext) => void;
+	/**
+	 * Exit a parse tree produced by `BlazeExpressionParser.variable`.
+	 * @param ctx the parse tree
+	 */
+	exitVariable?: (ctx: VariableContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `BlazeExpressionParser.inList`.

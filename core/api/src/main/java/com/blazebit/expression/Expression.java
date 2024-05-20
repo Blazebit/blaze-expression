@@ -140,6 +140,27 @@ public interface Expression {
          * @param e The expression to visit
          */
         void visit(CollectionLiteral e);
+
+        /**
+         * Visits the given query.
+         *
+         * @param e The query to visit
+         */
+        void visit(Query e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
+        void visit(FromItem e);
+
+        /**
+         * Visits the given expression.
+         *
+         * @param e The expression to visit
+         */
+        void visit(Join e);
     }
 
     /**
@@ -269,6 +290,30 @@ public interface Expression {
          * @return the result
          */
         T visit(CollectionLiteral e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(Query e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(FromItem e);
+
+        /**
+         * Visits the given expression and returns a result.
+         *
+         * @param e The expression to visit
+         * @return the result
+         */
+        T visit(Join e);
     }
 
     /**

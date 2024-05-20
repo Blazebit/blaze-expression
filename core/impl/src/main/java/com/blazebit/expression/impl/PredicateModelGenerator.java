@@ -45,14 +45,18 @@ import com.blazebit.expression.EnumLiteral;
 import com.blazebit.expression.Expression;
 import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionPredicate;
+import com.blazebit.expression.FromItem;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
+import com.blazebit.expression.Join;
+import com.blazebit.expression.JoinType;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.SyntaxErrorException;
 import com.blazebit.expression.TypeErrorException;
 import com.blazebit.expression.impl.PredicateParser.PathContext;
@@ -83,13 +87,14 @@ import java.util.stream.Stream;
  * @author Christian Beikov
  * @since 1.0.0
  */
-public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expression> {
+public class PredicateModelGenerator extends PredicateParserBaseVisitor<Object> {
 
     protected final DomainModel domainModel;
     protected final LiteralFactory literalFactory;
     protected final ExpressionCompiler.Context compileContext;
     protected Literal cachedBooleanTrueLiteral;
     protected Literal cachedBooleanFalseLiteral;
+    protected Map<String, DomainType> fromNodes;
 
     public PredicateModelGenerator(DomainModel domainModel, LiteralFactory literalFactory, ExpressionCompiler.Context compileContext) {
         this.domainModel = domainModel;
@@ -97,19 +102,29 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         this.compileContext = compileContext;
     }
 
+    protected DomainType resolveAlias(String alias) {
+        if (fromNodes != null) {
+            DomainType domainType = fromNodes.get( alias );
+            if (domainType != null) {
+                return domainType;
+            }
+        }
+        return compileContext.getRootDomainType( alias );
+    }
+
     @Override
     public Expression visitParsePredicate(PredicateParser.ParsePredicateContext ctx) {
-        return ctx.predicate().accept(this);
+        return (Expression) ctx.predicate().accept( this);
     }
 
     @Override
     public Expression visitParseExpression(PredicateParser.ParseExpressionContext ctx) {
-        return ctx.expression().accept(this);
+        return (Expression) ctx.expression().accept( this);
     }
 
     @Override
     public Expression visitParseExpressionOrPredicate(PredicateParser.ParseExpressionOrPredicateContext ctx) {
-        return ctx.predicateOrExpression().accept(this);
+        return (Expression) ctx.predicateOrExpression().accept( this);
     }
 
     @Override
@@ -118,7 +133,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         if (templateContext == null) {
             return new Literal(literalFactory.ofString(compileContext, ""));
         }
-        return templateContext.accept(this);
+        return (Expression) templateContext.accept( this);
+    }
+
+    @Override
+    public Query visitParseQuery(PredicateParser.ParseQueryContext ctx) {
+        return (Query) ctx.query().accept( this );
     }
 
     @Override
@@ -152,8 +172,107 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
     }
 
     @Override
+    public Query visitQuery(PredicateParser.QueryContext ctx) {
+        List<FromItem> fromItems = visitFromClause( ctx.fromClause() );
+        PredicateParser.SelectClauseContext selectClauseContext = ctx.selectClause();
+        List<Expression> selectItems;
+        boolean distinct = false;
+        if ( selectClauseContext == null ) {
+            selectItems = new ArrayList<>(fromItems.size());
+            for ( FromItem fromItem : fromItems ) {
+                selectItems.add( new Path( fromItem.getAlias(), Collections.emptyList(), fromItem.getType() ) );
+            }
+        } else {
+            distinct = selectClauseContext.DISTINCT() != null;
+            List<PredicateParser.ExpressionContext> selectItemContexts = selectClauseContext.expression();
+            selectItems = new ArrayList<>(selectItemContexts.size());
+            for ( PredicateParser.ExpressionContext selectItemContext : selectItemContexts ) {
+                selectItems.add( (Expression) selectItemContext.accept( this ) );
+            }
+        }
+        Predicate wherePredicate = visitWhereClause( ctx.whereClause() );
+        return new Query( null, selectItems, distinct, fromItems, wherePredicate );
+    }
+
+    @Override
+    public Predicate visitWhereClause(PredicateParser.WhereClauseContext ctx) {
+        if ( ctx == null ) {
+            return null;
+        }
+        return (Predicate) ctx.predicate().accept( this );
+    }
+
+    @Override
+    public List<FromItem> visitFromClause(PredicateParser.FromClauseContext ctx) {
+        List<PredicateParser.FromItemContext> fromItemContexts = ctx.fromItem();
+        List<FromItem> fromItems = new ArrayList<>(fromItemContexts.size());
+        Map<String, DomainType> finalFromNodes = fromItemContexts.size() > 1 ? new HashMap<>() : null;
+        for ( int i = 0; i < fromItemContexts.size(); i++ ) {
+            PredicateParser.FromItemContext fromItemContext = fromItemContexts.get( i );
+            fromNodes = new HashMap<>();
+            fromItems.add( visitFromItem( fromItemContext ) );
+            if ( finalFromNodes != null ) {
+                finalFromNodes.putAll( fromNodes );
+            }
+        }
+        if ( finalFromNodes != null ) {
+            fromNodes = finalFromNodes;
+        }
+        return fromItems;
+    }
+
+    @Override
+    public FromItem visitFromItem(PredicateParser.FromItemContext ctx) {
+        PredicateParser.FromRootContext fromRootContext = ctx.fromRoot();
+        DomainType domainType = domainModel.getType( fromRootContext.domainTypeName().getText() );
+        if ( domainType == null ) {
+            throw unknownType( fromRootContext.domainTypeName().getText() );
+        }
+        String alias = visitVariable( fromRootContext.variable() );
+        fromNodes.put( alias, domainType );
+        List<Join> joins = visitJoins( ctx.join() );
+        return new FromItem( domainType, alias, joins );
+    }
+
+    private List<Join> visitJoins(List<PredicateParser.JoinContext> joinContexts) {
+        List<Join> joins = new ArrayList<>(joinContexts.size());
+        for ( PredicateParser.JoinContext joinContext : joinContexts ) {
+            TerminalNode terminalNode = (TerminalNode) joinContext.getChild( 0 );
+            JoinType joinType;
+            switch ( terminalNode.getSymbol().getType() ) {
+                case PredicateLexer.LEFT:
+                    joinType = JoinType.LEFT;
+                    break;
+                case PredicateLexer.RIGHT:
+                    joinType = JoinType.RIGHT;
+                    break;
+                case PredicateLexer.FULL:
+                    joinType = JoinType.FULL;
+                    break;
+                default:
+                    joinType = JoinType.INNER;
+                    break;
+            }
+            PredicateParser.JoinTargetContext joinTargetContext = joinContext.joinTarget();
+            DomainType domainType = domainModel.getType( joinTargetContext.domainTypeName().getText() );
+            if ( domainType == null ) {
+                throw unknownType( joinTargetContext.domainTypeName().getText() );
+            }
+            String alias = visitVariable( joinTargetContext.variable() );
+            fromNodes.put( alias, domainType );
+            joins.add( new Join( domainType, alias, joinType, (Predicate) joinContext.predicate().accept( this ) ) );
+        }
+        return Collections.unmodifiableList( joins );
+    }
+
+    @Override
+    public String visitVariable(PredicateParser.VariableContext ctx) {
+        return ctx.identifier().getText();
+    }
+
+    @Override
     public Expression visitGroupedPredicate(PredicateParser.GroupedPredicateContext ctx) {
-        return ctx.predicate().accept(this);
+        return (Expression) ctx.predicate().accept( this);
     }
 
     @Override
@@ -205,7 +324,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Predicate visitIsNullPredicate(PredicateParser.IsNullPredicateContext ctx) {
-        Expression left = ctx.expression().accept(this);
+        Expression left = (Expression) ctx.expression().accept( this);
 
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.NULLNESS);
 
@@ -224,7 +343,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Predicate visitIsEmptyPredicate(PredicateParser.IsEmptyPredicateContext ctx) {
-        Expression left = ctx.expression().accept(this);
+        Expression left = (Expression) ctx.expression().accept( this);
 
         DomainPredicateTypeResolver predicateTypeResolver = domainModel.getPredicateTypeResolver(left.getType().getName(), DomainPredicate.COLLECTION);
 
@@ -359,7 +478,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitBooleanFunction(PredicateParser.BooleanFunctionContext ctx) {
-        Expression expression = super.visitBooleanFunction(ctx);
+        Expression expression = (Expression) super.visitBooleanFunction( ctx);
         DomainType booleanDomainType = domainModel.getPredicateDefaultResultType();
         if (expression.getType() == booleanDomainType) {
             if (expression instanceof Predicate) {
@@ -374,7 +493,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
 
     @Override
     public Expression visitGroupedExpression(PredicateParser.GroupedExpressionContext ctx) {
-        return ctx.expression().accept(this);
+        return (Expression) ctx.expression().accept( this);
     }
 
     @Override
@@ -452,7 +571,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                 throw cannotResolveOperationType(DomainOperator.UNARY_PLUS, operandTypes);
             } else if (domainType == left.getType()) {
                 // Don't create a wrapper for a unary plus if the type doesn't change
-                return ctx.expression().accept(this);
+                return (Expression) ctx.expression().accept( this);
             } else {
                 return new ArithmeticFactor(domainType, left, false);
 
@@ -566,12 +685,12 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
         PredicateParser.PathAttributesContext pathAttributesContext = ctx.pathAttributes();
         ArrayList<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>();
         if (identifierContext == null) {
-            Expression base = ctx.functionInvocation().accept(this);
+            Expression base = (Expression) ctx.functionInvocation().accept( this);
             DomainType domainType = visitPathAttributes(base.getType(), pathAttributes, pathAttributesContext);
             return new Path((ArithmeticExpression) base, Collections.unmodifiableList(pathAttributes), domainType);
         } else {
             String alias = identifierContext.getText();
-            DomainType type = compileContext.getRootDomainType(alias);
+            DomainType type = resolveAlias(alias);
             if (type == null) {
                 List<PredicateParser.IdentifierContext> identifiers;
                 if (pathAttributesContext != null) {
@@ -593,7 +712,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                         }
                         String rootAlias = implicitRootProvider.determineImplicitRoot(pathParts, compileContext);
                         if (rootAlias != null) {
-                            type = compileContext.getRootDomainType(rootAlias);
+                            type = resolveAlias(rootAlias);
                             if (type != null) {
                                 type = visitPathAttribute(type, pathAttributes, alias);
                                 DomainType domainType = visitPathAttributes(type, pathAttributes, pathAttributesContext);
@@ -606,7 +725,7 @@ public class PredicateModelGenerator extends PredicateParserBaseVisitor<Expressi
                     if (implicitRootProvider != null) {
                         String rootAlias = implicitRootProvider.determineImplicitRoot(Collections.singletonList(alias), compileContext);
                         if (rootAlias != null) {
-                            type = compileContext.getRootDomainType(rootAlias);
+                            type = resolveAlias(rootAlias);
                             if (type != null) {
                                 DomainType domainType = visitPathAttribute(type, pathAttributes, alias);
                                 return new Path(rootAlias, Collections.unmodifiableList(pathAttributes), domainType);

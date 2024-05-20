@@ -3,14 +3,6 @@
 
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 
-import { GroupedExpressionContext } from "./BlazeExpressionParser";
-import { LiteralExpressionContext } from "./BlazeExpressionParser";
-import { PathExpressionContext } from "./BlazeExpressionParser";
-import { FunctionExpressionContext } from "./BlazeExpressionParser";
-import { UnaryMinusExpressionContext } from "./BlazeExpressionParser";
-import { UnaryPlusExpressionContext } from "./BlazeExpressionParser";
-import { MultiplicativeExpressionContext } from "./BlazeExpressionParser";
-import { AdditiveExpressionContext } from "./BlazeExpressionParser";
 import { NamedInvocationContext } from "./BlazeExpressionParser";
 import { IndexedFunctionInvocationContext } from "./BlazeExpressionParser";
 import { GroupedPredicateContext } from "./BlazeExpressionParser";
@@ -29,14 +21,33 @@ import { InPredicateContext } from "./BlazeExpressionParser";
 import { BetweenPredicateContext } from "./BlazeExpressionParser";
 import { BooleanFunctionContext } from "./BlazeExpressionParser";
 import { PathPredicateContext } from "./BlazeExpressionParser";
+import { GroupedExpressionContext } from "./BlazeExpressionParser";
+import { LiteralExpressionContext } from "./BlazeExpressionParser";
+import { PathExpressionContext } from "./BlazeExpressionParser";
+import { FunctionExpressionContext } from "./BlazeExpressionParser";
+import { UnaryMinusExpressionContext } from "./BlazeExpressionParser";
+import { UnaryPlusExpressionContext } from "./BlazeExpressionParser";
+import { MultiplicativeExpressionContext } from "./BlazeExpressionParser";
+import { AdditiveExpressionContext } from "./BlazeExpressionParser";
 import { ParsePredicateContext } from "./BlazeExpressionParser";
 import { ParseExpressionContext } from "./BlazeExpressionParser";
 import { ParseExpressionOrPredicateContext } from "./BlazeExpressionParser";
 import { ParseTemplateContext } from "./BlazeExpressionParser";
+import { ParseQueryContext } from "./BlazeExpressionParser";
 import { TemplateContext } from "./BlazeExpressionParser";
 import { ExpressionContext } from "./BlazeExpressionParser";
 import { PredicateContext } from "./BlazeExpressionParser";
 import { PredicateOrExpressionContext } from "./BlazeExpressionParser";
+import { QueryContext } from "./BlazeExpressionParser";
+import { SelectClauseContext } from "./BlazeExpressionParser";
+import { FromClauseContext } from "./BlazeExpressionParser";
+import { WhereClauseContext } from "./BlazeExpressionParser";
+import { FromItemContext } from "./BlazeExpressionParser";
+import { FromRootContext } from "./BlazeExpressionParser";
+import { JoinContext } from "./BlazeExpressionParser";
+import { JoinTargetContext } from "./BlazeExpressionParser";
+import { DomainTypeNameContext } from "./BlazeExpressionParser";
+import { VariableContext } from "./BlazeExpressionParser";
 import { InListContext } from "./BlazeExpressionParser";
 import { PathContext } from "./BlazeExpressionParser";
 import { PathAttributesContext } from "./BlazeExpressionParser";
@@ -62,70 +73,6 @@ import { IdentifierContext } from "./BlazeExpressionParser";
  * operations with no return type.
  */
 export interface BlazeExpressionParserVisitor<Result> extends ParseTreeVisitor<Result> {
-	/**
-	 * Visit a parse tree produced by the `GroupedExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitGroupedExpression?: (ctx: GroupedExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `LiteralExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitLiteralExpression?: (ctx: LiteralExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `PathExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitPathExpression?: (ctx: PathExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `FunctionExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitFunctionExpression?: (ctx: FunctionExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `UnaryMinusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `UnaryPlusExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `MultiplicativeExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by the `AdditiveExpression`
-	 * labeled alternative in `BlazeExpressionParser.expression`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitAdditiveExpression?: (ctx: AdditiveExpressionContext) => Result;
-
 	/**
 	 * Visit a parse tree produced by the `NamedInvocation`
 	 * labeled alternative in `BlazeExpressionParser.functionInvocation`.
@@ -271,6 +218,70 @@ export interface BlazeExpressionParserVisitor<Result> extends ParseTreeVisitor<R
 	visitPathPredicate?: (ctx: PathPredicateContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by the `GroupedExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitGroupedExpression?: (ctx: GroupedExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `LiteralExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitLiteralExpression?: (ctx: LiteralExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `PathExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitPathExpression?: (ctx: PathExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `FunctionExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFunctionExpression?: (ctx: FunctionExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `UnaryMinusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitUnaryMinusExpression?: (ctx: UnaryMinusExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `UnaryPlusExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitUnaryPlusExpression?: (ctx: UnaryPlusExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `MultiplicativeExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitMultiplicativeExpression?: (ctx: MultiplicativeExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `AdditiveExpression`
+	 * labeled alternative in `BlazeExpressionParser.expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitAdditiveExpression?: (ctx: AdditiveExpressionContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `BlazeExpressionParser.parsePredicate`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -299,6 +310,13 @@ export interface BlazeExpressionParserVisitor<Result> extends ParseTreeVisitor<R
 	visitParseTemplate?: (ctx: ParseTemplateContext) => Result;
 
 	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.parseQuery`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitParseQuery?: (ctx: ParseQueryContext) => Result;
+
+	/**
 	 * Visit a parse tree produced by `BlazeExpressionParser.template`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -325,6 +343,76 @@ export interface BlazeExpressionParserVisitor<Result> extends ParseTreeVisitor<R
 	 * @return the visitor result
 	 */
 	visitPredicateOrExpression?: (ctx: PredicateOrExpressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.query`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitQuery?: (ctx: QueryContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.selectClause`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitSelectClause?: (ctx: SelectClauseContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.fromClause`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFromClause?: (ctx: FromClauseContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.whereClause`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitWhereClause?: (ctx: WhereClauseContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.fromItem`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFromItem?: (ctx: FromItemContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.fromRoot`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitFromRoot?: (ctx: FromRootContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.join`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitJoin?: (ctx: JoinContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.joinTarget`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitJoinTarget?: (ctx: JoinTargetContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.domainTypeName`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitDomainTypeName?: (ctx: DomainTypeNameContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `BlazeExpressionParser.variable`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitVariable?: (ctx: VariableContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `BlazeExpressionParser.inList`.

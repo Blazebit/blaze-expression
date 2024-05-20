@@ -17,6 +17,7 @@
 package com.blazebit.expression;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -34,6 +35,7 @@ public class ExpressionInterpreterContext<T> implements ExpressionInterpreter.Co
     private final Map<String, Object> properties;
     private final Map<String, Object> roots;
     private final Map<String, Function<T, Object>> rootProviders;
+    private final SimpleDataFetcherData dataFetcherData;
 
     private ExpressionInterpreterContext(ExpressionService expressionService) {
         this.expressionService = expressionService;
@@ -41,6 +43,7 @@ public class ExpressionInterpreterContext<T> implements ExpressionInterpreter.Co
         this.properties = new HashMap<>();
         this.roots = new HashMap<>();
         this.rootProviders = new HashMap<>();
+        this.dataFetcherData = new SimpleDataFetcherData();
     }
 
     /**
@@ -55,6 +58,7 @@ public class ExpressionInterpreterContext<T> implements ExpressionInterpreter.Co
         this.properties = new HashMap<>();
         this.roots = new HashMap<>();
         this.rootProviders = new HashMap<>();
+        this.dataFetcherData = new SimpleDataFetcherData();
     }
 
     /**
@@ -138,6 +142,24 @@ public class ExpressionInterpreterContext<T> implements ExpressionInterpreter.Co
             }
         }
         return (X) result;
+    }
+
+    @Override
+    public DataFetcherData getDataFetcherData() {
+        return dataFetcherData;
+    }
+
+    private static class SimpleDataFetcherData extends HashMap<String, List<?>> implements DataFetcherData {
+
+        @Override
+        public List<?> getDataForDomainType(String domainTypeName) {
+            return get( domainTypeName );
+        }
+
+        @Override
+        public List<?> setDataForDomainType(String domainTypeName, List<?> data) {
+            return put( domainTypeName, data );
+        }
     }
 
 }

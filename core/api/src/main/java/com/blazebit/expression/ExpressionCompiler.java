@@ -123,6 +123,15 @@ public interface ExpressionCompiler {
     public Expression createTemplateExpression(String templateString, Context compileContext);
 
     /**
+     * Creates and compiles the given query string with the given compile context.
+     *
+     * @param queryString The query expression string to compile
+     * @param compileContext The compile context to use
+     * @return The compiled query
+     */
+    public Query createQuery(String queryString, Context compileContext);
+
+    /**
      * A compiler context that returns the domain type for available root variables.
      *
      * @author Christian Beikov

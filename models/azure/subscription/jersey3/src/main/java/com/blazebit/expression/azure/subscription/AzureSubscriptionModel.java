@@ -17,6 +17,7 @@
 package com.blazebit.expression.azure.subscription;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.util.Map;
 
 import com.blazebit.domain.Domain;
@@ -25,8 +26,10 @@ import com.blazebit.domain.boot.model.MetadataDefinition;
 import com.blazebit.domain.boot.model.MetadataDefinitionHolder;
 import com.blazebit.domain.declarative.DeclarativeDomain;
 import com.blazebit.domain.declarative.DeclarativeDomainConfiguration;
+import com.blazebit.domain.declarative.spi.DeclarativeMetadataProcessor;
 import com.blazebit.domain.runtime.model.DomainOperator;
 import com.blazebit.domain.runtime.model.DomainPredicate;
+import com.blazebit.domain.spi.ServiceProvider;
 import com.blazebit.expression.DocumentationMetadataDefinition;
 import com.blazebit.expression.azure.subscription.model.AvailabilityZoneMappings;
 import com.blazebit.expression.azure.subscription.model.AvailabilityZonePeers;
@@ -137,6 +140,25 @@ public final class AzureSubscriptionModel {
         addDomainType(SubscriptionPolicies.class, declarativeDomainConfiguration);
         addDomainType(TenantIdDescription.class, declarativeDomainConfiguration);
         addDomainType(TenantListResult.class, declarativeDomainConfiguration);
+        declarativeDomainConfiguration.withMetadataProcessor( new DeclarativeMetadataProcessor<>() {
+            @Override
+            public Class<Annotation> getProcessingAnnotation() {
+                return null;
+            }
+
+            @Override
+            public MetadataDefinition<?> process(
+                    Class<?> annotatedClass,
+                    Annotation annotation,
+                    ServiceProvider serviceProvider) {
+                if (annotatedClass == Subscription.class) {
+                    return new DataFetcherMetadataDefinition( SubscriptionDataFetcher.INSTANCE );
+                } else if (annotatedClass == TenantIdDescriptionDataFetcher.class) {
+                    return new DataFetcherMetadataDefinition( TenantIdDescriptionDataFetcher.INSTANCE );
+                }
+                return null;
+            }
+        } );
         return declarativeDomainConfiguration;
     }
 

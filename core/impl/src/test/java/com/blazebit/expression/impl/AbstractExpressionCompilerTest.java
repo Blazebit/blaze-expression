@@ -45,12 +45,16 @@ import com.blazebit.expression.ExpressionCompiler;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
 import com.blazebit.expression.Expressions;
+import com.blazebit.expression.FromItem;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.ImplicitRootProvider;
 import com.blazebit.expression.InPredicate;
+import com.blazebit.expression.Join;
+import com.blazebit.expression.JoinType;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.impl.domain.DefaultBooleanLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultEnumLiteralResolver;
 import com.blazebit.expression.impl.domain.DefaultNumericLiteralResolver;
@@ -62,15 +66,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Christian Beikov
@@ -135,12 +139,12 @@ public abstract class AbstractExpressionCompilerTest {
                 .build()
                 .withFunctionTypeResolver("self", StaticDomainFunctionTypeResolvers.FIRST_ARGUMENT_TYPE);
 
-        for (final String type : Arrays.asList(INTEGER, LONG, BIGDECIMAL)) {
+        for (final String type : asList(INTEGER, LONG, BIGDECIMAL)) {
             builder.withOperationTypeResolver(type, DomainOperator.MODULO, StaticDomainOperationTypeResolvers.returning(INTEGER));
             builder.withOperationTypeResolver(type, DomainOperator.UNARY_MINUS, StaticDomainOperationTypeResolvers.returning(type));
             builder.withOperationTypeResolver(type, DomainOperator.UNARY_PLUS, StaticDomainOperationTypeResolvers.returning(type));
             builder.withOperationTypeResolver(type, DomainOperator.DIVISION, StaticDomainOperationTypeResolvers.returning(BIGDECIMAL));
-            for (DomainOperator domainOperator : Arrays.asList(DomainOperator.PLUS, DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
+            for (DomainOperator domainOperator : asList(DomainOperator.PLUS, DomainOperator.MINUS, DomainOperator.MULTIPLICATION)) {
                 builder.withOperationTypeResolver(type, domainOperator, StaticDomainOperationTypeResolvers.widest(BIGDECIMAL, INTEGER));
             }
         }
@@ -210,12 +214,20 @@ public abstract class AbstractExpressionCompilerTest {
         return templateExpression;
     }
 
+    protected Query parseQuery(String input) {
+        Query query = expressionCompiler.createQuery(input, context);
+        StringBuilder sb = new StringBuilder();
+        expressionSerializer.serializeTo(query, sb);
+        Assert.assertEquals(input, sb.toString());
+        return query;
+    }
+
     protected CompoundPredicate or(Predicate... disjuncts) {
-        return new CompoundPredicate(booleanDomainType(), Arrays.asList(disjuncts), false);
+        return new CompoundPredicate(booleanDomainType(), asList(disjuncts), false);
     }
 
     protected CompoundPredicate and(Predicate... conjuncts) {
-        return new CompoundPredicate(booleanDomainType(), Arrays.asList(conjuncts), true);
+        return new CompoundPredicate(booleanDomainType(), asList(conjuncts), true);
     }
 
     protected Literal time(Instant value) {
@@ -251,6 +263,10 @@ public abstract class AbstractExpressionCompilerTest {
     }
 
     protected Path attr(String entity, String... attributes) {
+        return path(entity, entity, attributes);
+    }
+
+    protected Path path(String entity, String alias, String... attributes) {
         EntityDomainType entityDomainType = (EntityDomainType) domainModel.getType(entity);
         DomainType type = entityDomainType;
         List<EntityDomainTypeAttribute> pathAttributes = new ArrayList<>(attributes.length);
@@ -273,7 +289,7 @@ public abstract class AbstractExpressionCompilerTest {
                 }
             }
         }
-        return new Path(entity, Collections.unmodifiableList(pathAttributes), type);
+        return new Path(alias, Collections.unmodifiableList(pathAttributes), type);
     }
 
     protected Path attr(ArithmeticExpression base, String... attributes) {
@@ -310,6 +326,30 @@ public abstract class AbstractExpressionCompilerTest {
 //	protected static CollectionAtom collectionAttr(String identifier) {
 //		return new CollectionAtom(new Path(identifier, TermType.COLLECTION));
 //	}
+
+    protected FromItem fromItem(String typeName, String alias) {
+        return new FromItem( domainModel.getType( typeName ), alias, Collections.emptyList() );
+    }
+
+    protected FromItem fromItem(String typeName, String alias, Join... joins) {
+        return new FromItem( domainModel.getType( typeName ), alias, asList(joins) );
+    }
+
+    protected Join join(String typeName, String alias, Predicate predicate) {
+        return new Join( domainModel.getType( typeName ), alias, JoinType.INNER, predicate );
+    }
+
+    protected Join leftJoin(String typeName, String alias, Predicate predicate) {
+        return new Join( domainModel.getType( typeName ), alias, JoinType.LEFT, predicate );
+    }
+
+    protected Join rightJoin(String typeName, String alias, Predicate predicate) {
+        return new Join( domainModel.getType( typeName ), alias, JoinType.RIGHT, predicate );
+    }
+
+    protected Join fullJoin(String typeName, String alias, Predicate predicate) {
+        return new Join( domainModel.getType( typeName ), alias, JoinType.FULL, predicate );
+    }
 
     protected ComparisonPredicate neq(ArithmeticExpression left, ArithmeticExpression right) {
         return new ComparisonPredicate(booleanDomainType(), left, right, ComparisonOperator.NOT_EQUAL);
@@ -372,7 +412,7 @@ public abstract class AbstractExpressionCompilerTest {
 //	}
 
     protected InPredicate in(ArithmeticExpression value, ArithmeticExpression... items) {
-        return new InPredicate(booleanDomainType(), value, Arrays.asList(items), false);
+        return new InPredicate(booleanDomainType(), value, asList(items), false);
     }
 
     protected FunctionInvocation functionInvocation(String functionName, Expression... argumentArray) {

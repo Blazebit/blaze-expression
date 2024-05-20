@@ -113,4 +113,30 @@ public abstract class VisitorAdapter implements Expression.Visitor {
     public void visit(CollectionLiteral e) {
 
     }
+
+    @Override
+    public void visit(Query e) {
+        for ( FromItem fromItem : e.getFromItems() ) {
+            fromItem.accept( this );
+        }
+        Predicate wherePredicate = e.getWherePredicate();
+        if ( wherePredicate != null ) {
+            wherePredicate.accept( this );
+        }
+        for ( Expression selectItem : e.getSelectItems() ) {
+            selectItem.accept( this );
+        }
+    }
+
+    @Override
+    public void visit(FromItem e) {
+        for ( Join join : e.getJoins() ) {
+            join.accept( this );
+        }
+    }
+
+    @Override
+    public void visit(Join e) {
+        e.getJoinPredicate().accept( this );
+    }
 }

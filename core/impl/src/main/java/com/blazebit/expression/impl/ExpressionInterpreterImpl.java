@@ -29,6 +29,7 @@ import com.blazebit.expression.CollectionLiteral;
 import com.blazebit.expression.ComparisonOperator;
 import com.blazebit.expression.ComparisonPredicate;
 import com.blazebit.expression.CompoundPredicate;
+import com.blazebit.expression.DataFetcherData;
 import com.blazebit.expression.DomainModelException;
 import com.blazebit.expression.EntityLiteral;
 import com.blazebit.expression.EnumLiteral;
@@ -37,15 +38,21 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionInterpreterContext;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.FromItem;
+import com.blazebit.expression.FromNode;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
+import com.blazebit.expression.Join;
+import com.blazebit.expression.JoinType;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 import com.blazebit.expression.spi.AttributeAccessor;
 import com.blazebit.expression.spi.ComparisonOperatorInterpreter;
+import com.blazebit.expression.spi.DataFetcher;
 import com.blazebit.expression.spi.DomainFunctionArguments;
 import com.blazebit.expression.spi.DomainOperatorInterpreter;
 import com.blazebit.expression.spi.FunctionInvoker;
@@ -53,10 +60,15 @@ import com.blazebit.expression.spi.TypeAdapter;
 import com.blazebit.expression.spi.TypeConverter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Christian Beikov
@@ -67,6 +79,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     protected final ExpressionService expressionService;
     protected Context context;
     protected TypeAdapter typeAdapter;
+    protected Map<String, Object> dataMap;
 
     public ExpressionInterpreterImpl(ExpressionService expressionService) {
         this.expressionService = expressionService;
@@ -341,7 +354,7 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
     public Object visit(Path e) {
         Object value;
         if (e.getBase() == null) {
-            value = context.getRoot(e.getAlias());
+            value = resolveRoot(e.getAlias());
         } else {
             value = e.getBase().accept(this);
         }
@@ -443,6 +456,438 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         return visit((Literal) e);
     }
 
+    protected Object resolveRoot(String alias) {
+        if (dataMap != null) {
+            Object object = dataMap.get( alias );
+            if (object != null) {
+                return object;
+            }
+        }
+        return context.getRoot(alias);
+    }
+
+    @Override
+    public List<Object> visit(Query e) {
+        List<FromItem> fromItems = e.getFromItems();
+        if (fromItems.size() == 1 && fromItems.get( 0 ).getJoins().isEmpty()) {
+            return visitSimpleQuery(e);
+        }
+        return visitJoinQuery( e );
+    }
+
+    private List<Object> visitSimpleQuery(Query e) {
+        FromItem fromItem = e.getFromItems().get( 0 );
+        List<?> data = getData( fromItem );
+        List<Object> result = new ArrayList<>();
+        dataMap = new HashMap<>( 1 );
+        dataMap.put( fromItem.getAlias(), null );
+        Map.Entry<String, Object> entry = dataMap.entrySet().iterator().next();
+        Predicate predicate = e.getWherePredicate();
+        Set<Object> uniqueResults = e.isDistinct() ? new HashSet<>() : null;
+        for ( Object object : data ) {
+            entry.setValue( object );
+            Object predicateResult = predicate == null ? Boolean.TRUE : predicate.accept( this );
+            if (predicateResult == Boolean.TRUE) {
+                Object selectResult = visitSelectItems( e );
+                if ( uniqueResults == null || uniqueResults.add( selectResult ) ) {
+                    result.add( selectResult );
+                }
+            }
+        }
+        return result;
+    }
+
+    private Object visitSelectItems(Query e) {
+        List<Expression> selectItems = e.getSelectItems();
+        if (selectItems.size() == 1) {
+            return selectItems.get( 0 ).accept( this );
+        }
+        Object[] array = new Object[selectItems.size()];
+        for ( int i = 0; i < selectItems.size(); i++ ) {
+            array[i] = selectItems.get( i ).accept( this );
+        }
+        return array;
+    }
+
+    private List<Object> visitJoinQuery(Query e) {
+        FromNode[] fromNodes = tupleNodes( e.getFromItems() );
+
+        Map.Entry<String, Object>[] entries = new Map.Entry[fromNodes.length];
+        dataMap = new HashMap<>(fromNodes.length);
+        for ( int i = 0; i < fromNodes.length; i++ ) {
+            dataMap.put( fromNodes[i].getAlias(), i );
+        }
+        for ( Map.Entry<String, Object> entry : dataMap.entrySet() ) {
+            entries[(int) entry.getValue()] = entry;
+        }
+
+        TupleList tuples = joinTuples( fromNodes, entries );
+
+        List<Object> result = new ArrayList<>();
+        Predicate predicate = e.getWherePredicate();
+        Set<Object> uniqueResults = e.isDistinct() ? new HashSet<>() : null;
+        for ( Object[] tuple : tuples ) {
+            initDataMap( entries, tuple );
+            Object predicateResult = predicate == null ? Boolean.TRUE : predicate.accept( this );
+            if (predicateResult == Boolean.TRUE) {
+                Object selectResult = visitSelectItems( e );
+                if ( uniqueResults == null || uniqueResults.add( selectResult ) ) {
+                    result.add( selectResult );
+                }
+            }
+        }
+        return result;
+    }
+
+    private TupleList joinTuples(FromNode[] fromNodes, Map.Entry<String, Object>[] entries) {
+        TupleList tuples = null;
+        for ( int fromNodeIndex = 0; fromNodeIndex < fromNodes.length; fromNodeIndex++ ) {
+            List<?> data = getData( fromNodes[fromNodeIndex] );
+            if ( tuples == null ) {
+                tuples = new TupleList( data.size() );
+                for ( Object object : data ) {
+                    Object[] tuple = new Object[fromNodes.length];
+                    tuple[fromNodeIndex] = object;
+                    tuples.add( tuple );
+                }
+            } else {
+                if ( fromNodes[fromNodeIndex] instanceof Join) {
+                    Join join = (Join) fromNodes[fromNodeIndex];
+                    Path[] eqHashJoinPaths;
+                    if ( data.isEmpty() ) {
+                        if ( join.getJoinType() == JoinType.INNER || join.getJoinType() == JoinType.RIGHT ) {
+                            // empty data on RHS produces empty tuples
+                            tuples.clear();
+                        }
+                    } else if ( (eqHashJoinPaths = determineEqHashJoinPaths( join ) ) != null ) {
+                        tuples = hashJoin( entries, data, fromNodeIndex, tuples, join, eqHashJoinPaths );
+                    } else {
+                        tuples = nestedLoopJoin( entries, data, fromNodeIndex, tuples, join );
+                    }
+                } else if (data.isEmpty()) {
+                    // Cross join with empty data on the RHS
+                    tuples.clear();
+                } else {
+                    // Cross join
+                    int lhsTuples = tuples.size();
+                    tuples.ensureCapacity( tuples.size() * data.size() );
+                    for ( int i = 0; i < lhsTuples; i++ ) {
+                        tuples.get( i )[fromNodeIndex] = data.get( 0 );
+                    }
+                    for ( int i = 1; i < data.size(); i++ ) {
+                        for ( int j = 0; j < lhsTuples; j++ ) {
+                            Object[] newTuple = tuples.get( j ).clone();
+                            newTuple[fromNodeIndex] = data.get( i );
+                            tuples.add( newTuple );
+                        }
+                    }
+                }
+            }
+        }
+        return tuples;
+    }
+
+    private Path[] determineEqHashJoinPaths(Join join) {
+        Predicate joinPredicate = join.getJoinPredicate();
+        if (!joinPredicate.isNegated() && joinPredicate instanceof ComparisonPredicate) {
+            ComparisonPredicate comparisonPredicate = (ComparisonPredicate) joinPredicate;
+            if (comparisonPredicate.getOperator() == ComparisonOperator.EQUAL) {
+                ArithmeticExpression lhs = comparisonPredicate.getLeft();
+                ArithmeticExpression rhs = comparisonPredicate.getRight();
+                String alias = join.getAlias();
+                if ( lhs instanceof Path && rhs instanceof Path ) {
+                    Path lhsPath = (Path) lhs;
+                    Path rhsPath = (Path) rhs;
+                    if (alias.equals( lhsPath.getAlias() )) {
+                        return new Path[]{ rhsPath, lhsPath };
+                    } else if (alias.equals( rhsPath.getAlias() )) {
+                        return new Path[]{ lhsPath, rhsPath };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private TupleList nestedLoopJoin(
+            Map.Entry<String, Object>[] entries,
+            List<?> data,
+            int fromNodeIndex,
+            TupleList tuples,
+            Join join) {
+        BitSet matchedBitSet = join.getJoinType() == JoinType.RIGHT || join.getJoinType() == JoinType.FULL ? new BitSet( data.size() ) : null;
+        for ( int i = 0, tuplesSize = tuples.size(); i < tuplesSize; i++ ) {
+            Object[] tuple = tuples.get( i );
+            initDataMap( entries, tuple );
+            int matches = 0;
+            for ( int j = 0; j < data.size(); j++ ) {
+                Object rhsObject = data.get( j );
+                entries[fromNodeIndex].setValue( rhsObject );
+                Object predicateResult = join.getJoinPredicate().accept( this );
+                if ( predicateResult == Boolean.TRUE ) {
+                    if (matchedBitSet != null) {
+                        matchedBitSet.set( j );
+                    }
+                    if ( matches == 0 ) {
+                        tuple[fromNodeIndex] = rhsObject;
+                    } else {
+                        Object[] clonedTuple = tuple.clone();
+                        clonedTuple[fromNodeIndex] = rhsObject;
+                        tuples.add( clonedTuple );
+                    }
+                    matches++;
+                }
+            }
+            if (matches == 0 && (join.getJoinType() == JoinType.INNER || join.getJoinType() == JoinType.RIGHT)) {
+                // TODO: optimize by storing deleted bitmap
+                tuples.remove( i );
+                i--;
+                tuplesSize--;
+            }
+        }
+        if (matchedBitSet != null) {
+            for ( int i = matchedBitSet.nextClearBit( 0 ); i >= 0; i = matchedBitSet.nextClearBit( i + 1 ) ) {
+                if ( i == data.size() ) {
+                    break;
+                }
+                Object[] tuple = new Object[entries.length];
+                tuple[fromNodeIndex] = data.get( i );
+                tuples.add( tuple );
+            }
+        }
+        return tuples;
+    }
+
+    private TupleList hashJoin(
+            Map.Entry<String, Object>[] entries,
+            List<?> data,
+            int fromNodeIndex,
+            TupleList tuples,
+            Join join,
+            Path[] eqHashJoinPaths) {
+        if (tuples.size() < data.size()) {
+            return hashJoinTuples( entries, data, fromNodeIndex, tuples, join, eqHashJoinPaths );
+        } else {
+            return hashJoinObjects( entries, data, fromNodeIndex, tuples, join, eqHashJoinPaths );
+        }
+    }
+
+    private TupleList hashJoinTuples(
+            Map.Entry<String, Object>[] entries,
+            List<?> data,
+            int fromNodeIndex,
+            TupleList tuples,
+            Join join,
+            Path[] eqHashJoinPaths) {
+        HashMap<Object, Object> map = new HashMap<>( tuples.size() );
+        int lhsIndex = findEntry( entries, eqHashJoinPaths[0].getAlias());
+        Map.Entry<String, Object> lhsEntry = entries[lhsIndex];
+        for ( int i = 0; i < tuples.size(); i++ ) {
+            lhsEntry.setValue( tuples.get( i )[lhsIndex] );
+            Object lhsValue = eqHashJoinPaths[0].accept( this );
+            Integer tupleIndex = i;
+            Object existing = map.putIfAbsent( lhsValue, tupleIndex );
+            if ( existing != null ) {
+                IndexList objects;
+                if ( existing instanceof IndexList ) {
+                    objects = (IndexList) existing;
+                } else {
+                    objects = new IndexList();
+                }
+                objects.add( tupleIndex );
+                map.put( lhsValue, objects );
+            }
+        }
+
+        TupleList joinedTuples = new TupleList();
+        Map.Entry<String, Object> rhsEntry = entries[fromNodeIndex];
+        BitSet matchedBitSet = join.getJoinType() == JoinType.LEFT || join.getJoinType() == JoinType.FULL ? new BitSet( tuples.size() ) : null;
+        for ( int i = 0, objectsSize = data.size(); i < objectsSize; i++ ) {
+            Object rhsObject = data.get( i );
+            rhsEntry.setValue( rhsObject );
+            Object rhsValue = eqHashJoinPaths[1].accept( this );
+            Object matches = map.get( rhsValue );
+            if (matches == null) {
+                if (join.getJoinType() == JoinType.RIGHT || join.getJoinType() == JoinType.FULL) {
+                    Object[] tuple = new Object[entries.length];
+                    tuple[fromNodeIndex] = rhsObject;
+                    joinedTuples.add( tuple );
+                }
+            } else if (matches instanceof IndexList ) {
+                IndexList indexList = (IndexList) matches;
+                int tupleIndex = indexList.get( 0 );
+                if (matchedBitSet != null) {
+                    matchedBitSet.set( tupleIndex );
+                }
+                Object[] tuple = tuples.get( tupleIndex ).clone();
+                tuple[fromNodeIndex] = rhsObject;
+                joinedTuples.add( tuple );
+                for ( int j = 1; j < indexList.size(); j++ ) {
+                    tupleIndex = indexList.get( j );
+                    if (matchedBitSet != null) {
+                        matchedBitSet.set( tupleIndex );
+                    }
+                    tuple = tuples.get( tupleIndex ).clone();
+                    tuple[fromNodeIndex] = rhsObject;
+                    joinedTuples.add( tuple );
+                }
+            } else {
+                int tupleIndex = (int) matches;
+                if (matchedBitSet != null) {
+                    matchedBitSet.set( tupleIndex );
+                }
+                Object[] tuple = tuples.get( tupleIndex ).clone();
+                tuple[fromNodeIndex] = rhsObject;
+                joinedTuples.add( tuple );
+            }
+        }
+        if (matchedBitSet != null) {
+            for ( int i = matchedBitSet.nextClearBit( 0 ); i >= 0; i = matchedBitSet.nextClearBit( i + 1 ) ) {
+                if ( i == tuples.size() ) {
+                    break;
+                }
+                joinedTuples.add( tuples.get( i ) );
+            }
+        }
+        return joinedTuples;
+    }
+
+    private TupleList hashJoinObjects(
+            Map.Entry<String, Object>[] entries,
+            List<?> data,
+            int fromNodeIndex,
+            TupleList tuples,
+            Join join,
+            Path[] eqHashJoinPaths) {
+        HashMap<Object, Object> map = new HashMap<>( data.size() );
+        Map.Entry<String, Object> rhsEntry = entries[fromNodeIndex];
+        for ( int i = 0; i < data.size(); i++ ) {
+            rhsEntry.setValue( data.get( i ) );
+            Object rhsValue = eqHashJoinPaths[1].accept( this );
+            Integer rhsIndex = i;
+            Object existing = map.putIfAbsent( rhsValue, rhsIndex );
+            if ( existing != null ) {
+                IndexList objects;
+                if ( existing instanceof IndexList ) {
+                    objects = (IndexList) existing;
+                } else {
+                    objects = new IndexList();
+                }
+                objects.add( rhsIndex );
+                map.put( rhsValue, objects );
+            }
+        }
+
+        int lhsIndex = findEntry( entries, eqHashJoinPaths[0].getAlias());
+        Map.Entry<String, Object> lhsEntry = entries[lhsIndex];
+        BitSet matchedBitSet = join.getJoinType() == JoinType.RIGHT || join.getJoinType() == JoinType.FULL ? new BitSet( data.size() ) : null;
+        for ( int i = 0, tuplesSize = tuples.size(); i < tuplesSize; i++ ) {
+            Object[] tuple = tuples.get( i );
+            lhsEntry.setValue( tuple[lhsIndex] );
+            Object lhsValue = eqHashJoinPaths[0].accept( this );
+            Object matches = map.get( lhsValue );
+            if (matches == null ) {
+                if (join.getJoinType() == JoinType.INNER || join.getJoinType() == JoinType.RIGHT) {
+                    // TODO: optimize by storing deleted bitmap
+                    tuples.remove( i );
+                    i--;
+                    tuplesSize--;
+                }
+            } else if (matches instanceof IndexList ) {
+                IndexList indexList = (IndexList) matches;
+                int rhsIndex = indexList.get( 0 );
+                tuple[fromNodeIndex] = data.get( rhsIndex );
+                if (matchedBitSet != null) {
+                    matchedBitSet.set( rhsIndex );
+                }
+                for ( int j = 1; j < indexList.size(); j++ ) {
+                    rhsIndex = indexList.get( j );
+                    if (matchedBitSet != null) {
+                        matchedBitSet.set( rhsIndex );
+                    }
+                    Object[] clonedTuple = tuple.clone();
+                    tuple[fromNodeIndex] = data.get( rhsIndex );
+                    tuples.add( clonedTuple );
+                }
+            } else {
+                int rhsIndex = (int) matches;
+                if (matchedBitSet != null) {
+                    matchedBitSet.set( rhsIndex );
+                }
+                tuple[fromNodeIndex] = data.get( rhsIndex );
+            }
+        }
+        if (matchedBitSet != null) {
+            for ( int i = matchedBitSet.nextClearBit( 0 ); i >= 0; i = matchedBitSet.nextClearBit( i + 1 ) ) {
+                if ( i == data.size() ) {
+                    break;
+                }
+                Object[] tuple = new Object[entries.length];
+                tuple[fromNodeIndex] = data.get( i );
+                tuples.add( tuple );
+            }
+        }
+        return tuples;
+    }
+
+    private int findEntry(Map.Entry<String, Object>[] entries, String alias) {
+        for ( int i = 0; i < entries.length; i++ ) {
+            if ( alias.equals( entries[i].getKey() ) ) {
+                return i;
+            }
+        }
+
+        throw new IllegalStateException("No entry found for alias: " + alias);
+    }
+
+    private static void initDataMap(Map.Entry<String, Object>[] entries, Object[] tuple) {
+        for ( int i = 0; i < tuple.length; i++ ) {
+            entries[i].setValue( tuple[i] );
+        }
+    }
+
+    private FromNode[] tupleNodes(List<FromItem> fromItems) {
+        int size = fromItems.size();
+        for ( FromItem fromItem : fromItems ) {
+            size += fromItem.getJoins().size();
+        }
+        FromNode[] tupleNodes = new FromNode[size];
+        int index = 0;
+        for ( FromItem fromItem : fromItems ) {
+            tupleNodes[index++] = fromItem;
+            for ( Join join : fromItem.getJoins() ) {
+                tupleNodes[index++] = join;
+            }
+        }
+        return tupleNodes;
+    }
+
+    protected List<?> getData(FromNode fromNode) {
+        DataFetcherData dataFetcherData = context.getDataFetcherData();
+        String domainTypeName = fromNode.getType().getName();
+        List<?> cachedData = dataFetcherData.getDataForDomainType( domainTypeName );
+        if (cachedData != null) {
+            return cachedData;
+        }
+        DataFetcher dataFetcher = fromNode.getType().getMetadata( DataFetcher.class );
+        if (dataFetcher == null) {
+            throw new IllegalArgumentException("No data fetcher available for type: " + fromNode.getType());
+        }
+        List<?> fetchedData = dataFetcher.fetch( context );
+        dataFetcherData.setDataForDomainType( domainTypeName, fetchedData );
+        return fetchedData;
+    }
+
+    @Override
+    public Object visit(FromItem e) {
+        return null;
+    }
+
+    @Override
+    public Object visit(Join e) {
+        return null;
+    }
+
     protected Boolean compare(DomainType leftType, DomainType rightType, Object left, Object right, ComparisonOperator operator) {
         ComparisonOperatorInterpreter comparisonOperatorInterpreter = leftType.getMetadata(ComparisonOperatorInterpreter.class);
         if (comparisonOperatorInterpreter == null) {
@@ -496,6 +941,89 @@ public class ExpressionInterpreterImpl implements Expression.ResultVisitor<Objec
         @Override
         public int assignedArguments() {
             return assignedArguments;
+        }
+    }
+
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static final class TupleList extends ArrayList<Object[]> {
+        public TupleList(int initialCapacity) {
+            super( initialCapacity );
+        }
+
+        public TupleList() {
+        }
+    }
+
+    /**
+     * @author Christian Beikov
+     * @since 1.0.0
+     */
+    private static final class IndexList {
+        private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+        private int[] elementData;
+        private int size;
+
+        public IndexList() {
+            elementData = new int[10];
+        }
+
+        private int[] grow(int minCapacity) {
+            return elementData = Arrays.copyOf( elementData, newCapacity(minCapacity));
+        }
+
+        private int[] grow() {
+            return grow(size + 1);
+        }
+        private int newCapacity(int minCapacity) {
+            // overflow-conscious code
+            int oldCapacity = elementData.length;
+            int newCapacity = oldCapacity + (oldCapacity >> 1);
+            if (newCapacity - minCapacity <= 0) {
+                if (minCapacity < 0) {
+                    // overflow
+                    throw new OutOfMemoryError();
+                }
+
+                return minCapacity;
+            }
+            return (newCapacity - MAX_ARRAY_SIZE <= 0)
+                    ? newCapacity
+                    : hugeCapacity(minCapacity);
+        }
+        private static int hugeCapacity(int minCapacity) {
+            if (minCapacity < 0) {
+                // overflow
+                throw new OutOfMemoryError();
+            }
+            return (minCapacity > MAX_ARRAY_SIZE)
+                    ? Integer.MAX_VALUE
+                    : MAX_ARRAY_SIZE;
+        }
+
+        public int size() {
+            return size;
+        }
+
+        public boolean isEmpty() {
+            return size == 0;
+        }
+
+        public int get(int index) {
+            if (index < 0 || index >= size) {
+                throw new IndexOutOfBoundsException("Index out of range: " + index);
+            }
+            return elementData[index];
+        }
+        public void add(int e) {
+            if (size == elementData.length) {
+                elementData = grow();
+            }
+            elementData[size] = e;
+            size = size + 1;
         }
     }
 }

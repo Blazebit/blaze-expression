@@ -36,13 +36,16 @@ import com.blazebit.expression.ExpressionInterpreter;
 import com.blazebit.expression.ExpressionPredicate;
 import com.blazebit.expression.ExpressionSerializer;
 import com.blazebit.expression.ExpressionService;
+import com.blazebit.expression.FromItem;
 import com.blazebit.expression.FunctionInvocation;
 import com.blazebit.expression.InPredicate;
 import com.blazebit.expression.IsEmptyPredicate;
 import com.blazebit.expression.IsNullPredicate;
+import com.blazebit.expression.Join;
 import com.blazebit.expression.Literal;
 import com.blazebit.expression.Path;
 import com.blazebit.expression.Predicate;
+import com.blazebit.expression.Query;
 
 import java.util.List;
 import java.util.Map;
@@ -496,6 +499,21 @@ public class ExcelExpressionSerializer implements Expression.ResultVisitor<Boole
             return inlineIfConstant(e, sb.length(), true);
         }
         throw new UnsupportedOperationException("No support for collections in Excel");
+    }
+
+    @Override
+    public Boolean visit(Query e) {
+        throw new UnsupportedOperationException("No support for queries in Excel");
+    }
+
+    @Override
+    public Boolean visit(FromItem e) {
+        throw new UnsupportedOperationException("No support for queries in Excel");
+    }
+
+    @Override
+    public Boolean visit(Join e) {
+        throw new UnsupportedOperationException("No support for queries in Excel");
     }
 
     /**
