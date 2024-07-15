@@ -17,7 +17,7 @@
 package com.blazebit.expression.declarative.view;
 
 import com.blazebit.expression.persistence.PersistenceExpressionSerializer;
-import com.blazebit.persistence.BaseQueryBuilder;
+import com.blazebit.persistence.FromBuilder;
 import com.blazebit.persistence.view.metamodel.ManagedViewType;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public class ManagedViewTypeCollection {
             // So we set null in order to cause an exception if it is used
             embeddingViewMacro.setEmbeddingViewPath(null);
             viewMacro.setViewPath(viewPath);
-            managedViewType.renderSecondaryMappings(viewPath, (BaseQueryBuilder<?, ?>) serializer.getWhereBuilder(), optionalParameters, false);
+            managedViewType.renderSecondaryMappings(viewPath, (FromBuilder<?>) serializer.getWhereBuilder(), optionalParameters, false);
             viewMacro.setViewPath(oldViewPath);
             embeddingViewMacro.setEmbeddingViewPath(oldEmbeddingViewPath);
         }
