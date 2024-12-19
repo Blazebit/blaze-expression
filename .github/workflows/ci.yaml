@@ -22,16 +22,16 @@ jobs:
           - jdk: 19
             build-jdk: 19
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Java 8
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
       - name: Set env
         run: echo "JDK8_HOME=$(echo $JAVA_HOME)" >> $GITHUB_ENV
       - name: Set up Requested JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.jdk == 19 && '19-ea' || matrix.jdk }}
           distribution: 'temurin'
@@ -47,7 +47,7 @@ jobs:
           echo "::set-output name=yearmonth::$(/bin/date -u "+%Y-%m")"
         shell: bash
       - name: Cache Maven local repository
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache-maven
         with:
           path: |
@@ -66,7 +66,7 @@ jobs:
         shell: bash
 
       - name: Upload test reports (if Maven failed)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test-reports-jdk${{ matrix.jdk }}-build-jdk${{ matrix.build-jdk }}
