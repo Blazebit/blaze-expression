@@ -24,7 +24,7 @@
     </modules>
 
     <artifactId>blaze-expression</artifactId>
-    <version>1.0.0-Alpha33</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>Blazebit Blaze-Expression</name>
     <url>https://expression.blazebit.com</url>
@@ -68,7 +68,7 @@
         <connection>scm:git:git@github.com:Blazebit/blaze-expression.git</connection>
         <developerConnection>scm:git:git@github.com:Blazebit/blaze-expression.git</developerConnection>
         <url>git@github.com:Blazebit/blaze-expression.git</url>
-        <tag>1.0.0-Alpha33</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
