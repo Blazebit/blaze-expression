@@ -38,12 +38,12 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>blaze-expression-persistence</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-persistence-core-api</artifactId>
+            <artifactId>blaze-persistence-core-api-jakarta</artifactId>
             <version>${version.blaze-persistence}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

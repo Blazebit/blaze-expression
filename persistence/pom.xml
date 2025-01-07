@@ -30,6 +30,7 @@
             <artifactId>blaze-persistence-core-api</artifactId>
             <version>${version.blaze-persistence}</version>
             <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
