@@ -42,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-persistence-entity-view-api</artifactId>
+            <artifactId>blaze-persistence-entity-view-api-jakarta</artifactId>
             <version>${version.blaze-persistence}</version>
         </dependency>
         <dependency>
@@ -52,7 +52,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>blaze-persistence-entity-view-impl</artifactId>
+            <artifactId>blaze-persistence-entity-view-impl-jakarta</artifactId>
             <version>${version.blaze-persistence}</version>
             <scope>runtime</scope>
         </dependency>
